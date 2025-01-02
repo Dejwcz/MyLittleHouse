@@ -10,6 +10,13 @@
 *.userosscache
 *.sln.docstates
 
+# Sensitive files
+secrets.json
+appsettings.json
+appsettings.*.json
+
+wwwroot/uploads/
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
