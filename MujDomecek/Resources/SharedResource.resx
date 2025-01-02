@@ -1,0 +1,429 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AddFiles" xml:space="preserve">
+    <value>Přidání souborů</value>
+  </data>
+  <data name="AttachedFiles" xml:space="preserve">
+    <value>Přiložené soubory</value>
+  </data>
+  <data name="BackToList" xml:space="preserve">
+    <value>Zpátky na seznam</value>
+  </data>
+  <data name="ChangeEmail" xml:space="preserve">
+    <value>Změnit email</value>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>Změna hesla</value>
+  </data>
+  <data name="ChangeYourAccountSettings" xml:space="preserve">
+    <value>Zde můžete upravit nastavení účtu</value>
+  </data>
+  <data name="ChildUnits" xml:space="preserve">
+    <value>Podřízené jednotky</value>
+  </data>
+  <data name="ConfirmationLinkSendCheckEmail" xml:space="preserve">
+    <value>Potvrzovací odkaz byl odeslán. Prosím zkontrolujte svůj email.</value>
+  </data>
+  <data name="ConfirmEmail" xml:space="preserve">
+    <value>Potvrzení emailu</value>
+  </data>
+  <data name="ConfirmNewPassword" xml:space="preserve">
+    <value>Potvrďte nové heslo</value>
+  </data>
+  <data name="ConfirmPassword" xml:space="preserve">
+    <value>Potvrďte heslo</value>
+  </data>
+  <data name="CreatedAt" xml:space="preserve">
+    <value>Vytvořeno</value>
+  </data>
+  <data name="CreateNewAccount" xml:space="preserve">
+    <value>Vytvořit nový účet</value>
+  </data>
+  <data name="CreateNewProp" xml:space="preserve">
+    <value>Vytvořit nový dům</value>
+  </data>
+  <data name="CreateNewRepair" xml:space="preserve">
+    <value>Přidat novou opravu</value>
+  </data>
+  <data name="CreateNewUnit" xml:space="preserve">
+    <value>Vytvořit novou jednotku</value>
+  </data>
+  <data name="CurrentPassword" xml:space="preserve">
+    <value>Současné heslo</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Smazat</value>
+  </data>
+  <data name="DeleteAreYouSure" xml:space="preserve">
+    <value>Opravdu chcete smazat?</value>
+  </data>
+  <data name="DeleteDataAndCloseMyAccount" xml:space="preserve">
+    <value>Smazat data a uzavřít můj účet</value>
+  </data>
+  <data name="DeletePersonalData" xml:space="preserve">
+    <value>Smazat osobní data</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Popis</value>
+  </data>
+  <data name="Details" xml:space="preserve">
+    <value>Detaily</value>
+  </data>
+  <data name="Download" xml:space="preserve">
+    <value>Stáhnout</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Editace</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="EnterEmail" xml:space="preserve">
+    <value>Zadejte svůj email</value>
+  </data>
+  <data name="ErrorConfirmingEmail" xml:space="preserve">
+    <value>Chyba při potvrzování emailu</value>
+  </data>
+  <data name="ErrorSetPhoneNumber" xml:space="preserve">
+    <value>Chyba při ukládání telefoního čísla</value>
+  </data>
+  <data name="FilesCount" xml:space="preserve">
+    <value>Počet souborů</value>
+  </data>
+  <data name="FirstName" xml:space="preserve">
+    <value>Křestní jméno</value>
+  </data>
+  <data name="Flat" xml:space="preserve">
+    <value>Byt</value>
+  </data>
+  <data name="ForgotPassword" xml:space="preserve">
+    <value>Zapoměli jste heslo?</value>
+  </data>
+  <data name="ForgotPasswordConfirmation" xml:space="preserve">
+    <value>Potvrzení zapomenutého hesla</value>
+  </data>
+  <data name="ForgotPasswordConfirmationText" xml:space="preserve">
+    <value>Byl odeslán email na Vaši adresu s pokyny pro resetování hesla.</value>
+  </data>
+  <data name="FullView" xml:space="preserve">
+    <value>Detail domu</value>
+  </data>
+  <data name="FullViewUnit" xml:space="preserve">
+    <value>Detail jednotky</value>
+  </data>
+  <data name="Garage" xml:space="preserve">
+    <value>Garáž</value>
+  </data>
+  <data name="Garden" xml:space="preserve">
+    <value>Zahrada</value>
+  </data>
+  <data name="Hello" xml:space="preserve">
+    <value>Vítejte v aplikaci Můj domeček</value>
+  </data>
+  <data name="Hi" xml:space="preserve">
+    <value>Ahoj</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Domů</value>
+  </data>
+  <data name="House" xml:space="preserve">
+    <value>Dům</value>
+  </data>
+  <data name="IndexTitle" xml:space="preserve">
+    <value>Můj domeček - </value>
+  </data>
+  <data name="Info" xml:space="preserve">
+    <value>Informace</value>
+  </data>
+  <data name="LastName" xml:space="preserve">
+    <value>Příjmení</value>
+  </data>
+  <data name="Logged" xml:space="preserve">
+    <value>Přihlášen</value>
+  </data>
+  <data name="Login" xml:space="preserve">
+    <value>Přihlásit</value>
+  </data>
+  <data name="Logout" xml:space="preserve">
+    <value>Odhlásit</value>
+  </data>
+  <data name="Manage" xml:space="preserve">
+    <value>Spravovat</value>
+  </data>
+  <data name="ManageEmail" xml:space="preserve">
+    <value>Nastavení emailu</value>
+  </data>
+  <data name="ManageYourAccount" xml:space="preserve">
+    <value>Správa vašeho účtu</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Jméno</value>
+  </data>
+  <data name="NewEmail" xml:space="preserve">
+    <value>Nový email</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>Nové heslo</value>
+  </data>
+  <data name="NoFilesAttached" xml:space="preserve">
+    <value>Žádné soubory nepřiloženy</value>
+  </data>
+  <data name="NoFilesSelected" xml:space="preserve">
+    <value>Žádný soubor nebyl vybrán</value>
+  </data>
+  <data name="None" xml:space="preserve">
+    <value>Žádná volba</value>
+  </data>
+  <data name="Other" xml:space="preserve">
+    <value>Ostatní</value>
+  </data>
+  <data name="ParentUnit" xml:space="preserve">
+    <value>Nadřazená jednotka</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Heslo</value>
+  </data>
+  <data name="PersonalData" xml:space="preserve">
+    <value>Osobní data</value>
+  </data>
+  <data name="PersonalDataMessageInfo" xml:space="preserve">
+    <value>Váš účet obsahuje osobní údaje, které jste nám poskytli. Tato stránka vám umožňuje stáhnout nebo smazat tato data.</value>
+  </data>
+  <data name="PersonalDataMessageWarning" xml:space="preserve">
+    <value>Smazáním těchto dat dojde k trvalému odstranění vašeho účtu, což nelze obnovit.</value>
+  </data>
+  <data name="PhoneNumber" xml:space="preserve">
+    <value>Telefoní číslo</value>
+  </data>
+  <data name="Price" xml:space="preserve">
+    <value>Cena</value>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+  <data name="Properties" xml:space="preserve">
+    <value>Domy</value>
+  </data>
+  <data name="Property" xml:space="preserve">
+    <value>Dům</value>
+  </data>
+  <data name="RecordDelete" xml:space="preserve">
+    <value>Mazání záznamů</value>
+  </data>
+  <data name="Register" xml:space="preserve">
+    <value>Registrovat</value>
+  </data>
+  <data name="RegisterAsNewUser" xml:space="preserve">
+    <value>Registrovat nového uživatele</value>
+  </data>
+  <data name="RememberMe" xml:space="preserve">
+    <value>Zůstat přihlášen</value>
+  </data>
+  <data name="Repair" xml:space="preserve">
+    <value>Práce</value>
+  </data>
+  <data name="RepairDate" xml:space="preserve">
+    <value>Datum opravy</value>
+  </data>
+  <data name="Repairs" xml:space="preserve">
+    <value>Práce a opravy</value>
+  </data>
+  <data name="RepairsCount" xml:space="preserve">
+    <value>Počet oprav a prací</value>
+  </data>
+  <data name="Resend" xml:space="preserve">
+    <value>Znovu odeslat</value>
+  </data>
+  <data name="ResendEmailConfirmation" xml:space="preserve">
+    <value>Znovu poslat ověřovací email</value>
+  </data>
+  <data name="RessetPassword" xml:space="preserve">
+    <value>Resetovat heslo</value>
+  </data>
+  <data name="Room" xml:space="preserve">
+    <value>Pokoj</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Uložit</value>
+  </data>
+  <data name="Select" xml:space="preserve">
+    <value>Vyberte</value>
+  </data>
+  <data name="SelectedFiles" xml:space="preserve">
+    <value>Vybrané soubory</value>
+  </data>
+  <data name="ShowRepairs" xml:space="preserve">
+    <value>Ukaž práce</value>
+  </data>
+  <data name="Stairs" xml:space="preserve">
+    <value>Schodiště</value>
+  </data>
+  <data name="ThankForConfirmingEmail" xml:space="preserve">
+    <value>Děkujeme za potvrzení vašeho emailu</value>
+  </data>
+  <data name="TotalRepairCost" xml:space="preserve">
+    <value>Cena prací celkem</value>
+  </data>
+  <data name="Unit" xml:space="preserve">
+    <value>Jednotka</value>
+  </data>
+  <data name="Units" xml:space="preserve">
+    <value>Jednotky</value>
+  </data>
+  <data name="UnitsAndRepairs" xml:space="preserve">
+    <value>Jednotky a práce</value>
+  </data>
+  <data name="UnitsCount" xml:space="preserve">
+    <value>Počet jednotek</value>
+  </data>
+  <data name="UnitsNames" xml:space="preserve">
+    <value>Jména jednotek</value>
+  </data>
+  <data name="UnitType" xml:space="preserve">
+    <value>Typ jednotky</value>
+  </data>
+  <data name="UpdatedAt" xml:space="preserve">
+    <value>Upraveno</value>
+  </data>
+  <data name="UpdatePassword" xml:space="preserve">
+    <value>Změnit heslo</value>
+  </data>
+  <data name="UseAccountToLogin" xml:space="preserve">
+    <value>Použijte svůj účet pro přihlášení</value>
+  </data>
+  <data name="UserName" xml:space="preserve">
+    <value>Uživatelské jméno</value>
+  </data>
+  <data name="Welcome" xml:space="preserve">
+    <value>Vítejte</value>
+  </data>
+  <data name="YouCanUploadMultipleFiles" xml:space="preserve">
+    <value>Můžete nahrát více souborů současně</value>
+  </data>
+  <data name="YourEmailIsUnchanged" xml:space="preserve">
+    <value>Váš email je nezměněn</value>
+  </data>
+  <data name="YourPasswordHasBeenChanged" xml:space="preserve">
+    <value>Vaše heslo bylo změněno</value>
+  </data>
+  <data name="YourProfileHasBeenUpdated" xml:space="preserve">
+    <value>Nastavení vašeho profilu bylo uložen</value>
+  </data>
+</root>

@@ -1,0 +1,38 @@
+﻿@using Microsoft.Extensions.Localization
+@{
+    ViewData["Title"] = Localizer["Welcome"];
+}
+
+@* Test for Localizer function *@
+@*  @{
+    var str = Localizer["Hello"];
+    <p>Found: @(str.ResourceNotFound ? "No" : "Yes")</p>
+    <p>Value: @str</p>
+}  *@
+
+
+<div class="text-center">
+    <p></p>
+    <h1 class="display-4 mt-5">@Localizer["Hello"]</h1>
+    <br />
+</div>
+@if (User.Identity == null || !User.Identity.IsAuthenticated) {
+    <div class="text-center mt-2">
+        <a class="btn btn-primary" asp-area="Identity" asp-page="/Account/Login">@Localizer["Login"]</a>
+    </div>
+    <div class="text-center mt-2">
+        <a class="btn btn-primary" asp-area="Identity" asp-page="/Account/Register">@Localizer["Register"]</a>       
+    </div>
+}
+else {
+    <div class="text-center">
+        <div class="btn-group-vertical mt-2" role="group" aria-label="Vertical button group">
+            <a class="btn btn-outline-primary mt-1" asp-controller="Properties" asp-action="Index">@Localizer["Properties"]</a>
+            <a class="btn btn-outline-primary mt-1" asp-controller="Units" asp-action="Index">@Localizer["Units"]</a>
+            <a class="btn btn-outline-primary mt-1" asp-controller="Repairs" asp-action="Index">@Localizer["Repairs"]</a>
+        </div>
+    </div>
+}
+
+
+

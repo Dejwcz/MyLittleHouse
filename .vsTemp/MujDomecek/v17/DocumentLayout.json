@@ -1,0 +1,206 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\kurz VSB\\oop\\MujDomecek\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|c:\\kurz vsb\\oop\\mujdomecek\\mujdomecek\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|solutionrelative:mujdomecek\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|c:\\kurz vsb\\oop\\mujdomecek\\mujdomecek\\views\\home\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|solutionrelative:mujdomecek\\views\\home\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|c:\\kurz vsb\\oop\\mujdomecek\\mujdomecek\\resources\\sharedresource.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|solutionrelative:mujdomecek\\resources\\sharedresource.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|c:\\kurz vsb\\oop\\mujdomecek\\mujdomecek\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|solutionrelative:mujdomecek\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|c:\\kurz vsb\\oop\\mujdomecek\\mujdomecek\\views\\shared\\_loginpartial.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|solutionrelative:mujdomecek\\views\\shared\\_loginpartial.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|c:\\kurz vsb\\oop\\mujdomecek\\mujdomecek\\resources\\sharedresource.resx||{FF4D6ACA-9352-4A5F-821E-F4D6EBDCAB11}",
+      "RelativeMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|solutionrelative:mujdomecek\\resources\\sharedresource.resx||{FF4D6ACA-9352-4A5F-821E-F4D6EBDCAB11}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|c:\\kurz vsb\\oop\\mujdomecek\\mujdomecek\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|solutionrelative:mujdomecek\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|c:\\kurz vsb\\oop\\mujdomecek\\mujdomecek\\data\\appuser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|solutionrelative:mujdomecek\\data\\appuser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|c:\\kurz vsb\\oop\\mujdomecek\\mujdomecek\\areas\\identity\\pages\\account\\register.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|solutionrelative:mujdomecek\\areas\\identity\\pages\\account\\register.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|c:\\kurz vsb\\oop\\mujdomecek\\mujdomecek\\areas\\identity\\pages\\account\\register.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|solutionrelative:mujdomecek\\areas\\identity\\pages\\account\\register.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|c:\\kurz vsb\\oop\\mujdomecek\\mujdomecek\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3597F8C6-7A92-43C7-9134-5DEAD55F9A95}|MujDomecek\\MujDomecek.csproj|solutionrelative:mujdomecek\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 6,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "SharedResource.Designer.cs",
+              "DocumentMoniker": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Resources\\SharedResource.Designer.cs",
+              "RelativeDocumentMoniker": "MujDomecek\\Resources\\SharedResource.Designer.cs",
+              "ToolTip": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Resources\\SharedResource.Designer.cs",
+              "RelativeToolTip": "MujDomecek\\Resources\\SharedResource.Designer.cs",
+              "ViewState": "AQIAAAIAAAAAAAAAAAAnwBgAAAARAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-12-28T16:31:51.462Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "SharedResource.resx",
+              "DocumentMoniker": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Resources\\SharedResource.resx",
+              "RelativeDocumentMoniker": "MujDomecek\\Resources\\SharedResource.resx",
+              "ToolTip": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Resources\\SharedResource.resx",
+              "RelativeToolTip": "MujDomecek\\Resources\\SharedResource.resx",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001005|",
+              "WhenOpened": "2024-12-28T16:31:19.675Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Views\\Home\\Index.cshtml",
+              "RelativeDocumentMoniker": "MujDomecek\\Views\\Home\\Index.cshtml",
+              "ToolTip": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Views\\Home\\Index.cshtml",
+              "RelativeToolTip": "MujDomecek\\Views\\Home\\Index.cshtml",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAIAAAAyAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2024-12-28T15:18:48.361Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "_LoginPartial.cshtml",
+              "DocumentMoniker": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Views\\Shared\\_LoginPartial.cshtml",
+              "RelativeDocumentMoniker": "MujDomecek\\Views\\Shared\\_LoginPartial.cshtml",
+              "ToolTip": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Views\\Shared\\_LoginPartial.cshtml",
+              "RelativeToolTip": "MujDomecek\\Views\\Shared\\_LoginPartial.cshtml",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2024-12-28T15:20:10.486Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "_Layout.cshtml",
+              "DocumentMoniker": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Views\\Shared\\_Layout.cshtml",
+              "RelativeDocumentMoniker": "MujDomecek\\Views\\Shared\\_Layout.cshtml",
+              "ToolTip": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Views\\Shared\\_Layout.cshtml",
+              "RelativeToolTip": "MujDomecek\\Views\\Shared\\_Layout.cshtml",
+              "ViewState": "AQIAABsAAAAAAAAAAAAAADoAAAAkAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2024-12-28T14:12:09.372Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "HomeController.cs",
+              "DocumentMoniker": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Controllers\\HomeController.cs",
+              "RelativeDocumentMoniker": "MujDomecek\\Controllers\\HomeController.cs",
+              "ToolTip": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Controllers\\HomeController.cs",
+              "RelativeToolTip": "MujDomecek\\Controllers\\HomeController.cs",
+              "ViewState": "AQIAAAIAAAAAAAAAAAAiwA8AAAAJAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-12-28T14:11:25.265Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Program.cs",
+              "RelativeDocumentMoniker": "MujDomecek\\Program.cs",
+              "ToolTip": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Program.cs",
+              "RelativeToolTip": "MujDomecek\\Program.cs",
+              "ViewState": "AQIAAAgAAAAAAAAAAAAQwBMAAAA+AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-12-28T09:12:33.569Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "AppUser.cs",
+              "DocumentMoniker": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Data\\AppUser.cs",
+              "RelativeDocumentMoniker": "MujDomecek\\Data\\AppUser.cs",
+              "ToolTip": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Data\\AppUser.cs",
+              "RelativeToolTip": "MujDomecek\\Data\\AppUser.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAoAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-12-27T21:51:35.214Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Register.cshtml.cs",
+              "DocumentMoniker": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Areas\\Identity\\Pages\\Account\\Register.cshtml.cs",
+              "RelativeDocumentMoniker": "MujDomecek\\Areas\\Identity\\Pages\\Account\\Register.cshtml.cs",
+              "ToolTip": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Areas\\Identity\\Pages\\Account\\Register.cshtml.cs",
+              "RelativeToolTip": "MujDomecek\\Areas\\Identity\\Pages\\Account\\Register.cshtml.cs",
+              "ViewState": "AQIAAHIAAAAAAAAAAAAcwIEAAAAbAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-12-27T21:49:57.46Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Register.cshtml",
+              "DocumentMoniker": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Areas\\Identity\\Pages\\Account\\Register.cshtml",
+              "RelativeDocumentMoniker": "MujDomecek\\Areas\\Identity\\Pages\\Account\\Register.cshtml",
+              "ToolTip": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Areas\\Identity\\Pages\\Account\\Register.cshtml",
+              "RelativeToolTip": "MujDomecek\\Areas\\Identity\\Pages\\Account\\Register.cshtml",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABQAAABZAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2024-12-27T21:45:50.142Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "ApplicationDbContext.cs",
+              "DocumentMoniker": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Data\\ApplicationDbContext.cs",
+              "RelativeDocumentMoniker": "MujDomecek\\Data\\ApplicationDbContext.cs",
+              "ToolTip": "C:\\kurz VSB\\oop\\MujDomecek\\MujDomecek\\Data\\ApplicationDbContext.cs",
+              "RelativeToolTip": "MujDomecek\\Data\\ApplicationDbContext.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAACIAAAAnAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-12-27T17:22:44.123Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+﻿@model IEnumerable<MujDomecek.DTO.RepairDto>
+
+@{
+    ViewData["Title"] = Localizer["Repair"];
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">@Localizer["Repairs"]</h1>
+    <a asp-action="Create" class="btn btn-primary btn-lg">@Localizer["CreateNewRepair"]</a>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Localizer["Name"]
+            </th>
+            <th>
+                @Localizer["Description"]
+            </th>
+            <th>
+                @Localizer["Price"]
+            </th>
+            <th>
+                @Localizer["RepairDate"]
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Title)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Description)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Cost)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.RepairDate)
+            </td>
+            <td>
+                <div class="btn-group" role="group">
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info m-1">@Localizer["Details"]</a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary m-1">@Localizer["Edit"]</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger m-1">@Localizer["Delete"]</a>
+                </div>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

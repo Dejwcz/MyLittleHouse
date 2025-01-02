@@ -1,0 +1,33 @@
+﻿@page
+@model DeletePersonalDataModel
+@{
+    ViewData["Title"] = Localizer["DeletePersonalData"];
+    ViewData["ActivePage"] = ManageNavPages.PersonalData;
+}
+
+<h3>@ViewData["Title"]</h3>
+
+<div class="alert alert-warning" role="alert">
+    <p>
+        <strong>@Localizer["PersonalDataMessageWarning"]</strong>
+    </p>
+</div>
+
+<div>
+    <form id="delete-user" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        @if (Model.RequirePassword)
+        {
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true"/>
+                <label asp-for="Input.Password" class="form-label">@Localizer["Password"]</label>
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+        }
+        <button class="w-100 btn btn-lg btn-danger" type="submit">@Localizer["DeleteDataAndCloseMyAccount"]</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

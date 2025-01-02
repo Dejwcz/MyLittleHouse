@@ -1,0 +1,45 @@
+﻿@model MujDomecek.DTO.UnitFullViewDto
+
+@{
+    ViewData["Title"] = Localizer["FullViewUnit"];
+}
+
+<h1>@Localizer["FullViewUnit"]</h1>
+
+<div class="container mt-4">
+    <!-- Ohraničení pro jednotku -->
+    <div class="border p-5 rounded mb-3 border-5">
+        <h4>@Model.Name - @Localizer["Type"]: @Localizer[Model.UnitType.ToString()] </h4>
+        <p>@Localizer["Description"]: @Model.Description</p>
+
+
+        <!-- Opravy -->
+        @if (Model.Repairs.Any()) {
+            <button class="btn btn-sm btn-link text-decoration-none mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#repairs-@Model.Id" aria-expanded="false" aria-controls="repairs-@Model.Id">
+                @Localizer["ShowRepairs"]
+            </button>
+
+            <div class="collapse mt-2" id="repairs-@Model.Id">
+                <ul class="list-unstyled">
+                    @foreach (var repair in Model.Repairs) {
+                        <li class="border p-2 rounded mb-2">
+                            <h6>@Localizer["Repair"] - @repair.Title</h6>
+                            <p>@Localizer["Description"]: @repair.Description</p>
+                            <p>@Localizer["Price"]: @repair.Cost</p>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
+        @if (Model.ChildUnitsNames.Any()) {
+            <h5>@Localizer["ChildUnits"]:</h5>
+            <ul>
+                @foreach (var childUnit in Model.ChildUnitsNames) {
+                    <li>@childUnit</li>
+                }
+            </ul>
+        }
+    </div>
+</div>
+

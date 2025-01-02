@@ -1,0 +1,43 @@
+﻿@model MujDomecek.DTO.UnitDto
+
+@{
+    ViewData["Title"] = Localizer["Details"];
+}
+
+<h1>@Localizer["Details"]</h1>
+
+<div>
+    <h4>@Localizer["Unit"]</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Localizer["Name"]
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+        <dt class = "col-sm-2">
+            @Localizer["Description"]
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Description)
+        </dd>
+        <dt class = "col-sm-2">
+            @Localizer["UnitType"]
+        </dt>
+        <dd class = "col-sm-10">
+            @Localizer[Model.UnitType.ToString()]
+        </dd>
+        <dt class = "col-sm-2">
+            @Localizer["ParentUnit"]
+        </dt>
+        <dd class = "col-sm-10">
+            <a asp-action="Details" asp-route-id="@Model.ParentUnitId">@Html.DisplayFor(model => model.ParentUnitName)</a>
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">@Localizer["Edit"]</a>
+    <a asp-action="Index" class="btn btn-secondary">@Localizer["BackToList"]</a>
+</div>
+

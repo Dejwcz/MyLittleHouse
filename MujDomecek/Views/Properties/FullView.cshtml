@@ -1,0 +1,48 @@
+﻿@model MujDomecek.DTO.PropertyFullViewDto
+
+@{
+    ViewData["Title"] = Localizer["FullView"];
+}
+
+<h1>@Localizer["FullView"]</h1>
+
+
+
+<div class="container mt-4">
+    <div class="border p-5 rounded mb-3 border-5">
+        <!-- Ohraničení pro nemovitost -->
+        <h4>@Localizer["Property"] - @Html.DisplayFor(modelItem => Model.Name)</h4>
+        <p>@Localizer["Description"]: @Html.DisplayFor(modelItem => Model.Description)</p>
+    </div>
+
+    @foreach (var unit in Model.Units) {
+        <div class="border-start border-3 ps-3 mb-3">
+            <!-- Ohraničení a odsazení pro jednotky -->
+
+            <h5>
+                @Localizer[unit.UnitType.ToString()] - @Html.DisplayFor(modelItem => unit.Name)
+                
+            </h5>
+            <p>@Localizer["Description"]: @Html.DisplayFor(modelItem => unit.Description)</p>
+            @if(unit.Repairs.Count > 0) {
+            <button class="btn btn-sm btn-link text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#repairs-@unit.Id" aria-expanded="false" aria-controls="repairs-@unit.Id">
+                @Localizer["Show Repairs"]
+            </button>
+            }
+            @if (unit.Repairs.Count > 0) {
+                <div class="collapse" id="repairs-@unit.Id">
+                    <ul class="list-unstyled ms-4">
+                        @foreach (var repair in unit.Repairs) {
+                            <li class="border p-2 rounded mb-2">
+                                <!-- Ohraničení pro jednotlivé opravy -->
+                                <h6>@Localizer["Repair"] - @Html.DisplayFor(modelItem => repair.Title)</h6>
+                                <p>@Localizer["Description"]: @Html.DisplayFor(modelItem => repair.Description)</p>
+                                <p>@Localizer["Price"]: @Html.DisplayFor(modelItem => repair.Cost)</p>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    }
+</div>
