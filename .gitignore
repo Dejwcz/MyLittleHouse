@@ -16,6 +16,7 @@ appsettings.json
 appsettings.*.json
 
 wwwroot/uploads/
+mujdomecek/wwwroot/uploads/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
