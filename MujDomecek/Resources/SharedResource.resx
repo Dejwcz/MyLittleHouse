@@ -129,6 +129,9 @@
   <data name="Administrator" xml:space="preserve">
     <value>Administrátor</value>
   </data>
+  <data name="AdminMessage" xml:space="preserve">
+    <value>Admin účet vidí všechny objekty, ale může mazat a editovat jen vlastní. Tlačítka v jednotkách a opravách toto zatím nereflektují.</value>
+  </data>
   <data name="ApplicationInformation" xml:space="preserve">
     <value>Informace o aplikaci</value>
   </data>
@@ -596,7 +599,7 @@ Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
     <value>Vítejte</value>
   </data>
   <data name="WelcomeMessage" xml:space="preserve">
-    <value>Vítejte v aplikaci Můj Domeček, která slouží k správě nemovitostí.</value>
+    <value>Vítejte v aplikaci Můj Domeček. Hlavní myšlenkou bylo vytvořit aplikaci, ve které si budu moci zaznamenat různé události (opravy, práce) týkající se mého domu. Díky tomu nebudu muset po letech dlouze přemýšlet, proč jsem něco udělal určitým způsobem nebo kudy vede například konkrétní kabel.😊</value>
   </data>
   <data name="YouCanUploadMultipleFiles" xml:space="preserve">
     <value>Můžete nahrát více souborů současně</value>

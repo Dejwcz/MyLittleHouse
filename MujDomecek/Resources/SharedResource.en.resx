@@ -129,6 +129,9 @@
   <data name="Administrator" xml:space="preserve">
     <value>Administrator</value>
   </data>
+  <data name="AdminMessage" xml:space="preserve">
+    <value>Admin account sees all objects but can delete and edit only their own. The buttons in units and repairs do not reflect this yet.</value>
+  </data>
   <data name="ApplicationInformation" xml:space="preserve">
     <value>Application Information</value>
   </data>
@@ -596,10 +599,10 @@ Proceed with caution as this operation cannot be undone.</value>
     <value>Welcome</value>
   </data>
   <data name="WelcomeMessage" xml:space="preserve">
-    <value>Welcome to My Little House, a property management application.</value>
+    <value>Welcome to My Little House. The main idea behind this project was to create an application where I can record various events (repairs, work) related to my house. This way, I won't have to spend years later wondering why I did something a certain way or trying to remember where a specific wire runs. 😊</value>
   </data>
   <data name="YouCanUploadMultipleFiles" xml:space="preserve">
-    <value>You can upload multiple files at once</value>
+    <value>s</value>
   </data>
   <data name="YourEmailIsUnchanged" xml:space="preserve">
     <value>Your email is unchanged</value>
