@@ -116,6 +116,7 @@ public class UnitsController(UnitService _service, UserManager<AppUser> _userMan
     public async Task<IActionResult> Delete(int id) {
 
         var unitDto = await _service.FindByIdAsync(id);
+        ViewBag.SubUnits = _service.GetSubordinateUnitsNames(id);
         if (unitDto == null) {
             return NotFound();
         }

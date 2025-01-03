@@ -14,7 +14,7 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">MujDomecek</a>
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">@Localizer["MyLittleHouse"]</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -52,7 +52,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container d-flex justify-content-between">
-        <span>&copy; 2025 - MujDomecek - <a asp-area="" asp-controller="Home" asp-action="Info">@Localizer["Info"]</a></span>
+        <span>&copy; 2025 - @Localizer["MyLittleHouse"] - <a asp-area="" asp-controller="Home" asp-action="Info">@Localizer["Info"]</a></span>
         @{
             var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
 

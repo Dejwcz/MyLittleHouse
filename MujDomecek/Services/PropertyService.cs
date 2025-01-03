@@ -128,10 +128,26 @@ public class PropertyService(ApplicationDbContext _context) {
     }
 
     internal async Task DeleteAsync(int id) {
-        var property = await _context.Properties.FindAsync(id);
+        var property = await _context.Properties
+            .Include(p => p.Units)
+            .ThenInclude(u => u.Repairs)
+            .ThenInclude(r => r.Documents)
+            .FirstOrDefaultAsync(p => p.Id == id);
         if (property != null) {
             property.IsDeleted = true;
             property.DeletedAt = DateTime.Now;
+            foreach (var unit in property.Units) {
+                unit.IsDeleted = true;
+                unit.DeletedAt = DateTime.Now;
+                foreach (var repair in unit.Repairs) {
+                    repair.IsDeleted = true;
+                    repair.DeletedAt = DateTime.Now;
+                    foreach (var document in repair.Documents) {
+                        document.IsDeleted = true;
+                        document.DeletedAt = DateTime.Now;
+                    }
+                }
+            }
         }
         await _context.SaveChangesAsync();
     }

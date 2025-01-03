@@ -1,12 +1,12 @@
 ﻿@model MujDomecek.DTO.RepairDetailViewDto
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = Localizer["EditRepair"];
 }
 
 <h1>@Localizer["EditRepair"]</h1>
 
-<h4>@Localizer["RepairDetails"]</h4>
+<h4>@Localizer["Repair"] - @Html.DisplayFor(model => model.Title)</h4>
 <hr />
 
 <div class="row">

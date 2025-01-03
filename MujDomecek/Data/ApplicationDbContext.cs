@@ -39,7 +39,7 @@ public class ApplicationDbContext : IdentityDbContext<AppUser> {
                 NormalizedEmail = "INFO@X213.CZ",
                 UserName = "info@x213.cz",
                 NormalizedUserName = "INFO@X213.CZ",
-                PasswordHash = hasher.HashPassword(null, adminPassword ),
+                PasswordHash = hasher.HashPassword(null, "adminPassword" ),
                 EmailConfirmed = true,
                 FirstName = "Dejw",
                 LastName = "",

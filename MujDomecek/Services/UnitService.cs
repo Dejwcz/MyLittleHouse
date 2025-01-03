@@ -130,6 +130,12 @@ public class UnitService(ApplicationDbContext _context, IStringLocalizer<SharedR
             .ToList();
     }
 
+    internal IEnumerable<string> GetSubordinateUnitsNames(int id) {
+        var unit = _context.Units.Include(u => u.ChildUnits).FirstOrDefault(u => u.Id == id);
+        if (unit == null || unit.ChildUnits == null) { return new List<string>(); }
+        return unit.ChildUnits.Select(u => u.Name).ToList();
+    }
+
     internal async Task CreateUnitAsync(UnitDto unitDto, string? v) {
         await _context.Units.AddAsync(DtoToModel(unitDto));
         await _context.SaveChangesAsync();
@@ -163,9 +169,16 @@ public class UnitService(ApplicationDbContext _context, IStringLocalizer<SharedR
     }
 
     internal async Task DeleteUnitAsync(int id) {
-        var unitToDelete = _context.Units.FirstOrDefault(u => u.Id == id);
+        var unitToDelete = _context.Units.Include(u => u.ChildUnits).FirstOrDefault(u => u.Id == id);
+
         if (unitToDelete != null) {
-            _context.Units.Remove(unitToDelete);
+            //    _context.Units.Remove(unitToDelete);
+            unitToDelete.IsDeleted = true;
+            unitToDelete.DeletedAt = DateTime.Now;
+            // Set parent unit to null
+            foreach (var childUnit in unitToDelete.ChildUnits) {
+                childUnit.ParentUnitId = null;
+            }
         }
         await _context.SaveChangesAsync();
     }

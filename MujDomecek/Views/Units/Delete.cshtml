@@ -7,6 +7,15 @@
 <h1>@Localizer["Delete"]</h1>
 
 <h3>@Localizer["DeleteAreYouSure"]</h3>
+@if(ViewBag.SubUnits.Count > 0)
+{
+    <p>@Localizer["DeleteUnitMessage"]</p>
+    @foreach(var subUnit in ViewBag.SubUnits)
+    {
+        <p class="text-danger">@subUnit</p>
+    };
+}
+
 <div>
     <h4>@Localizer["Unit"] - @Html.DisplayFor(model => model.Name)</h4>
     <hr />

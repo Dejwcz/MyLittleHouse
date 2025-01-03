@@ -6,7 +6,7 @@
 }
 
 <h3>@ViewData["Title"]</h3>
-
+@if (!User.IsInRole("DungeonMaster")) {
 <div class="row">
     <div class="col-md-8">
         <p>@Localizer["PersonalDataMessageInfo"]</p>
@@ -18,7 +18,11 @@
             <a id="delete" asp-page="DeletePersonalData" class="btn btn-danger">@Localizer["Delete"]</a>
         </form>
     </div>
-</div>
+    </div>
+}
+else {
+    <h1>Nic nebude!!</h1>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

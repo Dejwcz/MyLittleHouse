@@ -117,14 +117,35 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AdaptValidationMessages" xml:space="preserve">
+    <value>Automatická adaptace validačních zpráv a popisků uživatelského rozhraní podle zvoleného jazyka.</value>
+  </data>
+  <data name="AddAndManageProperties" xml:space="preserve">
+    <value>Přidávejte a spravujte nemovitosti, jako jsou domy, byty a zahrady.</value>
+  </data>
   <data name="AddFiles" xml:space="preserve">
     <value>Přidání souborů</value>
+  </data>
+  <data name="Administrator" xml:space="preserve">
+    <value>Administrátor</value>
+  </data>
+  <data name="ApplicationInformation" xml:space="preserve">
+    <value>Informace o aplikaci</value>
   </data>
   <data name="AttachedFiles" xml:space="preserve">
     <value>Přiložené soubory</value>
   </data>
+  <data name="Back" xml:space="preserve">
+    <value>Zpět</value>
+  </data>
   <data name="BackToList" xml:space="preserve">
     <value>Zpátky na seznam</value>
+  </data>
+  <data name="BreakingRelationships" xml:space="preserve">
+    <value>Přerušení vazeb rodič-potomek</value>
+  </data>
+  <data name="BreakingRelationshipsDescription" xml:space="preserve">
+    <value>Aby se předešlo pádům aplikace, jsou vazby mezi jednotkami pečlivě spravovány.</value>
   </data>
   <data name="ChangeEmail" xml:space="preserve">
     <value>Změnit email</value>
@@ -137,6 +158,22 @@
   </data>
   <data name="ChildUnits" xml:space="preserve">
     <value>Podřízené jednotky</value>
+  </data>
+  <data name="CleanUpDatabase" xml:space="preserve">
+    <value>Vyčištění databáze</value>
+  </data>
+  <data name="CleanUpDatabaseMessage" xml:space="preserve">
+    <value>Tato akce trvale odstraní všechny položky smazané "měkce" z databáze. Včetně uložených souborů.
+Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
+  </data>
+  <data name="ClearDBErrorMessage" xml:space="preserve">
+    <value>Chyba při čištění databáze</value>
+  </data>
+  <data name="ClearDBSuccesMessage" xml:space="preserve">
+    <value>Databáze úspěšně vyčištěna</value>
+  </data>
+  <data name="CloneRepository" xml:space="preserve">
+    <value>Naklonujte repozitář:</value>
   </data>
   <data name="ConfirmationLinkSendCheckEmail" xml:space="preserve">
     <value>Potvrzovací odkaz byl odeslán. Prosím zkontrolujte svůj email.</value>
@@ -180,6 +217,21 @@
   <data name="DeletePersonalData" xml:space="preserve">
     <value>Smazat osobní data</value>
   </data>
+  <data name="DeletePropertyMessage" xml:space="preserve">
+    <value>Tímto smažete všechny jednotky, opravy i soubory patřící k domu!</value>
+  </data>
+  <data name="DeleteRepairMessage" xml:space="preserve">
+    <value>Upozornění: Tímto smažete i soubory přiložené k opravě!</value>
+  </data>
+  <data name="DeleteUnitMessage" xml:space="preserve">
+    <value>Tímto smažete vazbu u následujících jednotek:</value>
+  </data>
+  <data name="DemoLoginCredentials" xml:space="preserve">
+    <value>Přihlašovací údaje pro demo</value>
+  </data>
+  <data name="DemoLoginDescription" xml:space="preserve">
+    <value>Prozkoumejte aplikaci pomocí následujících předpřipravených účtů.</value>
+  </data>
   <data name="Description" xml:space="preserve">
     <value>Popis</value>
   </data>
@@ -189,10 +241,22 @@
   <data name="Download" xml:space="preserve">
     <value>Stáhnout</value>
   </data>
+  <data name="DungeonMaster" xml:space="preserve">
+    <value>Pán jeskyně</value>
+  </data>
   <data name="Edit" xml:space="preserve">
     <value>Editace</value>
   </data>
+  <data name="EditFileDescriptions" xml:space="preserve">
+    <value>Upravit popisy souborů a zobrazit náhledy přímo v aplikaci.</value>
+  </data>
+  <data name="EditRepair" xml:space="preserve">
+    <value>Úprava opravy</value>
+  </data>
   <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Email1" xml:space="preserve">
     <value>Email</value>
   </data>
   <data name="EnterEmail" xml:space="preserve">
@@ -204,6 +268,18 @@
   <data name="ErrorSetPhoneNumber" xml:space="preserve">
     <value>Chyba při ukládání telefoního čísla</value>
   </data>
+  <data name="EstablishParentChildRelationships" xml:space="preserve">
+    <value>Vytvářejte vazby rodič-potomek mezi jednotkami pro hierarchickou strukturu.</value>
+  </data>
+  <data name="ExploreAndContribute" xml:space="preserve">
+    <value>Nebojte se prozkoumat, otestovat a přispět! 😊</value>
+  </data>
+  <data name="Features" xml:space="preserve">
+    <value>Funkce</value>
+  </data>
+  <data name="FileAttachments" xml:space="preserve">
+    <value>Přiložené soubory</value>
+  </data>
   <data name="FilesCount" xml:space="preserve">
     <value>Počet souborů</value>
   </data>
@@ -213,6 +289,9 @@
   <data name="Flat" xml:space="preserve">
     <value>Byt</value>
   </data>
+  <data name="FollowSetupInstructions" xml:space="preserve">
+    <value>Postupujte podle pokynů k nastavení uvedených v repozitáři.</value>
+  </data>
   <data name="ForgotPassword" xml:space="preserve">
     <value>Zapoměli jste heslo?</value>
   </data>
@@ -221,6 +300,9 @@
   </data>
   <data name="ForgotPasswordConfirmationText" xml:space="preserve">
     <value>Byl odeslán email na Vaši adresu s pokyny pro resetování hesla.</value>
+  </data>
+  <data name="FrequentUpdates" xml:space="preserve">
+    <value>Očekávejte časté aktualizace a změny při přidávání nových funkcí a úprav stávajících.</value>
   </data>
   <data name="FullView" xml:space="preserve">
     <value>Detail domu</value>
@@ -234,8 +316,14 @@
   <data name="Garden" xml:space="preserve">
     <value>Zahrada</value>
   </data>
+  <data name="HardDeletes" xml:space="preserve">
+    <value>Tvrdé mazání</value>
+  </data>
+  <data name="HardDeletesDescription" xml:space="preserve">
+    <value>Data jsou trvale odstraněna z databáze pro určité operace.</value>
+  </data>
   <data name="Hello" xml:space="preserve">
-    <value>Vítejte v aplikaci Můj domeček</value>
+    <value>Vítejte v aplikaci Můj domeček</value>
   </data>
   <data name="Hi" xml:space="preserve">
     <value>Ahoj</value>
@@ -252,8 +340,20 @@
   <data name="Info" xml:space="preserve">
     <value>Informace</value>
   </data>
+  <data name="InstallationAndSetup" xml:space="preserve">
+    <value>Instalace a nastavení</value>
+  </data>
+  <data name="KeyConceptsDemonstrated" xml:space="preserve">
+    <value>Klíčové koncepty</value>
+  </data>
   <data name="LastName" xml:space="preserve">
     <value>Příjmení</value>
+  </data>
+  <data name="Localization" xml:space="preserve">
+    <value>Lokalizace</value>
+  </data>
+  <data name="LogAndTrackRepairs" xml:space="preserve">
+    <value>Zaznamenávejte a sledujte opravy nebo údržbu u jednotlivých jednotek.</value>
   </data>
   <data name="Logged" xml:space="preserve">
     <value>Přihlášen</value>
@@ -273,6 +373,12 @@
   <data name="ManageYourAccount" xml:space="preserve">
     <value>Správa vašeho účtu</value>
   </data>
+  <data name="MultiLanguageSupport" xml:space="preserve">
+    <value>Podpora více jazyků, aktuálně čeština a angličtina.</value>
+  </data>
+  <data name="MyLittleHouse" xml:space="preserve">
+    <value>Můj domeček</value>
+  </data>
   <data name="Name" xml:space="preserve">
     <value>Jméno</value>
   </data>
@@ -291,6 +397,9 @@
   <data name="None" xml:space="preserve">
     <value>Žádná volba</value>
   </data>
+  <data name="OrganizePropertiesIntoUnits" xml:space="preserve">
+    <value>Organizujte nemovitosti do menších jednotek (např. místnosti, garáže, schodiště).</value>
+  </data>
   <data name="Other" xml:space="preserve">
     <value>Ostatní</value>
   </data>
@@ -298,6 +407,9 @@
     <value>Nadřazená jednotka</value>
   </data>
   <data name="Password" xml:space="preserve">
+    <value>Heslo</value>
+  </data>
+  <data name="Password1" xml:space="preserve">
     <value>Heslo</value>
   </data>
   <data name="PersonalData" xml:space="preserve">
@@ -318,11 +430,23 @@
   <data name="Profile" xml:space="preserve">
     <value>Profil</value>
   </data>
+  <data name="ProjectStatus" xml:space="preserve">
+    <value>Stav projektu</value>
+  </data>
+  <data name="ProjectUnderDevelopment" xml:space="preserve">
+    <value>Tato aplikace je školní projekt a aktuálně je ve vývoji.</value>
+  </data>
   <data name="Properties" xml:space="preserve">
     <value>Domy</value>
   </data>
   <data name="Property" xml:space="preserve">
     <value>Dům</value>
+  </data>
+  <data name="PropertyManagement" xml:space="preserve">
+    <value>Správa nemovitostí</value>
+  </data>
+  <data name="RecordCostsAndDetails" xml:space="preserve">
+    <value>Zaznamenejte náklady, data oprav a podrobné popisy prací.</value>
   </data>
   <data name="RecordDelete" xml:space="preserve">
     <value>Mazání záznamů</value>
@@ -332,6 +456,9 @@
   </data>
   <data name="RegisterAsNewUser" xml:space="preserve">
     <value>Registrovat nového uživatele</value>
+  </data>
+  <data name="RegularUser" xml:space="preserve">
+    <value>Běžný uživatel</value>
   </data>
   <data name="RememberMe" xml:space="preserve">
     <value>Zůstat přihlášen</value>
@@ -345,6 +472,9 @@
   <data name="Repairs" xml:space="preserve">
     <value>Práce a opravy</value>
   </data>
+  <data name="RepairsAndMaintenance" xml:space="preserve">
+    <value>Opravy a údržba</value>
+  </data>
   <data name="RepairsCount" xml:space="preserve">
     <value>Počet oprav a prací</value>
   </data>
@@ -356,6 +486,9 @@
   </data>
   <data name="RessetPassword" xml:space="preserve">
     <value>Resetovat heslo</value>
+  </data>
+  <data name="Role" xml:space="preserve">
+    <value>Role</value>
   </data>
   <data name="Room" xml:space="preserve">
     <value>Pokoj</value>
@@ -372,11 +505,41 @@
   <data name="ShowRepairs" xml:space="preserve">
     <value>Ukaž práce</value>
   </data>
+  <data name="SoftDeletes" xml:space="preserve">
+    <value>Měkké mazání</value>
+  </data>
+  <data name="SoftDeletesDescription" xml:space="preserve">
+    <value>Záznamy jsou označeny jako smazané, aniž by byly trvale odstraněny, což umožňuje jejich obnovení.</value>
+  </data>
   <data name="Stairs" xml:space="preserve">
     <value>Schodiště</value>
   </data>
+  <data name="TechnologyAspNet" xml:space="preserve">
+    <value>Poskytuje backendový rámec pro serverovou logiku a směrování.</value>
+  </data>
+  <data name="TechnologyBootstrap" xml:space="preserve">
+    <value>Zajišťuje responzivní a uživatelsky přívětivý design.</value>
+  </data>
+  <data name="TechnologyEfCore" xml:space="preserve">
+    <value>Použitý jako ORM pro interakce s databází.</value>
+  </data>
+  <data name="TechnologyJquery" xml:space="preserve">
+    <value>Zajišťuje plynulou validaci formulářů na straně klienta.</value>
+  </data>
+  <data name="TechnologyLocalization" xml:space="preserve">
+    <value>Podpora více jazyků pro širší publikum.</value>
+  </data>
+  <data name="TechnologySqlServer" xml:space="preserve">
+    <value>Pohání databázovou infrastrukturu aplikace.</value>
+  </data>
+  <data name="TechnologyStack" xml:space="preserve">
+    <value>Použité technologie</value>
+  </data>
   <data name="ThankForConfirmingEmail" xml:space="preserve">
     <value>Děkujeme za potvrzení vašeho emailu</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Název</value>
   </data>
   <data name="TotalRepairCost" xml:space="preserve">
     <value>Cena prací celkem</value>
@@ -396,6 +559,9 @@
   <data name="UnitsNames" xml:space="preserve">
     <value>Jména jednotek</value>
   </data>
+  <data name="UnitsWithinProperties" xml:space="preserve">
+    <value>Jednotky v nemovitostech</value>
+  </data>
   <data name="UnitType" xml:space="preserve">
     <value>Typ jednotky</value>
   </data>
@@ -405,14 +571,32 @@
   <data name="UpdatePassword" xml:space="preserve">
     <value>Změnit heslo</value>
   </data>
+  <data name="UpdatePasswordsAndEmails" xml:space="preserve">
+    <value>Aktualizace hesel, emailových adres nebo žádost o odstranění účtu.</value>
+  </data>
+  <data name="UploadAndAttachFiles" xml:space="preserve">
+    <value>Nahrávejte a přikládejte soubory, jako jsou fotografie nebo faktury, k záznamům o opravách.</value>
+  </data>
   <data name="UseAccountToLogin" xml:space="preserve">
     <value>Použijte svůj účet pro přihlášení</value>
+  </data>
+  <data name="UserAccounts" xml:space="preserve">
+    <value>Uživatelské účty</value>
   </data>
   <data name="UserName" xml:space="preserve">
     <value>Uživatelské jméno</value>
   </data>
+  <data name="UserRegistrationAndLogin" xml:space="preserve">
+    <value>Registrace uživatelů, přihlášení a správa účtů.</value>
+  </data>
+  <data name="ViewPropertyDetails" xml:space="preserve">
+    <value>Zobrazte podrobné informace o jednotlivých nemovitostech.</value>
+  </data>
   <data name="Welcome" xml:space="preserve">
     <value>Vítejte</value>
+  </data>
+  <data name="WelcomeMessage" xml:space="preserve">
+    <value>Vítejte v aplikaci Můj Domeček, která slouží k správě nemovitostí.</value>
   </data>
   <data name="YouCanUploadMultipleFiles" xml:space="preserve">
     <value>Můžete nahrát více souborů současně</value>

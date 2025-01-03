@@ -162,9 +162,17 @@ public class RepairService(ApplicationDbContext _context, IStringLocalizer<Share
     }
 
     internal async Task DeleteRepairAsync(int id) {
-        var repairToDelete = await _context.Repairs.FirstOrDefaultAsync(u => u.Id == id);
+        var repairToDelete = _context.Repairs
+            .Include(r => r.Documents)
+            .FirstOrDefault(r => r.Id == id);
         if (repairToDelete != null) {
-            _context.Repairs.Remove(repairToDelete);
+        //    _context.Repairs.Remove(repairToDelete);
+            repairToDelete.IsDeleted = true;
+            repairToDelete.DeletedAt = DateTime.Now;
+            foreach (var document in repairToDelete.Documents) {
+                document.IsDeleted = true;
+                document.DeletedAt = DateTime.Now;
+            }
         }
         await _context.SaveChangesAsync();
     }
