@@ -1,6 +1,8 @@
 # My Little House (Můj Domeček)
 
-**Můj Domeček** is a school project currently under development. The application aims to help users manage their properties, units, repairs, and related documentation. It provides a centralized and user-friendly platform for keeping track of household or property management activities.
+**Můj Domeček** is a school project currently under development. The primary goal of the application is to provide a convenient way for users to manage their properties, units, repairs, and related documentation.
+
+The idea behind the project stems from a common problem: keeping track of home repairs and maintenance over the years. With Můj Domeček, you can log detailed records of each repair, including costs, dates, and descriptions. This way, when you revisit your home projects years later, you won’t have to struggle to remember why certain decisions were made or what specific repairs were done.
 
 ---
 
