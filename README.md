@@ -4,6 +4,13 @@
 
 The idea behind the project stems from a common problem: keeping track of home repairs and maintenance over the years. With Můj Domeček, you can log detailed records of each repair, including costs, dates, and descriptions. This way, when you revisit your home projects years later, you won’t have to struggle to remember why certain decisions were made or what specific repairs were done.
 
+## Live Demo  
+
+🚀 **The application is currently live at:**  
+[**https://mujdomecek.runasp.net/**](https://mujdomecek.runasp.net/)  
+
+Feel free to explore the functionality, log in using the demo accounts, and see how the app manages properties, repairs, and more!
+
 ---
 
 ## Features
