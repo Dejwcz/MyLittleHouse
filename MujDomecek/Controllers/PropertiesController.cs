@@ -104,7 +104,7 @@ public class PropertiesController(UserManager<AppUser> _userManager, PropertySer
 
     [HttpGet]
     public async Task<IActionResult> FullViewAsync(int id) {
-        if (!await _service.CheckPropertyIdToUserId(_userManager.GetUserId(User), id)) {
+        if (!await _service.CheckPropertyIdToUserId(_userManager.GetUserId(User), id) && !User.IsInRole("DungeonMaster")) {
             return Unauthorized();
         }
         var property = await _service.FindByIdAsync<PropertyFullViewDto>(id);
