@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 
@@ -14,8 +15,12 @@ public class EmailSender : IEmailSender {
         Options = optionsAccessor.Value;
         _logger = logger;
     }
-
     public AuthMessageSenderOptions Options { get; } //Set with Secret Manager.
+
+    //version for deployment with hardcoded key(loading from Options in deployment does not work)
+    //public async Task SendEmailAsync(string toEmail, string subject, string message) {
+    //    await Execute("apikey", subject, message, toEmail);
+    //}
 
     public async Task SendEmailAsync(string toEmail, string subject, string message) {
         if (string.IsNullOrEmpty(Options.SendGridKey)) {
