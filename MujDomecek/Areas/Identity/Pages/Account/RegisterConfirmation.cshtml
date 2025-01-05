@@ -1,7 +1,7 @@
 ﻿@page
 @model RegisterConfirmationModel
 @{
-    ViewData["Title"] = "Register confirmation";
+    ViewData["Title"] = Localizer["RegisterConfirmation"];
 }
 
 <h1>@ViewData["Title"]</h1>
@@ -19,9 +19,9 @@
     }
     else
     {
-<p>
-        Please check your email to confirm your account.
-</p>
+        <p>
+            @Localizer["CheckYourEmail"]
+        </p>
     }
 }
 

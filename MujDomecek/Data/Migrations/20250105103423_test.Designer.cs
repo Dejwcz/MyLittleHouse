@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MujDomecek.Data;
 
@@ -11,9 +12,11 @@ using MujDomecek.Data;
 namespace MujDomecek.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250105103423_test")]
+    partial class test
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -156,6 +159,13 @@ namespace MujDomecek.Data.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = "98ab911b-bf8c-4181-8185-1a103a96a5b5",
+                            RoleId = "45172101-2d51-4025-aa5d-f90eb130b904"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -250,6 +260,26 @@ namespace MujDomecek.Data.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "98ab911b-bf8c-4181-8185-1a103a96a5b5",
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "5f9ac7ee-6f33-460c-b554-87dfa3a57e7d",
+                            Email = "info@x213.cz",
+                            EmailConfirmed = true,
+                            FirstName = "Dejw",
+                            LastName = "",
+                            LockoutEnabled = false,
+                            NormalizedEmail = "INFO@X213.CZ",
+                            NormalizedUserName = "INFO@X213.CZ",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMj//VUdTwkW6r1tqB+j4VBKwmNtFN9TDadAotBNtXjTSudRskTFAZ1dx+SUEl3jFA==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "4c753fab-8bff-4c58-8384-c7cda9e7fbba",
+                            TwoFactorEnabled = false,
+                            UserName = "info@x213.cz"
+                        });
                 });
 
             modelBuilder.Entity("MujDomecek.Data.Property", b =>

@@ -30,27 +30,6 @@ public class ApplicationDbContext : IdentityDbContext<AppUser> {
                 NormalizedName = "DUNGEONMASTER"
             });
 
-        var adminPassword = _configuration["info@x213.czPassword"];
-        var hasher = new PasswordHasher<AppUser>();
-        builder.Entity<AppUser>()
-            .HasData(new AppUser {
-                Id = "98ab911b-bf8c-4181-8185-1a103a96a5b5",
-                Email = "info@x213.cz",
-                NormalizedEmail = "INFO@X213.CZ",
-                UserName = "info@x213.cz",
-                NormalizedUserName = "INFO@X213.CZ",
-                PasswordHash = hasher.HashPassword(null, "info@x213.czPassword" ),
-                EmailConfirmed = true,
-                FirstName = "Dejw",
-                LastName = "",
-            });
-
-        builder.Entity<IdentityUserRole<string>>().HasData(
-            new IdentityUserRole<string> {
-                RoleId = "45172101-2d51-4025-aa5d-f90eb130b904",
-                UserId = "98ab911b-bf8c-4181-8185-1a103a96a5b5",
-            });
-
         builder.Entity<Property>().HasQueryFilter(p => !p.IsDeleted);
         builder.Entity<Unit>().HasQueryFilter(p => !p.IsDeleted);
         builder.Entity<Repair>().HasQueryFilter(p => !p.IsDeleted);

@@ -126,6 +126,12 @@
   <data name="AddFiles" xml:space="preserve">
     <value>Add Files</value>
   </data>
+  <data name="AddRepair" xml:space="preserve">
+    <value>Add Repair</value>
+  </data>
+  <data name="AddUnit" xml:space="preserve">
+    <value>Add Unit</value>
+  </data>
   <data name="Administrator" xml:space="preserve">
     <value>Administrator</value>
   </data>
@@ -159,6 +165,9 @@
   <data name="ChangeYourAccountSettings" xml:space="preserve">
     <value>You can update your account settings here</value>
   </data>
+  <data name="CheckYourEmail" xml:space="preserve">
+    <value>Please check your email to confirm your account.</value>
+  </data>
   <data name="ChildUnits" xml:space="preserve">
     <value>Child Units</value>
   </data>
@@ -175,6 +184,9 @@ Proceed with caution as this operation cannot be undone.</value>
   <data name="ClearDBSuccesMessage" xml:space="preserve">
     <value>The database cleanup completed successfully.</value>
   </data>
+  <data name="ClickingHere" xml:space="preserve">
+    <value>clicking here</value>
+  </data>
   <data name="CloneRepository" xml:space="preserve">
     <value>Clone the repository:</value>
   </data>
@@ -189,6 +201,12 @@ Proceed with caution as this operation cannot be undone.</value>
   </data>
   <data name="ConfirmPassword" xml:space="preserve">
     <value>Confirm Password</value>
+  </data>
+  <data name="ConfirmYourAccount" xml:space="preserve">
+    <value>Please confirm your account by</value>
+  </data>
+  <data name="ConfirmYourEmail" xml:space="preserve">
+    <value>Confirm your email</value>
   </data>
   <data name="CreatedAt" xml:space="preserve">
     <value>Created At</value>
@@ -326,7 +344,7 @@ Proceed with caution as this operation cannot be undone.</value>
     <value>Data is permanently removed from the database for certain operations.</value>
   </data>
   <data name="Hello" xml:space="preserve">
-    <value>Welcome to My House App</value>
+    <value>Welcome to My House App</value>
   </data>
   <data name="Hi" xml:space="preserve">
     <value>Hi</value>
@@ -380,7 +398,7 @@ Proceed with caution as this operation cannot be undone.</value>
     <value>Multi-language support for Czech and English.</value>
   </data>
   <data name="MyLittleHouse" xml:space="preserve">
-    <value>My House App</value>
+    <value>My House App</value>
   </data>
   <data name="Name" xml:space="preserve">
     <value>Name</value>
@@ -459,6 +477,9 @@ Proceed with caution as this operation cannot be undone.</value>
   </data>
   <data name="RegisterAsNewUser" xml:space="preserve">
     <value>Register as New User</value>
+  </data>
+  <data name="RegisterConfirmation" xml:space="preserve">
+    <value>Register confirmation</value>
   </data>
   <data name="RegularUser" xml:space="preserve">
     <value>Regular User</value>
@@ -599,7 +620,7 @@ Proceed with caution as this operation cannot be undone.</value>
     <value>Welcome</value>
   </data>
   <data name="WelcomeMessage" xml:space="preserve">
-    <value>Welcome to My Little House. The main idea behind this project was to create an application where I can record various events (repairs, work) related to my house. This way, I won't have to spend years later wondering why I did something a certain way or trying to remember where a specific wire runs. 😊</value>
+    <value>Welcome to My Little House. The main idea behind this project was to create an application where I can record various events (repairs, work) related to my house. This way, I won't have to spend years later wondering why I did something a certain way or trying to remember where a specific wire runs. 😊</value>
   </data>
   <data name="YouCanUploadMultipleFiles" xml:space="preserve">
     <value>s</value>

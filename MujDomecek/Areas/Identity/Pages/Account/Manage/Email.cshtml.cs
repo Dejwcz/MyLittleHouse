@@ -131,8 +131,8 @@ namespace MujDomecek.Areas.Identity.Pages.Account.Manage
                     protocol: Request.Scheme);
                 await _emailSender.SendEmailAsync(
                     Input.NewEmail,
-                    "Confirm your email",
-                    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                    _localizer["ConfirmYourEmail"],
+                    $"{_localizer["ConfirmYourAccount"]} <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>{_localizer["ClickingHere"]}</a>.");
 
                 StatusMessage = _localizer["ConfirmationLinkSendCheckEmail"];
                 return RedirectToPage();

@@ -6,6 +6,9 @@ using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using MujDomecek.Services;
 using System.Globalization;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using WebPWrecover.Services;
+
 
 namespace MujDomecek;
 public class Program {
@@ -54,6 +57,10 @@ public class Program {
         builder.Services.AddControllersWithViews()
                 .AddViewLocalization()
                 .AddDataAnnotationsLocalization();
+
+        // Email sender
+        builder.Services.AddTransient<IEmailSender, EmailSender>();
+        builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration);
 
         var app = builder.Build();
 

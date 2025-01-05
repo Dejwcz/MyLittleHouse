@@ -126,6 +126,12 @@
   <data name="AddFiles" xml:space="preserve">
     <value>Přidání souborů</value>
   </data>
+  <data name="AddRepair" xml:space="preserve">
+    <value>Přidat opravu</value>
+  </data>
+  <data name="AddUnit" xml:space="preserve">
+    <value>Přidat jednotku</value>
+  </data>
   <data name="Administrator" xml:space="preserve">
     <value>Administrátor</value>
   </data>
@@ -159,6 +165,9 @@
   <data name="ChangeYourAccountSettings" xml:space="preserve">
     <value>Zde můžete upravit nastavení účtu</value>
   </data>
+  <data name="CheckYourEmail" xml:space="preserve">
+    <value>Zkontrolujte svůj email a potvrďte registraci.</value>
+  </data>
   <data name="ChildUnits" xml:space="preserve">
     <value>Podřízené jednotky</value>
   </data>
@@ -175,6 +184,9 @@ Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
   <data name="ClearDBSuccesMessage" xml:space="preserve">
     <value>Databáze úspěšně vyčištěna</value>
   </data>
+  <data name="ClickingHere" xml:space="preserve">
+    <value>kliknutím zde</value>
+  </data>
   <data name="CloneRepository" xml:space="preserve">
     <value>Naklonujte repozitář:</value>
   </data>
@@ -189,6 +201,12 @@ Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
   </data>
   <data name="ConfirmPassword" xml:space="preserve">
     <value>Potvrďte heslo</value>
+  </data>
+  <data name="ConfirmYourAccount" xml:space="preserve">
+    <value>Prosím potvrďte aktivaci svého účtu</value>
+  </data>
+  <data name="ConfirmYourEmail" xml:space="preserve">
+    <value>Potvrzení emailu</value>
   </data>
   <data name="CreatedAt" xml:space="preserve">
     <value>Vytvořeno</value>
@@ -326,7 +344,7 @@ Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
     <value>Data jsou trvale odstraněna z databáze pro určité operace.</value>
   </data>
   <data name="Hello" xml:space="preserve">
-    <value>Vítejte v aplikaci Můj domeček</value>
+    <value>Vítejte v aplikaci Můj domeček</value>
   </data>
   <data name="Hi" xml:space="preserve">
     <value>Ahoj</value>
@@ -380,7 +398,7 @@ Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
     <value>Podpora více jazyků, aktuálně čeština a angličtina.</value>
   </data>
   <data name="MyLittleHouse" xml:space="preserve">
-    <value>Můj domeček</value>
+    <value>Můj domeček</value>
   </data>
   <data name="Name" xml:space="preserve">
     <value>Jméno</value>
@@ -459,6 +477,9 @@ Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
   </data>
   <data name="RegisterAsNewUser" xml:space="preserve">
     <value>Registrovat nového uživatele</value>
+  </data>
+  <data name="RegisterConfirmation" xml:space="preserve">
+    <value>Potvrzení registrace</value>
   </data>
   <data name="RegularUser" xml:space="preserve">
     <value>Běžný uživatel</value>
@@ -599,7 +620,7 @@ Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
     <value>Vítejte</value>
   </data>
   <data name="WelcomeMessage" xml:space="preserve">
-    <value>Vítejte v aplikaci Můj Domeček. Hlavní myšlenkou bylo vytvořit aplikaci, ve které si budu moci zaznamenat různé události (opravy, práce) týkající se mého domu. Díky tomu nebudu muset po letech dlouze přemýšlet, proč jsem něco udělal určitým způsobem nebo kudy vede například konkrétní kabel.😊</value>
+    <value>Vítejte v aplikaci Můj Domeček. Hlavní myšlenkou bylo vytvořit aplikaci, ve které si budu moci zaznamenat různé události (opravy, práce) týkající se mého domu. Díky tomu nebudu muset po letech dlouze přemýšlet, proč jsem něco udělal určitým způsobem nebo kudy vede například konkrétní kabel.😊</value>
   </data>
   <data name="YouCanUploadMultipleFiles" xml:space="preserve">
     <value>Můžete nahrát více souborů současně</value>
