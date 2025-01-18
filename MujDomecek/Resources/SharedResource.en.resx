@@ -253,6 +253,9 @@ Proceed with caution as this operation cannot be undone.</value>
   <data name="DemoLoginDescription" xml:space="preserve">
     <value>To explore the application, you can log in using the following pre-configured accounts.</value>
   </data>
+  <data name="DemoLoginMessage" xml:space="preserve">
+    <value>You can use a demo account to log in</value>
+  </data>
   <data name="Description" xml:space="preserve">
     <value>Description</value>
   </data>
@@ -381,6 +384,15 @@ Proceed with caution as this operation cannot be undone.</value>
   </data>
   <data name="Login" xml:space="preserve">
     <value>Login</value>
+  </data>
+  <data name="LoginAsAdmin" xml:space="preserve">
+    <value>Login as Admin</value>
+  </data>
+  <data name="LoginAsJerry" xml:space="preserve">
+    <value>Login as Jerry</value>
+  </data>
+  <data name="LoginAsTom" xml:space="preserve">
+    <value>Login as Tom</value>
   </data>
   <data name="Logout" xml:space="preserve">
     <value>Logout</value>

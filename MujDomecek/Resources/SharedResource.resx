@@ -253,6 +253,9 @@ Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
   <data name="DemoLoginDescription" xml:space="preserve">
     <value>Prozkoumejte aplikaci pomocí následujících předpřipravených účtů.</value>
   </data>
+  <data name="DemoLoginMessage" xml:space="preserve">
+    <value>Pro přihlášení můžete použít nachystané demo účty</value>
+  </data>
   <data name="Description" xml:space="preserve">
     <value>Popis</value>
   </data>
@@ -381,6 +384,15 @@ Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
   </data>
   <data name="Login" xml:space="preserve">
     <value>Přihlásit</value>
+  </data>
+  <data name="LoginAsAdmin" xml:space="preserve">
+    <value>Přihlásit jako Admin</value>
+  </data>
+  <data name="LoginAsJerry" xml:space="preserve">
+    <value>Přihlásit jako Jerry</value>
+  </data>
+  <data name="LoginAsTom" xml:space="preserve">
+    <value>Přihlásit jako Tom</value>
   </data>
   <data name="Logout" xml:space="preserve">
     <value>Odhlásit</value>

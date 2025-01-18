@@ -24,18 +24,19 @@
         <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Register">@Localizer["Register"]</a>
     </div>
     <br />
-    <div class="text-center">
-        <p>@Localizer["DemoLoginMessage"]</p>
+    <br />
+    <div class="text-center border-1">
+        <p class="text-info">@Localizer["DemoLoginMessage"]</p>
             <div class="btn-group">
                 <a class="btn btn-outline-info" asp-controller="DemoLogin" asp-action="DemoLoginTom">@Localizer["LoginAsTom"]</a>
-                <a class="btn btn-outline-info" asp-controller="DemoLogin" asp-action="DemoLoginAdmin">@Localizer["LoginAsAdmin"]</a>
                 <a class="btn btn-outline-info" asp-controller="DemoLogin" asp-action="DemoLoginJerry">@Localizer["LoginAsJerry"]</a>
+                <a class="btn btn-outline-info" asp-controller="DemoLogin" asp-action="DemoLoginAdmin">@Localizer["LoginAsAdmin"]</a>
             </div>
         </div>
 }
 else {
     <div class="text-center">
-        <div class="btn-group-vertical mt-2" role="group" aria-label="Vertical button group">
+        <div class="btn-group-vertical mt-2" role="group">
             <a class="btn btn-outline-primary mt-1 btn-lg" asp-controller="Properties" asp-action="Index">@Localizer["Properties"]</a>
             <a class="btn btn-outline-primary mt-1 btn-lg" asp-controller="Units" asp-action="Index">@Localizer["Units"]</a>
             <a class="btn btn-outline-primary mt-1 btn-lg" asp-controller="Repairs" asp-action="Index">@Localizer["Repairs"]</a>
