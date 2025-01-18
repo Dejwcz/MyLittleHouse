@@ -22,8 +22,9 @@ namespace MujDomecek.Controllers {
         }
 
         [HttpGet]
-        public IActionResult UsersList() {
-            return View();
+        public async Task<IActionResult> UsersListAsync() {
+            var usersList = await _service.GetUsersAsync();
+            return View(usersList);
         }
     }
 }

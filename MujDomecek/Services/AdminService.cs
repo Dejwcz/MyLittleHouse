@@ -1,7 +1,4 @@
-﻿
-using Microsoft.EntityFrameworkCore;
-
-namespace MujDomecek.Services {
+﻿namespace MujDomecek.Services {
     public class AdminService(ApplicationDbContext _context) {
         internal async Task CleanUpDatabaseAsync() {
             // Remove files
@@ -9,7 +6,7 @@ namespace MujDomecek.Services {
                 .IgnoreQueryFilters()
                 .Where(d => d.IsDeleted)
                 .ToListAsync();
-            
+
             foreach (var document in documentsToDelete) {
                 var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", document.FilePath);
 
@@ -52,8 +49,28 @@ namespace MujDomecek.Services {
             await _context.SaveChangesAsync();
         }
 
-        internal async Task GetUsers() {
-
+        internal async Task<IEnumerable<UserDto>> GetUsersAsync() {
+            var users = await _context.Users.IgnoreQueryFilters().ToListAsync();
+            var usersList = new List<UserDto>();
+            foreach (var user in users) {
+                var userDto = new UserDto {
+                    Id = user.Id,
+                    Email = user.Email ?? "",
+                    EmailConfirmed = user.EmailConfirmed,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    PhoneNumber = user.PhoneNumber ?? "",
+                    LockoutEnabled = user.LockoutEnabled,
+                    LockoutEnd = user.LockoutEnd,
+                    CreatedAt = user.CreatedAt,
+                    UpdatedAt = user.UpdatedAt,
+                    LastLogin = user.LastLogin,
+                    IsDeleted = user.IsDeleted,
+                    DeletedAt = user.DeletedAt
+                };
+                usersList.Add(userDto);
+            }
+            return usersList;
         }
     }
 }
