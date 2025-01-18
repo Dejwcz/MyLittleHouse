@@ -8,6 +8,10 @@
         public string PhoneNumber { get; set; }
         public bool LockoutEnabled { get; set; }
         public DateTimeOffset? LockoutEnd { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime? UpdatedAt { get; set; }
+        public DateTime? LastLogin { get; set; }
+        public bool IsDeleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
     }
 }
