@@ -34,6 +34,7 @@ public class Program {
         builder.Services.AddScoped<UnitService>();
         builder.Services.AddScoped<RepairService>();
         builder.Services.AddScoped<AdminService>();
+        builder.Services.AddScoped<DemoLoginService>();
 
         // Add localization services
         builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

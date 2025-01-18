@@ -1,16 +1,20 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MujDomecek.Areas.Identity.Pages.Account;
+using Newtonsoft.Json.Linq;
 
 namespace MujDomecek.Controllers; 
-public class DemoLoginController(SignInManager<AppUser> _signInManager, ILogger<LoginModel> _logger) : Controller  {
+public class DemoLoginController(SignInManager<AppUser> _signInManager, ILogger<LoginModel> _logger, 
+    ApplicationDbContext _context, DemoLoginService _service) : Controller  {
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> DemoLoginTom() {
         await _signInManager.SignOutAsync();
-        var result = await _signInManager.PasswordSignInAsync("tom@cat.com", "HeavenlyPuss1949", false, lockoutOnFailure: false);
+        var userName = "tom@cat.com";
+        var result = await _signInManager.PasswordSignInAsync(userName, "HeavenlyPuss1949", false, lockoutOnFailure: false);
         if (result.Succeeded) {
             _logger.LogInformation("User logged in.");
+            await _service.UpdateLastLogin(userName);
             return RedirectToAction("Index", "Home");
         }
         else {
@@ -23,9 +27,11 @@ public class DemoLoginController(SignInManager<AppUser> _signInManager, ILogger<
     [AllowAnonymous]
     public async Task<IActionResult> DemoLoginJerry() {
         await _signInManager.SignOutAsync();
-        var result = await _signInManager.PasswordSignInAsync("jerry@mouse.com", "MouseTrouble1944", false, lockoutOnFailure: false);
+        var userName = "jerry@mouse.com";
+        var result = await _signInManager.PasswordSignInAsync(userName, "MouseTrouble1944", false, lockoutOnFailure: false);
         if (result.Succeeded) {
             _logger.LogInformation("User logged in.");
+            await _service.UpdateLastLogin(userName);
             return RedirectToAction("Index", "Home");
         }
         else {
@@ -38,9 +44,11 @@ public class DemoLoginController(SignInManager<AppUser> _signInManager, ILogger<
     [AllowAnonymous]
     public async Task<IActionResult> DemoLoginAdmin() {
         await _signInManager.SignOutAsync();
-        var result = await _signInManager.PasswordSignInAsync("info@x213.cz", "MickeyMouse1928", false, lockoutOnFailure: false);
+        var userName = "info@x213.cz";
+        var result = await _signInManager.PasswordSignInAsync(userName, "MickeyMouse1928", false, lockoutOnFailure: false);
         if (result.Succeeded) {
             _logger.LogInformation("User logged in.");
+            await _service.UpdateLastLogin(userName);
             return RedirectToAction("Index", "Home");
         }
         else {
