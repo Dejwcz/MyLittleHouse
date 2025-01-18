@@ -119,7 +119,12 @@ namespace MujDomecek.Areas.Identity.Pages.Account.Manage {
 
             await _context.SaveChangesAsync();
 
-            var result = await _userManager.DeleteAsync(user);
+            //soft delete user(Not user data. User data is already deleted)
+            //var result = await _userManager.DeleteAsync(user);
+
+            user.IsDeleted = true;
+            user.DeletedAt = DateTime.Now;
+            var result = await _userManager.UpdateAsync(user);
             var userId = await _userManager.GetUserIdAsync(user);
             if (!result.Succeeded) {
                 throw new InvalidOperationException($"Unexpected error occurred deleting user.");
