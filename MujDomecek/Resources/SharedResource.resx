@@ -251,7 +251,7 @@ Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
     <value>Přihlašovací údaje pro demo</value>
   </data>
   <data name="DemoLoginDescription" xml:space="preserve">
-    <value>Prozkoumejte aplikaci pomocí následujících předpřipravených účtů.</value>
+    <value>Prozkoumejte aplikaci pomocí následujících předpřipravených účtů. Nebo se můžete sami zaregistrovat.</value>
   </data>
   <data name="DemoLoginMessage" xml:space="preserve">
     <value>Pro přihlášení můžete použít nachystané demo účty</value>

@@ -251,7 +251,7 @@ Proceed with caution as this operation cannot be undone.</value>
     <value>Demo Login Credentials</value>
   </data>
   <data name="DemoLoginDescription" xml:space="preserve">
-    <value>To explore the application, you can log in using the following pre-configured accounts.</value>
+    <value>To explore the application, you can log in using the following pre-configured accounts or you can register yourself.</value>
   </data>
   <data name="DemoLoginMessage" xml:space="preserve">
     <value>You can use a demo account to log in</value>
