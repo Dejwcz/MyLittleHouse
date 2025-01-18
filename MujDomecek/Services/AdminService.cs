@@ -51,5 +51,9 @@ namespace MujDomecek.Services {
 
             await _context.SaveChangesAsync();
         }
+
+        internal async Task GetUsers() {
+
+        }
     }
 }
