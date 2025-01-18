@@ -23,6 +23,15 @@
     <div class="text-center mt-2">
         <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Register">@Localizer["Register"]</a>
     </div>
+    <br />
+    <div class="text-center">
+        <p>@Localizer["DemoLoginMessage"]</p>
+            <div class="btn-group">
+                <a class="btn btn-outline-info" asp-controller="DemoLogin" asp-action="DemoLoginTom">@Localizer["LoginAsTom"]</a>
+                <a class="btn btn-outline-info" asp-controller="DemoLogin" asp-action="DemoLoginAdmin">@Localizer["LoginAsAdmin"]</a>
+                <a class="btn btn-outline-info" asp-controller="DemoLogin" asp-action="DemoLoginJerry">@Localizer["LoginAsJerry"]</a>
+            </div>
+        </div>
 }
 else {
     <div class="text-center">

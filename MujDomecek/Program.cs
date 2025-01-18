@@ -1,10 +1,6 @@
-using Elfie.Serialization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
-using MujDomecek.Services;
 using System.Globalization;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using WebPWrecover.Services;
@@ -14,9 +10,9 @@ namespace MujDomecek;
 public class Program {
     public static void Main(string[] args) {
         var builder = WebApplication.CreateBuilder(args); 
-        //var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
         //var connectionString = builder.Configuration.GetConnectionString("MonsterASPConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-        var connectionString = builder.Configuration.GetConnectionString("MonsterASPConnectionDeployed") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+        //var connectionString = builder.Configuration.GetConnectionString("MonsterASPConnectionDeployed") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(connectionString));
