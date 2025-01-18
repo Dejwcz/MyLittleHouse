@@ -44,8 +44,10 @@
             <td>
                 <div class="btn-group" role="group">
                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info m-1">@Localizer["Details"]</a>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary m-1">@Localizer["Edit"]</a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger m-1">@Localizer["Delete"]</a>
+                    @if (!User.IsInRole("DungeonMaster")) {
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary m-1">@Localizer["Edit"]</a>
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger m-1">@Localizer["Delete"]</a>
+                    }
                 </div>
             </td>
         </tr>
