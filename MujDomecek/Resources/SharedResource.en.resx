@@ -232,6 +232,9 @@ Proceed with caution as this operation cannot be undone.</value>
   <data name="DeleteAreYouSure" xml:space="preserve">
     <value>Are you sure you want to delete?</value>
   </data>
+  <data name="DeletedAt" xml:space="preserve">
+    <value>Deleted At</value>
+  </data>
   <data name="DeleteDataAndCloseMyAccount" xml:space="preserve">
     <value>Delete Data and Close My Account</value>
   </data>
@@ -282,6 +285,9 @@ Proceed with caution as this operation cannot be undone.</value>
   </data>
   <data name="Email1" xml:space="preserve">
     <value>Email</value>
+  </data>
+  <data name="EmailConfirmed" xml:space="preserve">
+    <value>Email Confirmed</value>
   </data>
   <data name="EnterEmail" xml:space="preserve">
     <value>Enter your email</value>
@@ -367,14 +373,26 @@ Proceed with caution as this operation cannot be undone.</value>
   <data name="InstallationAndSetup" xml:space="preserve">
     <value>Installation and Setup</value>
   </data>
+  <data name="IsDeleted" xml:space="preserve">
+    <value>Is Deleted</value>
+  </data>
   <data name="KeyConceptsDemonstrated" xml:space="preserve">
     <value>Key Concepts Demonstrated</value>
+  </data>
+  <data name="LastLogin" xml:space="preserve">
+    <value>Last Login</value>
   </data>
   <data name="LastName" xml:space="preserve">
     <value>Last Name</value>
   </data>
   <data name="Localization" xml:space="preserve">
     <value>Localization</value>
+  </data>
+  <data name="LockoutEnabled" xml:space="preserve">
+    <value>Lockout Enabled</value>
+  </data>
+  <data name="LockoutEnd" xml:space="preserve">
+    <value>Lockout End</value>
   </data>
   <data name="LogAndTrackRepairs" xml:space="preserve">
     <value>Log and track repairs or maintenance tasks for specific units.</value>

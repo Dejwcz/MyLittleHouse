@@ -232,6 +232,9 @@ Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
   <data name="DeleteAreYouSure" xml:space="preserve">
     <value>Opravdu chcete smazat?</value>
   </data>
+  <data name="DeletedAt" xml:space="preserve">
+    <value>Smazáno dne</value>
+  </data>
   <data name="DeleteDataAndCloseMyAccount" xml:space="preserve">
     <value>Smazat data a uzavřít můj účet</value>
   </data>
@@ -282,6 +285,9 @@ Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
   </data>
   <data name="Email1" xml:space="preserve">
     <value>Email</value>
+  </data>
+  <data name="EmailConfirmed" xml:space="preserve">
+    <value>Email potvrzen</value>
   </data>
   <data name="EnterEmail" xml:space="preserve">
     <value>Zadejte svůj email</value>
@@ -367,14 +373,26 @@ Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
   <data name="InstallationAndSetup" xml:space="preserve">
     <value>Instalace a nastavení</value>
   </data>
+  <data name="IsDeleted" xml:space="preserve">
+    <value>Smazáno</value>
+  </data>
   <data name="KeyConceptsDemonstrated" xml:space="preserve">
     <value>Klíčové koncepty</value>
+  </data>
+  <data name="LastLogin" xml:space="preserve">
+    <value>Poslední přihlášení</value>
   </data>
   <data name="LastName" xml:space="preserve">
     <value>Příjmení</value>
   </data>
   <data name="Localization" xml:space="preserve">
     <value>Lokalizace</value>
+  </data>
+  <data name="LockoutEnabled" xml:space="preserve">
+    <value>Uzamčeno</value>
+  </data>
+  <data name="LockoutEnd" xml:space="preserve">
+    <value>Konec za</value>
   </data>
   <data name="LogAndTrackRepairs" xml:space="preserve">
     <value>Zaznamenávejte a sledujte opravy nebo údržbu u jednotlivých jednotek.</value>
