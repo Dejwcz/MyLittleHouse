@@ -2,8 +2,19 @@
     ViewData["Title"] = Localizer["CleanUpDatabase"];
 }
 
+
+<div class="text-center mt-4">
+    <h2>@Localizer["UsersList"]</h2>
+    <p>@Localizer["UsersListMessage"]</p>
+    <form asp-action="UsersList" asp-controller="Admin" method="get">
+        <button type="submit" class="btn btn-primary btn-lg">
+            @Localizer["UsersList"]
+        </button>
+    </form>
+</div>
+
 <div class="container mt-5">
-    <h1 class="text-center">@Localizer["CleanUpDatabase"]</h1>
+    <h2 class="text-center">@Localizer["CleanUpDatabase"]</h2>
     <p class="text-center">
         @Localizer["CleanUpDatabaseMessage"]
     </p>

@@ -625,6 +625,12 @@ Postupujte opatrně, protože tuto operaci nelze vrátit zpět.</value>
   <data name="UserRegistrationAndLogin" xml:space="preserve">
     <value>Registrace uživatelů, přihlášení a správa účtů.</value>
   </data>
+  <data name="UsersList" xml:space="preserve">
+    <value>Seznam uživatelů</value>
+  </data>
+  <data name="UsersListMessage" xml:space="preserve">
+    <value>Zobrazení seznam uživatelů</value>
+  </data>
   <data name="ViewPropertyDetails" xml:space="preserve">
     <value>Zobrazte podrobné informace o jednotlivých nemovitostech.</value>
   </data>

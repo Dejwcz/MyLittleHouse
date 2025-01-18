@@ -20,5 +20,10 @@ namespace MujDomecek.Controllers {
             }
             return RedirectToAction(nameof(Index));
         }
+
+        [HttpGet]
+        public IActionResult UsersList() {
+            return View();
+        }
     }
 }

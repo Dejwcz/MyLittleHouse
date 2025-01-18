@@ -625,6 +625,12 @@ Proceed with caution as this operation cannot be undone.</value>
   <data name="UserRegistrationAndLogin" xml:space="preserve">
     <value>User registration, login, and account management features.</value>
   </data>
+  <data name="UsersList" xml:space="preserve">
+    <value>Users List</value>
+  </data>
+  <data name="UsersListMessage" xml:space="preserve">
+    <value>Viewing users list</value>
+  </data>
   <data name="ViewPropertyDetails" xml:space="preserve">
     <value>View detailed information about each property.</value>
   </data>
