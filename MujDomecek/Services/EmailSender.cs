@@ -19,7 +19,7 @@ public class EmailSender : IEmailSender {
 
     //version for deployment with hardcoded key(loading from Options in deployment does not work)
     //public async Task SendEmailAsync(string toEmail, string subject, string message) {
-    //    await Execute("apikey", subject, message, toEmail);
+    //    await Execute("apiKey", subject, message, toEmail);
     //}
 
     public async Task SendEmailAsync(string toEmail, string subject, string message) {

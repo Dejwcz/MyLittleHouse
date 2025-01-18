@@ -61,6 +61,12 @@ public class Program {
 
         var app = builder.Build();
 
+        // Create scope and apply migrations
+        using (var scope = app.Services.CreateScope()) {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Database.Migrate(); // Here we apply migrations
+        }
+
         // Localization
         var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
         app.UseRequestLocalization(localizationOptions);
