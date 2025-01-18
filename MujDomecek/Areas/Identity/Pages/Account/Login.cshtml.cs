@@ -22,11 +22,13 @@ namespace MujDomecek.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<AppUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly ApplicationDbContext _context;
 
-        public LoginModel(SignInManager<AppUser> signInManager, ILogger<LoginModel> logger)
+        public LoginModel(SignInManager<AppUser> signInManager, ILogger<LoginModel> logger, ApplicationDbContext context )
         {
             _signInManager = signInManager;
             _logger = logger;
+            _context = context;
         }
 
         /// <summary>
@@ -116,6 +118,12 @@ namespace MujDomecek.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in.");
+                    // Update last login
+                    var user = _context.Users.Where(u => u.Email == Input.Email).FirstOrDefault();
+                    if (user != null) {
+                        user.LastLogin = DateTime.Now;
+                        await _context.SaveChangesAsync();
+                    }
                     return LocalRedirect(returnUrl);
                 }
                 if (result.RequiresTwoFactor)
