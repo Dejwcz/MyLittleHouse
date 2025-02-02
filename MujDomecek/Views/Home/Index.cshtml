@@ -13,26 +13,26 @@
 
 <div class="text-center">
     <p></p>
-    <h1 class="display-4 mt-5">@Localizer["Hello"]</h1>
+    <h1 class="display-4 mt-5 fw-bolder">@Localizer["Hello"]</h1>
     <br />
 </div>
 @if (User.Identity == null || !User.Identity.IsAuthenticated) {
-    <div class="text-center mt-2">
-        <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Login">@Localizer["Login"]</a>
+    <div class="text-center mt-4">
+        <a class="btn btn-primary btn-lg btn-ultimate" asp-area="Identity" asp-page="/Account/Login">@Localizer["Login"]</a>
     </div>
     <div class="text-center mt-2">
-        <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Register">@Localizer["Register"]</a>
+        <a class="btn btn-primary btn-lg btn-ultimate" asp-area="Identity" asp-page="/Account/Register">@Localizer["Register"]</a>
     </div>
     <br />
     <br />
-    <div class="text-center border-1">
+    <div class="text-center border border-2 border-info p-3 rounded-2 col mx-auto mt-5">
         <p class="text-info">@Localizer["DemoLoginMessage"]</p>
-            <div class="btn-group">
-                <a class="btn btn-outline-info" asp-controller="DemoLogin" asp-action="DemoLoginTom">@Localizer["LoginAsTom"]</a>
-                <a class="btn btn-outline-info" asp-controller="DemoLogin" asp-action="DemoLoginJerry">@Localizer["LoginAsJerry"]</a>
-                <a class="btn btn-outline-info" asp-controller="DemoLogin" asp-action="DemoLoginAdmin">@Localizer["LoginAsAdmin"]</a>
-            </div>
+        <div class="btn-group d-flex flex-column flex-sm-row gap-1">
+            <a class="btn btn-outline-info rounded-2" asp-controller="DemoLogin" asp-action="DemoLoginTom">@Localizer["LoginAsTom"]</a>
+            <a class="btn btn-outline-info rounded-2" asp-controller="DemoLogin" asp-action="DemoLoginJerry">@Localizer["LoginAsJerry"]</a>
+            <a class="btn btn-outline-info rounded-2" asp-controller="DemoLogin" asp-action="DemoLoginAdmin">@Localizer["LoginAsAdmin"]</a>
         </div>
+    </div>
 }
 else {
     <div class="text-center">

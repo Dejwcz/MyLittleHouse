@@ -1,0 +1,86 @@
+﻿// Variable overrides first
+$primary: #4CAF50; // Čerstvá jarní tráva
+$secondary: #8BC34A; // Světlý zelený akcent
+$success: #43A047; // Trochu tmavší zelená pro potvrzení akcí
+$info: #26A69A; // Osvěžující modrozelená
+$warning: #FFEB3B; // Jasná žlutá pro kontrast
+$danger: #E53935; // Klasická červená pro varování a chyby
+$light: #F1F8E9; // Světle zelená, téměř bílá, vhodná jako pozadí
+$dark: #1B5E20; // Tmavá zelená pro důraz a kontrast
+
+$body-text: #212529; // Hlavní text na světlém pozadí
+$on-primary: #ffffff; // Text na primárním pozadí (např. tlačítka s $primary)
+$on-secondary: #ffffff; // Text na sekundárním pozadí
+$on-dark: #ffffff; // Text na tmavém pozadí
+$on-warning: #000000; // Text na varovném (žlutém) pozadí
+
+
+
+// Then import Bootstrap
+@import "../../../node_modules/bootstrap/scss/bootstrap";
+
+body {
+    color: $body-text;
+    background-color: $light;
+}
+header {
+    background-color: $primary;
+    color: $on-primary;
+}
+footer {
+    background-color: $primary;
+    color: $on-primary;
+}
+
+.btn-primary {
+    background-color: $primary;
+    color: $on-primary;
+}
+
+.btn-secondary {
+    background-color: $secondary;
+    color: $on-secondary;
+}
+
+.btn-dark {
+    background-color: $dark;
+    color: $on-dark;
+}
+
+.btn-warning {
+    background-color: $warning;
+    color: $on-warning;
+}
+
+.btn {
+    border-radius: 0.5rem;
+    font-weight: bold;
+    padding: 0.75rem 1.5rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover,
+    &:focus {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+}
+.navbar-nav .nav-link {
+    border-radius: 0.5rem;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover,
+    &:focus {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        text-decoration: none; // odstraní podtržení, pokud by bylo nastaveno
+    }
+    // Můžeš případně nastavit i aktivní stav (například pokud se stránka shoduje s aktuální URL)
+    &.active {
+        // Například jemná změna barev či další efekty:
+        color: white; // nebo jiná definovaná barva
+    }
+}
+
+
