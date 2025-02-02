@@ -74,12 +74,12 @@ footer {
     &:focus {
         transform: translateY(-3px);
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        text-decoration: none; // odstraní podtržení, pokud by bylo nastaveno
+        text-decoration: none;
     }
-    // Můžeš případně nastavit i aktivní stav (například pokud se stránka shoduje s aktuální URL)
+
     &.active {
-        // Například jemná změna barev či další efekty:
-        color: white; // nebo jiná definovaná barva
+        color: $on-primary;
+        
     }
 }
 
