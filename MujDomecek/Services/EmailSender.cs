@@ -1,7 +1,5 @@
-﻿
-using Microsoft.AspNetCore.Identity.UI.Services;
+﻿using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 

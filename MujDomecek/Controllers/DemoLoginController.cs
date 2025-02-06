@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MujDomecek.Areas.Identity.Pages.Account;
-using Newtonsoft.Json.Linq;
 
-namespace MujDomecek.Controllers; 
+namespace MujDomecek.Controllers;
 public class DemoLoginController(SignInManager<AppUser> _signInManager, ILogger<LoginModel> _logger, 
     ApplicationDbContext _context, DemoLoginService _service) : Controller  {
     [HttpGet]

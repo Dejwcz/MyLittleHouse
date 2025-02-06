@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="~/scss/custom.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/MujDomecek.styles.css" asp-append-version="true" />
-
+    @await Html.PartialAsync("_Favicons")
 </head>
 <body>
     <header>
@@ -61,7 +61,7 @@
             var selectedCs = (currentCulture == "cs") ? "selected" : "";
         }
         <div>
-            <select id="languageSelector" class="form-select form-select-sm m-2 bg-dark text-light border border-2 border-primary rounded-2" style="width: auto;" onchange="changeLanguage(this.value)">
+            <select id="languageSelector" class="form-select form-select-sm m-2 bg-secondary border border-2 border-primary rounded-2" style="width: auto;" onchange="changeLanguage(this.value)">
             <option value="en" @selectedEn>English</option>
             <option value="cs" @selectedCs>Čeština</option>
             </select>

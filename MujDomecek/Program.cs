@@ -5,7 +5,6 @@ using System.Globalization;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using WebPWrecover.Services;
 
-
 namespace MujDomecek;
 public class Program {
     public static void Main(string[] args) {
@@ -97,7 +96,6 @@ public class Program {
                 throw;
             }
         });
-
 
         app.UseHttpsRedirection();
         app.UseStaticFiles();

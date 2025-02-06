@@ -9,39 +9,44 @@
     <a asp-action="Create" class="btn btn-primary btn-lg">@Localizer["CreateNewProp"]</a>
 </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Localizer["Name"]
-            </th>
-            <th>
-                @Localizer["Description"]
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                    <a asp-action="FullView" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Name)</a>
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                <div class="btn-group" role="group">
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info m-1 d-flex align-items-center">@Localizer["Details"]</a>
-                    @if(item.UserId == ViewBag.UserId ) {
-                            <a asp-action="Create" asp-controller="Units" class="btn btn-success m-1 d-flex align-items-center">@Localizer["AddUnit"]</a>
-                            <a asp-action="Create" asp-controller="Repairs" class="btn btn-success m-1 d-flex align-items-center">@Localizer["AddRepair"]</a>
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary m-1 d-flex align-items-center">@Localizer["Edit"]</a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger m-1 d-flex align-items-center">@Localizer["Delete"]</a>
-                    }
-                </div>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+<div class="container">
+    @foreach (var item in Model)
+    {
+        <div class="row border-bottom py-2 ">
+            <!-- Název a popis -->
+            <div class="col-12 d-flex justify-content-center">
+                <h5>
+                    <a asp-action="FullView" asp-route-id="@item.Id">
+                        @Html.DisplayFor(modelItem => item.Name)
+                    </a>
+                </h5>
+            </div>
+            <div class="col-12 d-flex justify-content-center">
+                <p class="mb-2 text-center ">@Html.DisplayFor(modelItem => item.Description)</p>
+            </div>
+
+            <!-- Tlačítka -->
+            <div class="col-12 d-flex gap-1 justify-content-center">
+                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info h-100 d-grid align-content-center px-2 py-1 my-auto">
+                    @Localizer["Details"]
+                </a>
+
+                @if (item.UserId == ViewBag.UserId)
+                {
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn h-100 d-grid align-content-center btn-primary px-2 py-1 my-auto">
+                        @Localizer["Edit"]
+                    </a>
+                    <a asp-action="Create" asp-controller="Units" class="btn btn-success px-2 py-1 my-auto">
+                        @Localizer["AddUnit"]
+                    </a>
+                    <a asp-action="Create" asp-controller="Repairs" class="btn btn-success px-2 py-1 my-auto">
+                        @Localizer["AddRepair"]
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger h-100 d-grid align-content-center px-2 py-1 my-auto">
+                        @Localizer["Delete"]
+                    </a>
+                }
+            </div>
+        </div>
+    }
+</div>
