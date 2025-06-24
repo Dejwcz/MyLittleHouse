@@ -1,104 +1,269 @@
 ﻿@model MujDomecek.DTO.RepairDetailViewDto
 
 @{
-    ViewData["Title"] = Localizer["Details"];
+    ViewData["Title"] = Model?.Title ?? Localizer["Details"];
 }
 
-<h1>@Localizer["Details"]</h1>
-
-<div class="row">
-    <div class="col-md-6">
-        <h4>@Html.DisplayFor(model => model.Title)</h4>
-        <hr />
-        <dl class="row">
-            <dt class="col-sm-4">
-                @Localizer["Name"]
-            </dt>
-            <dd class="col-sm-8">
-                @Html.DisplayFor(model => model.Title)
-            </dd>
-            <dt class="col-sm-4">
-                @Localizer["Description"]
-            </dt>
-            <dd class="col-sm-8">
-                @Html.DisplayFor(model => model.Description)
-            </dd>
-            <dt class="col-sm-4">
-                @Localizer["RepairDate"]
-            </dt>
-            <dd class="col-sm-8">
-                @Html.DisplayFor(model => model.RepairDate)
-            </dd>
-            <dt class="col-sm-4">
-                @Localizer["Price"]
-            </dt>
-            <dd class="col-sm-8">
-                @Html.DisplayFor(model => model.Cost)
-            </dd>
-        </dl>
+<div class="container-fluid">
+    <!-- Header Section with Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-start flex-wrap">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a asp-action="Index">@Localizer["Repairs"]</a></li>
+                            <li class="breadcrumb-item active">@Model?.Title</li>
+                        </ol>
+                    </nav>
+                    <h1 class="display-6 mb-2">@Model?.Title</h1>
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <span class="badge bg-primary fs-6">@Model?.Cost.ToString("C")</span>
+                        <span class="text-muted">
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            @Model?.RepairDate.ToString("dd.MM.yyyy")
+                        </span>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i>@Localizer["Edit"]
+                    </a>
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="fas fa-trash me-2"></i>@Localizer["Delete"]
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>@Localizer["BackToList"]
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="col-md-6">
-        <h4>@Localizer["Details"]</h4>
-        <hr />
-        <dl class="row">
-            <dt class="col-sm-4">
-                @Localizer["CreatedAt"]
-            </dt>
-            <dd class="col-sm-8">
-                @Html.DisplayFor(model => model.CreatedAt)
-            </dd>
-            <dt class="col-sm-4">
-                @Localizer["UpdatedAt"]
-            </dt>
-            <dd class="col-sm-8">
-                @Html.DisplayFor(model => model.UpdatedAt)
-            </dd>
-            <dt class="col-sm-4">
-                @Localizer["FilesCount"]
-            </dt>
-            <dd class="col-sm-8">
-                @(Model.Documents?.Count ?? 0)
-            </dd>
-        </dl>
-    </div>
-</div>
-<hr />
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">@Localizer["Edit"]</a>
-    <a asp-action="Index" class="btn btn-secondary">@Localizer["BackToList"]</a>
-</div>
-<hr />
-
-<!-- Picture preview -->
-<div class="row">
-    @foreach (var document in Model.Documents ?? Enumerable.Empty<RepairDocumentsDto>()) {
-        <div class="col-md-3 mb-3">
-            <div class="card">
-                <a href="#" data-bs-toggle="modal" data-bs-target="#imageModal-@document.Id">
-                    <img src="~/@document.FilePath" class="card-img-top img-thumbnail" alt="@document.Description" />
-                </a>
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Repair Information -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>@Localizer["RepairInformation"]
+                    </h5>
+                </div>
                 <div class="card-body">
-                    <p class="card-text">@document.Description</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">@Localizer["Description"]</label>
+                                <div class="border rounded p-3 bg-light">
+                                    @if (!string.IsNullOrEmpty(Model?.Description))
+                                    {
+                                        <p class="mb-0">@Model.Description</p>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted mb-0 fst-italic">@Localizer["NoDescription"]</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label text-muted">@Localizer["Cost"]</label>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-money-bill-wave text-success me-2"></i>
+                                        <span class="h5 mb-0 text-success">@Model?.Cost.ToString("C")</span>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label text-muted">@Localizer["RepairDate"]</label>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                        <span>@Model?.RepairDate.ToString("dd.MM.yyyy")</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Modal for bigger picture -->
-        <div class="modal fade" id="imageModal-@document.Id" tabindex="-1" aria-labelledby="imageModalLabel-@document.Id" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="imageModalLabel-@document.Id">@document.Description</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- Metadata -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-clock me-2"></i>@Localizer["Metadata"]
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">@Localizer["CreatedAt"]</span>
+                        <small>@Model?.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
                     </div>
-                    <div class="modal-body">
-                        <img src="~/@document.FilePath" class="img-fluid" alt="@document.Description" />
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">@Localizer["UpdatedAt"]</span>
+                        <small>@Model?.UpdatedAt.ToString("dd.MM.yyyy HH:mm")</small>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">@Localizer["AttachedFiles"]</span>
+                        <span class="badge bg-info">@(Model?.Documents?.Count ?? 0)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents/Images Section -->
+    @if (Model?.Documents?.Any() == true)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-images me-2"></i>@Localizer["AttachedFiles"] (@Model.Documents.Count)
+                        </h5>
+                        <small class="text-muted">@Localizer["ClickToEnlarge"]</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            @foreach (var document in Model.Documents)
+                            {
+                                <div class="col-xl-3 col-lg-4 col-md-6">
+                                    <div class="card border-0 shadow-sm h-100 document-card">
+                                        <div class="position-relative">
+                                            <img src="~/@document.FilePath" 
+                                                 class="card-img-top document-thumbnail" 
+                                                 alt="@document.Description"
+                                                 data-bs-toggle="modal" 
+                                                 data-bs-target="#imageModal-@document.Id"
+                                                 style="height: 200px; object-fit: cover; cursor: pointer;" />
+                                            <div class="position-absolute top-0 end-0 m-2">
+                                                <span class="badge bg-dark bg-opacity-75">
+                                                    <i class="fas fa-expand-alt"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(document.Description))
+                                        {
+                                            <div class="card-body">
+                                                <p class="card-text small text-muted mb-0">@document.Description</p>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- Enhanced Modal for bigger picture -->
+                                <div class="modal fade" id="imageModal-@document.Id" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered modal-xl">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">
+                                                    @if (!string.IsNullOrEmpty(document.Description))
+                                                    {
+                                                        @document.Description
+                                                    }
+                                                    else
+                                                    {
+                                                        @Localizer["AttachedImage"]
+                                                    }
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-center p-0">
+                                                <img src="~/@document.FilePath" 
+                                                     class="img-fluid" 
+                                                     alt="@document.Description"
+                                                     style="max-height: 80vh;" />
+                                            </div>
+                                            <div class="modal-footer justify-content-center">
+                                                <a href="~/@document.FilePath" 
+                                                   target="_blank" 
+                                                   class="btn btn-outline-primary">
+                                                    <i class="fas fa-external-link-alt me-2"></i>@Localizer["OpenInNewTab"]
+                                                </a>
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                    @Localizer["Close"]
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-file-image fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted mb-3">@Localizer["NoFilesAttached"]</h5>
+                        <p class="text-muted mb-4">@Localizer["AddFilesDescription"]</p>
+                        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>@Localizer["AddFiles"]
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     }
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>@Localizer["ConfirmDelete"]
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>@Localizer["AreYouSureDelete"] "<strong>@Model?.Title</strong>"?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i>@Localizer["DeleteWarning"]
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["Cancel"]</button>
+                <a asp-action="Delete" asp-route-id="@Model?.Id" class="btn btn-danger">
+                    <i class="fas fa-trash me-2"></i>@Localizer["Delete"]
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .document-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .document-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
+        }
+        .document-thumbnail {
+            transition: filter 0.2s ease-in-out;
+        }
+        .document-thumbnail:hover {
+            filter: brightness(0.95);
+        }
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "›";
+        }
+    </style>
+}
 
 

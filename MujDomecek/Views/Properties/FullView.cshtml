@@ -4,50 +4,430 @@
     ViewData["Title"] = Localizer["FullView"];
 }
 
-<h1 class="text-center my-4">@Localizer["FullView"]</h1>
-
-<div class="container">
-    <!-- Informace o nemovitosti -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h4 class="card-title text-primary">
-                @Localizer["Property"]: @Html.DisplayFor(modelItem => Model.Name)
-            </h4>
-            <p class="card-text">
-                <strong>@Localizer["Description"]:</strong> @Html.DisplayFor(modelItem => Model.Description)
-            </p>
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">@Localizer["Properties"]</a></li>
+                    <li class="breadcrumb-item active">@Model?.Name</li>
+                </ol>
+            </nav>
+            <div class="text-center">
+                <h1 class="display-5 text-primary mb-2">
+                    <i class="fas fa-home me-2"></i>@Model?.Name
+                </h1>
+                <p class="text-muted">@Localizer["CompletePropertyOverview"]</p>
+            </div>
         </div>
     </div>
 
-    <!-- Jednotky v nemovitosti -->
-    @foreach (var unit in Model.Units) {
-        <div class="card border-start border-info mb-4 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title text-secondary">
-                    @Localizer[unit.UnitType.ToString()] - @Html.DisplayFor(modelItem => unit.Name)
-                </h5>
-                <p class="card-text">
-                    <strong>@Localizer["Description"]:</strong> @Html.DisplayFor(modelItem => unit.Description)
-                </p>
+    <!-- Property Info Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="house-overview-card">
+                <div class="house-exterior">
+                    <!-- Roof -->
+                    <div class="overview-roof">
+                        <div class="roof-shape"></div>
+                        <div class="roof-chimney"></div>
+                    </div>
+                    
+                    <!-- House Body -->
+                    <div class="overview-house-body">
+                        <div class="property-header p-4 text-white">
+                            <h3 class="mb-2">@Model?.Name</h3>
+                            <p class="mb-0 opacity-75">
+                                @(string.IsNullOrEmpty(Model?.Description) ? Localizer["NoDescription"] : Model.Description)
+                            </p>
+                        </div>
+                        
+                        <!-- Property Stats -->
+                        <div class="property-overview-stats">
+                            <div class="row g-3 p-4">
+                                <div class="col-md-3 col-6">
+                                    <div class="stat-card text-center p-3 rounded bg-primary text-white">
+                                        <i class="fas fa-door-open fa-2x mb-2"></i>
+                                        <div class="stat-number h4 mb-1">@(Model?.Units?.Count ?? 0)</div>
+                                        <small>@Localizer["Units"]</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="stat-card text-center p-3 rounded bg-success text-white">
+                                        <i class="fas fa-tools fa-2x mb-2"></i>
+                                        <div class="stat-number h4 mb-1">@(Model?.Units?.Sum(u => u.Repairs?.Count ?? 0) ?? 0)</div>
+                                        <small>@Localizer["TotalRepairs"]</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="stat-card text-center p-3 rounded bg-warning text-white">
+                                        <i class="fas fa-money-bill-wave fa-2x mb-2"></i>
+                                        <div class="stat-number h4 mb-1">@(Model?.Units?.SelectMany(u => u.Repairs ?? Enumerable.Empty<MujDomecek.DTO.RepairDto>()).Sum(r => r.Cost).ToString("C") ?? "0")</div>
+                                        <small>@Localizer["TotalCost"]</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="stat-card text-center p-3 rounded bg-info text-white">
+                                        <i class="fas fa-calendar-alt fa-2x mb-2"></i>
+                                        <div class="stat-number h4 mb-1">@(Model?.CreatedAt.ToString("MM/yyyy") ?? "")</div>
+                                        <small>@Localizer["Created"]</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                @if (unit.Repairs.Count > 0) {
-                    <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#repairs-@unit.Id" aria-expanded="false" aria-controls="repairs-@unit.Id">
-                        @Localizer["ShowRepairs"]
-                    </button>
-                }
+    <!-- Units Layout as House Floors -->
+    @if (Model?.Units?.Any() == true)
+    {
+        <div class="row">
+            <div class="col-12">
+                <h2 class="text-center mb-4 text-secondary">
+                    <i class="fas fa-building me-2"></i>@Localizer["PropertyLayout"]
+                </h2>
+            </div>
+        </div>
 
-                <div class="collapse mt-3" id="repairs-@unit.Id">
-                    <ul class="list-group">
-                        @foreach (var repair in unit.Repairs) {
-                            <li class="list-group-item">
-                                <h6 class="mb-1 text-dark">@Localizer["Repair"]: @Html.DisplayFor(modelItem => repair.Title)</h6>
-                                <p class="mb-1"><strong>@Localizer["Description"]:</strong> @Html.DisplayFor(modelItem => repair.Description)</p>
-                                <p class="mb-0"><strong>@Localizer["Price"]:</strong> @Html.DisplayFor(modelItem => repair.Cost)</p>
-                            </li>
+        <!-- Group units by type for floor-like layout -->
+        @{
+            var unitGroups = Model.Units.GroupBy(u => u.UnitType).OrderBy(g => GetFloorOrder(g.Key));
+        }
+
+        @foreach (var unitGroup in unitGroups)
+        {
+            <div class="floor-section mb-5">
+                <div class="floor-header text-center mb-4">
+                    <h4 class="floor-title">
+                        <i class="@GetUnitTypeIcon(unitGroup.Key) me-2"></i>
+                        @Localizer[unitGroup.Key.ToString()]
+                        <span class="badge bg-secondary ms-2">@unitGroup.Count()</span>
+                    </h4>
+                </div>
+
+                <div class="floor-layout">
+                    <div class="row g-4">
+                        @foreach (var unit in unitGroup)
+                        {
+                            <div class="col-lg-6 col-xl-4">
+                                <div class="room-card @GetUnitColorClass(unit.UnitType)">
+                                    <!-- Room Header -->
+                                    <div class="room-header p-3">
+                                        <h5 class="room-title text-white mb-1">
+                                            <i class="@GetUnitTypeIcon(unit.UnitType) me-2"></i>@unit.Name
+                                        </h5>
+                                        @if (!string.IsNullOrEmpty(unit.Description))
+                                        {
+                                            <p class="room-description text-white-50 mb-0 small">@unit.Description</p>
+                                        }
+                                    </div>
+
+                                    <!-- Room Content -->
+                                    <div class="room-content bg-white p-3">
+                                        @if (unit.Repairs?.Any() == true)
+                                        {
+                                            <div class="repairs-summary mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="text-muted small">@Localizer["Repairs"]</span>
+                                                    <span class="badge bg-primary">@unit.Repairs.Count</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="text-muted small">@Localizer["TotalCost"]</span>
+                                                    <span class="fw-bold text-success">@unit.Repairs.Sum(r => r.Cost).ToString("C")</span>
+                                                </div>
+                                            </div>
+
+                                            <button class="btn btn-outline-primary btn-sm w-100" 
+                                                    type="button" 
+                                                    data-bs-toggle="collapse" 
+                                                    data-bs-target="#repairs-@unit.Id" 
+                                                    aria-expanded="false">
+                                                <i class="fas fa-tools me-2"></i>@Localizer["ShowRepairs"] (@unit.Repairs.Count)
+                                            </button>
+
+                                            <div class="collapse mt-3" id="repairs-@unit.Id">
+                                                <div class="repairs-list">
+                                                    @foreach (var repair in unit.Repairs)
+                                                    {
+                                                        <div class="repair-item border rounded p-3 mb-2 bg-light">
+                                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                                <h6 class="repair-title mb-0 text-dark">@repair.Title</h6>
+                                                                <span class="badge bg-success">@repair.Cost.ToString("C")</span>
+                                                            </div>
+                                                            @if (!string.IsNullOrEmpty(repair.Description))
+                                                            {
+                                                                <p class="repair-description text-muted small mb-2">@repair.Description</p>
+                                                            }
+                                                            <div class="repair-meta">
+                                                                <small class="text-muted">
+                                                                    <i class="fas fa-calendar-alt me-1"></i>@repair.RepairDate.ToString("dd.MM.yyyy")
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="no-repairs text-center py-3">
+                                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                                <p class="text-muted mb-0">@Localizer["NoRepairsYet"]</p>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <!-- Room Footer -->
+                                    <div class="room-footer p-3 border-top">
+                                        <div class="d-flex gap-2">
+                                            <a asp-controller="Units" asp-action="Details" asp-route-id="@unit.Id" 
+                                               class="btn btn-outline-primary btn-sm flex-fill">
+                                                <i class="fas fa-info me-1"></i>@Localizer["Details"]
+                                            </a>
+                                            <a asp-controller="Repairs" asp-action="Create" asp-route-unitId="@unit.Id"
+                                               class="btn btn-outline-success btn-sm flex-fill">
+                                                <i class="fas fa-plus me-1"></i>@Localizer["AddRepair"]
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         }
-                    </ul>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="empty-property text-center py-5">
+                    <i class="fas fa-door-open fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted mb-3">@Localizer["NoUnitsYet"]</h4>
+                    <p class="text-muted mb-4">@Localizer["StartAddingUnits"]</p>
+                    <a asp-controller="Units" asp-action="Create" asp-route-propertyId="@Model?.Id" 
+                       class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>@Localizer["AddFirstUnit"]
+                    </a>
                 </div>
             </div>
         </div>
     }
+
+    <!-- Navigation Footer -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-center gap-3">
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>@Localizer["BackToProperties"]
+                </a>
+                <a asp-action="Details" asp-route-id="@Model?.Id" class="btn btn-outline-primary">
+                    <i class="fas fa-info me-2"></i>@Localizer["PropertyDetails"]
+                </a>
+                <a asp-controller="Units" asp-action="Create" asp-route-propertyId="@Model?.Id" 
+                   class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>@Localizer["AddUnit"]
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
+
+@functions {
+    private string GetUnitTypeIcon(MujDomecek.Data.UnitType unitType)
+    {
+        return unitType switch
+        {
+            MujDomecek.Data.UnitType.Room => "fas fa-bed",
+            MujDomecek.Data.UnitType.Garage => "fas fa-car",
+            MujDomecek.Data.UnitType.Garden => "fas fa-seedling",
+            MujDomecek.Data.UnitType.Stairs => "fas fa-sort-up",
+            MujDomecek.Data.UnitType.Flat => "fas fa-building",
+            MujDomecek.Data.UnitType.House => "fas fa-home",
+            MujDomecek.Data.UnitType.Other => "fas fa-door-open",
+            _ => "fas fa-door-open"
+        };
+    }
+
+    private string GetUnitColorClass(MujDomecek.Data.UnitType unitType)
+    {
+        return unitType switch
+        {
+            MujDomecek.Data.UnitType.Room => "room-bedroom",
+            MujDomecek.Data.UnitType.Garage => "room-garage",
+            MujDomecek.Data.UnitType.Garden => "room-garden",
+            MujDomecek.Data.UnitType.Stairs => "room-stairs",
+            MujDomecek.Data.UnitType.Flat => "room-flat",
+            MujDomecek.Data.UnitType.House => "room-house",
+            MujDomecek.Data.UnitType.Other => "room-other",
+            _ => "room-other"
+        };
+    }
+
+    private int GetFloorOrder(MujDomecek.Data.UnitType unitType)
+    {
+        return unitType switch
+        {
+            MujDomecek.Data.UnitType.Garden => 1,
+            MujDomecek.Data.UnitType.Garage => 2,
+            MujDomecek.Data.UnitType.House => 3,
+            MujDomecek.Data.UnitType.Flat => 4,
+            MujDomecek.Data.UnitType.Room => 5,
+            MujDomecek.Data.UnitType.Stairs => 6,
+            MujDomecek.Data.UnitType.Other => 7,
+            _ => 8
+        };
+    }
+}
+
+@section Scripts {
+    <style>
+        /* House Overview Card */
+        .house-overview-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .house-exterior {
+            position: relative;
+        }
+
+        .overview-roof {
+            height: 80px;
+            background: linear-gradient(135deg, #8B4513, #A0522D);
+            position: relative;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .roof-shape {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 60px solid transparent;
+            border-right: 60px solid transparent;
+            border-bottom: 40px solid #654321;
+        }
+
+        .roof-chimney {
+            position: absolute;
+            right: 30px;
+            top: 30px;
+            width: 15px;
+            height: 30px;
+            background: #8B0000;
+            border-radius: 2px;
+        }
+
+        .overview-house-body {
+            background: inherit;
+        }
+
+        /* Floor Sections */
+        .floor-section {
+            position: relative;
+        }
+
+        .floor-title {
+            color: #2c3e50;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 25px;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Room Cards */
+        .room-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+        }
+
+        .room-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        /* Room Types Colors */
+        .room-bedroom .room-header { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .room-garage .room-header { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        .room-garden .room-header { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .room-stairs .room-header { background: linear-gradient(135deg, #a8edea, #fed6e3); }
+        .room-flat .room-header { background: linear-gradient(135deg, #ff9a9e, #fecfef); }
+        .room-house .room-header { background: linear-gradient(135deg, #ffecd2, #fcb69f); }
+        .room-other .room-header { background: linear-gradient(135deg, #e0c3fc, #9bb5ff); }
+
+        /* Property Stats */
+        .stat-card {
+            transition: transform 0.2s ease;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-card:hover {
+            transform: scale(1.05);
+        }
+
+        /* Repairs */
+        .repair-item {
+            transition: all 0.2s ease;
+            border-left: 4px solid #007bff !important;
+        }
+
+        .repair-item:hover {
+            background: #f8f9fa !important;
+            transform: translateX(5px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .floor-title {
+                padding: 10px 20px;
+                font-size: 1.1rem;
+            }
+            
+            .room-card {
+                margin-bottom: 1rem;
+            }
+
+            .overview-roof {
+                height: 60px;
+            }
+        }
+
+        /* Animations */
+        .room-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Breadcrumb styling */
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "›";
+        }
+    </style>
+}
