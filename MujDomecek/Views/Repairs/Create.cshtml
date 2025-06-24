@@ -4,82 +4,391 @@
     ViewData["Title"] = Localizer["Create"];
 }
 
-<h1>@Localizer["CreateNewRepair"]</h1>
-
-<h4>@Localizer["Repairs"]</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Title" class="control-label">@Localizer["Name"]</label>
-                <input asp-for="Title" class="form-control" />
-                <span asp-validation-for="Title" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label">@Localizer["Description"]</label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Cost" class="control-label">@Localizer["Price"]</label>
-                <input asp-for="Cost" class="form-control" />
-                <span asp-validation-for="Cost" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="RepairDate" class="control-label">@Localizer["RepairDate"]</label>
-                <input asp-for="RepairDate" class="form-control" />
-                <span asp-validation-for="RepairDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="UnitId" class="control-label">@Localizer["Unit"]</label>
-                <select asp-for="UnitId" class ="form-control" asp-items="ViewBag.Units">
-                    <option value="">-- @Localizer["Select"] --</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="control-label">@Localizer["AddFiles"]</label>
-                <!-- Skrytý vstup pro výběr souborů -->
-                <input type="file" id="fileInput" class="form-control" name="Files" multiple accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf" multiple onchange="updateFileList(this)">
-                <small class="form-text text-muted">@Localizer["YouCanUploadMultipleFiles"]</small>
-
-                <!-- Rámeček pro zobrazení vybraných souborů -->
-                <div class="border p-2 mt-2">
-                    <h6>@Localizer["SelectedFiles"]</h6>
-                    <ul id="fileList" class="list-unstyled mb-0">
-                        <li class="text-muted">@Localizer["NoFilesSelected"]</li>
-                    </ul>
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">@Localizer["Repairs"]</a></li>
+                    <li class="breadcrumb-item active">@Localizer["CreateNewRepair"]</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <h1 class="display-6 mb-1">@Localizer["CreateNewRepair"]</h1>
+                    <p class="text-muted mb-0">@Localizer["FillInRepairDetails"]</p>
                 </div>
             </div>
-            <div class="form-group mt-2">
-                <input type="submit" value="@Localizer["CreateNewRepair"]" class="btn btn-primary" />
-                <a asp-action="Index" class="btn btn-secondary">@Localizer["BackToList"]</a>
-            </div>
-        </form>
+        </div>
     </div>
-</div>
 
+    <!-- Form Section -->
+    <form asp-action="Create" enctype="multipart/form-data" class="needs-validation" novalidate>
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        
+        <div class="row">
+            <!-- Basic Information -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>@Localizer["BasicInformation"]
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Title" class="form-label">
+                                    @Localizer["Name"] <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                    <input asp-for="Title" class="form-control" placeholder="@Localizer["EnterRepairName"]" />
+                                </div>
+                                <span asp-validation-for="Title" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="UnitId" class="form-label">
+                                    @Localizer["Unit"] <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-home"></i></span>
+                                    <select asp-for="UnitId" class="form-select" asp-items="ViewBag.Units">
+                                        <option value="">-- @Localizer["SelectUnit"] --</option>
+                                    </select>
+                                </div>
+                                <span asp-validation-for="UnitId" class="text-danger"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label asp-for="Cost" class="form-label">
+                                    @Localizer["Cost"] <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-money-bill-wave"></i></span>
+                                    <input asp-for="Cost" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+                                    <span class="input-group-text">@Localizer["Currency"]</span>
+                                </div>
+                                <span asp-validation-for="Cost" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="RepairDate" class="form-label">
+                                    @Localizer["RepairDate"] <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                    <input asp-for="RepairDate" class="form-control" type="date" />
+                                </div>
+                                <span asp-validation-for="RepairDate" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-2">
+                            <div class="col-12">
+                                <label asp-for="Description" class="form-label">@Localizer["Description"]</label>
+                                <textarea asp-for="Description" class="form-control" rows="4" 
+                                          placeholder="@Localizer["DescribeRepairDetails"]"></textarea>
+                                <span asp-validation-for="Description" class="text-danger"></span>
+                                <div class="form-text">@Localizer["OptionalFieldDescription"]</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions & Tips -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-lightbulb me-2"></i>@Localizer["Tips"]
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-start mb-3">
+                            <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                            <small class="text-muted">@Localizer["TipTitle"]</small>
+                        </div>
+                        <div class="d-flex align-items-start mb-3">
+                            <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                            <small class="text-muted">@Localizer["TipCost"]</small>
+                        </div>
+                        <div class="d-flex align-items-start mb-3">
+                            <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                            <small class="text-muted">@Localizer["TipFiles"]</small>
+                        </div>
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                            <small class="text-muted">@Localizer["TipDate"]</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Date Buttons -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-clock me-2"></i>@Localizer["QuickDate"]
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="setToday()">
+                                <i class="fas fa-calendar-day me-1"></i>@Localizer["Today"]
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setYesterday()">
+                                <i class="fas fa-calendar-minus me-1"></i>@Localizer["Yesterday"]
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setThisWeek()">
+                                <i class="fas fa-calendar-week me-1"></i>@Localizer["ThisWeek"]
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-images me-2"></i>@Localizer["AttachFiles"]
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-area">
+                            <div class="upload-drop-zone" id="dropZone">
+                                <div class="text-center py-4">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                    <h6 class="text-muted mb-2">@Localizer["DragDropFiles"]</h6>
+                                    <p class="text-muted mb-3">@Localizer["OrClickToSelect"]</p>
+                                    <input type="file" id="fileInput" class="d-none" name="Files" multiple 
+                                           accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf" onchange="handleFileSelect(this)">
+                                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                                        <i class="fas fa-plus me-2"></i>@Localizer["SelectFiles"]
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted mt-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                @Localizer["SupportedFormats"]: JPG, PNG, GIF, BMP, WebP, PDF. @Localizer["MaxFileSize"]: 10MB
+                            </small>
+
+                            <!-- Selected Files Preview -->
+                            <div id="filePreview" class="mt-3" style="display: none;">
+                                <h6 class="mb-3">@Localizer["SelectedFiles"]</h6>
+                                <div id="fileList" class="row g-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>@Localizer["Cancel"]
+                            </a>
+                            <button type="reset" class="btn btn-outline-warning" onclick="resetForm()">
+                                <i class="fas fa-undo me-2"></i>@Localizer["Reset"]
+                            </button>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>@Localizer["CreateRepair"]
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
-<script>
-    function updateFileList(input) {
-        const fileList = document.getElementById('fileList');
-        fileList.innerHTML = ''; // Vymaže aktuální seznam
+    
+    <script>
+        // File handling functionality
+        let selectedFiles = [];
 
-        if (input.files && input.files.length > 0) {
-            Array.from(input.files).forEach(file => {
-                const li = document.createElement('li');
-                li.textContent = file.name;
-                fileList.appendChild(li);
-            });
-        } else {
-            const li = document.createElement('li');
-            li.textContent = '@Localizer["NoFilesSelected"]';
-            li.classList.add('text-muted');
-            fileList.appendChild(li);
+        function handleFileSelect(input) {
+            selectedFiles = Array.from(input.files);
+            updateFilePreview();
         }
-    }
-</script>
+
+        function updateFilePreview() {
+            const filePreview = document.getElementById('filePreview');
+            const fileList = document.getElementById('fileList');
+            
+            if (selectedFiles.length === 0) {
+                filePreview.style.display = 'none';
+                return;
+            }
+
+            filePreview.style.display = 'block';
+            fileList.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'col-md-3';
+                
+                const isImage = file.type.startsWith('image/');
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                
+                fileItem.innerHTML = `
+                    <div class="card border file-item">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="file-info flex-grow-1">
+                                    <div class="file-name text-truncate" title="${file.name}">
+                                        <i class="fas ${isImage ? 'fa-image' : 'fa-file'} me-1"></i>
+                                        ${file.name}
+                                    </div>
+                                    <small class="text-muted">${fileSize} MB</small>
+                                </div>
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFile(${index})">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            ${isImage ? `<div class="file-preview">
+                                <img src="${URL.createObjectURL(file)}" class="img-fluid rounded" style="max-height: 80px; width: 100%; object-fit: cover;">
+                            </div>` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+            updateFilePreview();
+        }
+
+        function updateFileList() {
+            const fileInput = document.getElementById('fileInput');
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            fileInput.files = dt.files;
+        }
+
+        // Drag and drop functionality
+        const dropZone = document.getElementById('dropZone');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('dragover');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            selectedFiles = Array.from(files);
+            
+            const fileInput = document.getElementById('fileInput');
+            fileInput.files = files;
+            updateFilePreview();
+        }
+
+        // Quick date functions
+        function setToday() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('RepairDate').value = today;
+        }
+
+        function setYesterday() {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            document.getElementById('RepairDate').value = yesterday.toISOString().split('T')[0];
+        }
+
+        function setThisWeek() {
+            const thisWeek = new Date();
+            thisWeek.setDate(thisWeek.getDate() - thisWeek.getDay() + 1);
+            document.getElementById('RepairDate').value = thisWeek.toISOString().split('T')[0];
+        }
+
+        function resetForm() {
+            selectedFiles = [];
+            updateFilePreview();
+            document.querySelector('form').reset();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default date to today
+            setToday();
+        });
+    </script>
+
+    <style>
+        .upload-drop-zone {
+            border: 2px dashed #dee2e6;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-drop-zone.dragover {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+        
+        .file-item {
+            transition: transform 0.2s ease-in-out;
+        }
+        
+        .file-item:hover {
+            transform: translateY(-2px);
+        }
+        
+        .file-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "›";
+        }
+        
+        .form-label {
+            font-weight: 500;
+        }
+        
+        .input-group-text {
+            background-color: #f8f9fa;
+        }
+    </style>
+}

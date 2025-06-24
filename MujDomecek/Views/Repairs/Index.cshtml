@@ -4,51 +4,284 @@
     ViewData["Title"] = Localizer["Repair"];
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="mb-0">@Localizer["Repairs"]</h1>
-    <a asp-action="Create" class="btn btn-primary btn-lg">@Localizer["CreateNewRepair"]</a>
-</div>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Localizer["Name"]
-            </th>
-            <th>
-                @Localizer["Description"]
-            </th>
-            <th>
-                @Localizer["Price"]
-            </th>
-            <th>
-                @Localizer["RepairDate"]
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Cost)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.RepairDate)
-            </td>
-            <td>
-                <div class="btn-group" role="group">
-                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info m-1">@Localizer["Details"]</a>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary m-1">@Localizer["Edit"]</a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger m-1">@Localizer["Delete"]</a>
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <h1 class="display-6 mb-1">@Localizer["Repairs"]</h1>
+                    <p class="text-muted mb-0">@Localizer["RepairsAndMaintenance"]</p>
                 </div>
-            </td>
-        </tr>
+                <div class="d-flex gap-2">
+                    <a asp-action="Create" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>@Localizer["CreateNewRepair"]
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchInput" placeholder="@Localizer["Repairs"]">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="sortSelect">
+                                <option value="date-desc">@Localizer["RepairDate"] - @Localizer["Details"]</option>
+                                <option value="date-asc">@Localizer["RepairDate"] - @Localizer["Back"]</option>
+                                <option value="cost-desc">@Localizer["Price"] - @Localizer["Details"]</option>
+                                <option value="cost-asc">@Localizer["Price"] - @Localizer["Back"]</option>
+                                <option value="title">@Localizer["Title"]</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" class="form-control" id="dateFilter">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-outline-secondary w-100" id="clearFilters">
+                                <i class="fas fa-times me-1"></i>@Localizer["Delete"]
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Repairs Grid -->
+    <div class="row" id="repairsContainer">
+        @if (Model?.Any() == true)
+        {
+            @foreach (var item in Model)
+            {
+                <div class="col-xl-4 col-lg-6 col-md-6 mb-4 repair-card" 
+                     data-title="@item.Title.ToLower()" 
+                     data-description="@item.Description?.ToLower()" 
+                     data-cost="@item.Cost" 
+                     data-date="@item.RepairDate.ToString("yyyy-MM-dd")">
+                    <div class="card h-100 shadow-sm border-0 repair-item">
+                        <div class="card-header bg-light border-0 d-flex justify-content-between align-items-center">
+                            <h6 class="card-title mb-0 text-truncate">@item.Title</h6>
+                            <span class="badge bg-primary">@item.Cost.ToString("C")</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text text-muted mb-3" style="height: 3rem; overflow: hidden;">
+                                @(string.IsNullOrEmpty(item.Description) ? Localizer["NoDescription"] : item.Description)
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    @item.RepairDate.ToString("dd.MM.yyyy")
+                                </small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0">
+                            <div class="d-grid gap-2">
+                                <div class="btn-group" role="group">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info btn-sm">
+                                        <i class="fas fa-eye me-1"></i>@Localizer["Details"]
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-edit me-1"></i>@Localizer["Edit"]
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" 
+                                            data-bs-toggle="modal" data-bs-target="#deleteModal-@item.Id">
+                                        <i class="fas fa-trash me-1"></i>@Localizer["Delete"]
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Confirmation Modal -->
+                <div class="modal fade" id="deleteModal-@item.Id" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">@Localizer["ConfirmDelete"]</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>@Localizer["AreYouSureDelete"] "<strong>@item.Title</strong>"?</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["Cancel"]</button>
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger">@Localizer["Delete"]</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-tools fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted mb-3">@Localizer["NoRepairsYet"]</h4>
+                    <p class="text-muted mb-4">@Localizer["StartTrackingRepairs"]</p>
+                    <a asp-action="Create" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>@Localizer["CreateFirstRepair"]
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Statistics Summary -->
+    @if (Model?.Any() == true)
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <h5 class="text-primary">@Model.Count()</h5>
+                                <small class="text-muted">@Localizer["TotalRepairs"]</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h5 class="text-success">@Model.Sum(r => r.Cost).ToString("C")</h5>
+                                <small class="text-muted">@Localizer["TotalCost"]</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h5 class="text-info">@(Model.Sum(r => r.Cost) / Model.Count()).ToString("C")</h5>
+                                <small class="text-muted">@Localizer["AverageCost"]</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h5 class="text-warning">@Model.OrderByDescending(r => r.RepairDate).FirstOrDefault()?.RepairDate.ToString("dd.MM.yyyy")</h5>
+                                <small class="text-muted">@Localizer["LastRepair"]</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const sortSelect = document.getElementById('sortSelect');
+            const dateFilter = document.getElementById('dateFilter');
+            const clearFilters = document.getElementById('clearFilters');
+            const repairCards = document.querySelectorAll('.repair-card');
+
+            function filterAndSort() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const sortBy = sortSelect.value;
+                const dateValue = dateFilter.value;
+
+                let visibleCards = Array.from(repairCards);
+
+                // Filter by search term
+                if (searchTerm) {
+                    visibleCards = visibleCards.filter(card => {
+                        const title = card.dataset.title || '';
+                        const description = card.dataset.description || '';
+                        return title.includes(searchTerm) || description.includes(searchTerm);
+                    });
+                }
+
+                // Filter by date
+                if (dateValue) {
+                    visibleCards = visibleCards.filter(card => {
+                        return card.dataset.date === dateValue;
+                    });
+                }
+
+                // Hide all cards first
+                repairCards.forEach(card => {
+                    card.style.display = 'none';
+                });
+
+                // Sort visible cards
+                visibleCards.sort((a, b) => {
+                    switch (sortBy) {
+                        case 'date-desc':
+                            return new Date(b.dataset.date) - new Date(a.dataset.date);
+                        case 'date-asc':
+                            return new Date(a.dataset.date) - new Date(b.dataset.date);
+                        case 'cost-desc':
+                            return parseFloat(b.dataset.cost) - parseFloat(a.dataset.cost);
+                        case 'cost-asc':
+                            return parseFloat(a.dataset.cost) - parseFloat(b.dataset.cost);
+                        case 'title':
+                            return a.dataset.title.localeCompare(b.dataset.title);
+                        default:
+                            return 0;
+                    }
+                });
+
+                // Show and reorder visible cards
+                const container = document.getElementById('repairsContainer');
+                visibleCards.forEach(card => {
+                    card.style.display = 'block';
+                    container.appendChild(card);
+                });
+
+                // Show "no results" message if needed
+                updateNoResultsMessage(visibleCards.length === 0);
+            }
+
+            function updateNoResultsMessage(show) {
+                let noResultsMsg = document.getElementById('noResultsMessage');
+                if (show && !noResultsMsg) {
+                    noResultsMsg = document.createElement('div');
+                    noResultsMsg.id = 'noResultsMessage';
+                    noResultsMsg.className = 'col-12 text-center py-5';
+                    noResultsMsg.innerHTML = `
+                        <i class="fas fa-search fa-2x text-muted mb-3"></i>
+                        <h5 class="text-muted">@Localizer["NoResultsFound"]</h5>
+                        <p class="text-muted">@Localizer["TryDifferentSearch"]</p>
+                    `;
+                    document.getElementById('repairsContainer').appendChild(noResultsMsg);
+                } else if (!show && noResultsMsg) {
+                    noResultsMsg.remove();
+                }
+            }
+
+            // Event listeners
+            searchInput.addEventListener('input', filterAndSort);
+            sortSelect.addEventListener('change', filterAndSort);
+            dateFilter.addEventListener('change', filterAndSort);
+            
+            clearFilters.addEventListener('click', function() {
+                searchInput.value = '';
+                sortSelect.value = 'date-desc';
+                dateFilter.value = '';
+                filterAndSort();
+            });
+
+            // Initial sort
+            filterAndSort();
+        });
+    </script>
+    <style>
+        .repair-item {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .repair-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+        }
+        .card-header {
+            border-bottom: 1px solid rgba(0,0,0,0.125);
+        }
+        .btn-group .btn {
+            flex: 1;
+        }
+    </style>
 }
-    </tbody>
-</table>

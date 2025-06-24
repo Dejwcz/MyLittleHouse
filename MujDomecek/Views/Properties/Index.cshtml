@@ -4,44 +4,434 @@
     ViewData["Title"] = @Localizer["Properties"];
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="mb-0">@Localizer["Properties"]</h1>
-    <a asp-action="Create" class="btn btn-primary btn-lg">@Localizer["CreateNewProp"]</a>
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <h1 class="display-6 mb-1 text-primary">
+                        <i class="fas fa-home me-2"></i>@Localizer["Properties"]
+                    </h1>
+                    <p class="text-muted mb-0">@Localizer["PropertyManagement"]</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
+                        <i class="fas fa-plus me-2"></i>@Localizer["CreateNewProp"]
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Properties Grid -->
+    <div class="row g-4">
+        @if (Model?.Any() == true)
+        {
+            @foreach (var item in Model)
+            {
+                <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+                    <div class="house-card position-relative">
+                        <!-- House Structure -->
+                        <div class="house-container">
+                            <!-- Roof -->
+                            <div class="house-roof">
+                                <div class="roof-triangle"></div>
+                                <div class="chimney"></div>
+                            </div>
+                            
+                            <!-- House Body -->
+                            <div class="house-body">
+                                <!-- Property Info -->
+                                <div class="property-info p-3">
+                                    <h5 class="property-title mb-2 text-white">
+                                        <i class="fas fa-home me-2"></i>@item.Name
+                                    </h5>
+                                    <p class="property-description text-white-50 mb-3">
+                                        @(string.IsNullOrEmpty(item.Description) ? Localizer["NoDescription"] : item.Description)
+                                    </p>
+                                </div>
+
+                                <!-- Windows -->
+                                <div class="house-windows">
+                                    <div class="window window-left">
+                                        <div class="window-cross"></div>
+                                    </div>
+                                    <div class="window window-right">
+                                        <div class="window-cross"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Door -->
+                                <div class="house-door">
+                                    <div class="door-handle"></div>
+                                </div>
+                            </div>
+
+                            <!-- Foundation/Actions -->
+                            <div class="house-foundation">
+                                <div class="action-buttons p-3">
+                                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                                        <a asp-action="FullView" asp-route-id="@item.Id" 
+                                           class="btn btn-outline-light btn-sm flex-fill">
+                                            <i class="fas fa-eye me-1"></i>@Localizer["View"]
+                                        </a>
+                                        <a asp-action="Details" asp-route-id="@item.Id" 
+                                           class="btn btn-outline-info btn-sm flex-fill">
+                                            <i class="fas fa-info me-1"></i>@Localizer["Details"]
+                                        </a>
+                                    </div>
+                                    
+                                    @if(item.UserId == ViewBag.UserId)
+                                    {
+                                        <div class="d-flex flex-wrap gap-2 justify-content-center mt-2">
+                                            <a asp-action="Create" asp-controller="Units" asp-route-propertyId="@item.Id"
+                                               class="btn btn-success btn-sm">
+                                                <i class="fas fa-plus me-1"></i>@Localizer["AddUnit"]
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@item.Id" 
+                                               class="btn btn-warning btn-sm">
+                                                <i class="fas fa-edit me-1"></i>@Localizer["Edit"]
+                                            </a>
+                                            <button type="button" class="btn btn-danger btn-sm"
+                                                    data-bs-toggle="modal" data-bs-target="#deleteModal-@item.Id">
+                                                <i class="fas fa-trash me-1"></i>@Localizer["Delete"]
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Property Stats -->
+                        <div class="property-stats mt-3">
+                            <div class="row text-center g-2">
+                                <div class="col-4">
+                                    <div class="stat-item bg-primary text-white rounded p-2">
+                                        <div class="stat-number fw-bold">0</div>
+                                        <small>@Localizer["Units"]</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-item bg-success text-white rounded p-2">
+                                        <div class="stat-number fw-bold">0</div>
+                                        <small>@Localizer["Repairs"]</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-item bg-warning text-white rounded p-2">
+                                        <div class="stat-number fw-bold">0</div>
+                                        <small>@Localizer["Cost"]</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Confirmation Modal -->
+                @if(item.UserId == ViewBag.UserId)
+                {
+                    <div class="modal fade" id="deleteModal-@item.Id" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title text-danger">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>@Localizer["ConfirmDelete"]
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>@Localizer["DeleteAreYouSure"] "<strong>@item.Name</strong>"?</p>
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-info-circle me-2"></i>@Localizer["DeletePropertyMessage"]
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["Cancel"]</button>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger">
+                                        <i class="fas fa-trash me-2"></i>@Localizer["Delete"]
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <div class="empty-state-house mb-4">
+                        <i class="fas fa-home fa-4x text-muted"></i>
+                    </div>
+                    <h4 class="text-muted mb-3">@Localizer["Properties"]</h4>
+                    <p class="text-muted mb-4">@Localizer["AddAndManageProperties"]</p>
+                    <a asp-action="Create" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>@Localizer["CreateNewProp"]
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
 </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Localizer["Name"]
-            </th>
-            <th>
-                @Localizer["Description"]
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                    <a asp-action="FullView" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Name)</a>
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                <div class="btn-group" role="group">
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info m-1 d-flex align-items-center">@Localizer["Details"]</a>
-                    @if(item.UserId == ViewBag.UserId ) {
-                            <a asp-action="Create" asp-controller="Units" class="btn btn-success m-1 d-flex align-items-center">@Localizer["AddUnit"]</a>
-                            <a asp-action="Create" asp-controller="Repairs" class="btn btn-success m-1 d-flex align-items-center">@Localizer["AddRepair"]</a>
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary m-1 d-flex align-items-center">@Localizer["Edit"]</a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger m-1 d-flex align-items-center">@Localizer["Delete"]</a>
-                    }
-                </div>
-            </td>
-        </tr>
+@section Scripts {
+    <style>
+        .house-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .house-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .house-container {
+            position: relative;
+            width: 100%;
+            min-height: 280px;
+        }
+
+        /* Roof */
+        .house-roof {
+            position: relative;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .roof-triangle {
+            width: 0;
+            height: 0;
+            border-left: 120px solid transparent;
+            border-right: 120px solid transparent;
+            border-bottom: 80px solid #8B4513;
+            position: relative;
+            background: linear-gradient(45deg, #A0522D, #8B4513);
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .roof-triangle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -120px;
+            width: 0;
+            height: 0;
+            border-left: 120px solid transparent;
+            border-right: 120px solid transparent;
+            border-bottom: 80px solid #A0522D;
+        }
+
+        .chimney {
+            position: absolute;
+            right: 60px;
+            top: 20px;
+            width: 20px;
+            height: 40px;
+            background: linear-gradient(135deg, #B22222, #8B0000);
+            border-radius: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .chimney::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -2px;
+            width: 24px;
+            height: 8px;
+            background: #8B0000;
+            border-radius: 2px;
+        }
+
+        /* House Body */
+        .house-body {
+            position: relative;
+            height: 200px;
+            background: linear-gradient(135deg, #4A90E2, #357ABD);
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .property-info {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+
+        /* Windows */
+        .house-windows {
+            position: absolute;
+            top: 60px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .window {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: 3px solid #8B4513;
+            border-radius: 4px;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .window-cross {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 2px;
+            background: #8B4513;
+        }
+
+        .window-cross::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 2px;
+            height: 100%;
+            background: #8B4513;
+        }
+
+        /* Door */
+        .house-door {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 80px;
+            background: linear-gradient(135deg, #8B4513, #654321);
+            border-radius: 8px 8px 0 0;
+            border: 2px solid #654321;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .door-handle {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        /* Foundation */
+        .house-foundation {
+            background: linear-gradient(135deg, #696969, #2F4F4F);
+            border-radius: 0 0 8px 8px;
+            min-height: 60px;
+        }
+
+        /* Property Stats */
+        .property-stats {
+            animation: slideInUp 0.5s ease-out;
+        }
+
+        .stat-item {
+            transition: all 0.2s ease;
+        }
+
+        .stat-item:hover {
+            transform: scale(1.05);
+        }
+
+        .stat-number {
+            font-size: 1.2rem;
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Color Variations for Different Houses */
+        .house-card:nth-child(3n+1) .house-body {
+            background: linear-gradient(135deg, #E74C3C, #C0392B);
+        }
+
+        .house-card:nth-child(3n+2) .house-body {
+            background: linear-gradient(135deg, #27AE60, #229954);
+        }
+
+        .house-card:nth-child(3n+3) .house-body {
+            background: linear-gradient(135deg, #9B59B6, #8E44AD);
+        }
+
+        .house-card:nth-child(4n+1) .roof-triangle {
+            border-bottom-color: #D35400;
+        }
+
+        .house-card:nth-child(4n+2) .roof-triangle {
+            border-bottom-color: #7D3C98;
+        }
+
+        .house-card:nth-child(4n+3) .roof-triangle {
+            border-bottom-color: #148F77;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .house-container {
+                min-height: 240px;
+            }
+            
+            .roof-triangle {
+                border-left-width: 100px;
+                border-right-width: 100px;
+                border-bottom-width: 60px;
+            }
+            
+            .house-body {
+                height: 160px;
+            }
+            
+            .property-info {
+                padding: 1rem !important;
+            }
+        }
+
+        /* Empty State */
+        .empty-state-house {
+            opacity: 0.3;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+    </style>
 }
-    </tbody>
-</table>
