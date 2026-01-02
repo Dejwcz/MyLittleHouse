@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(wc:*)",
+      "WebFetch(domain:mujdomecek.runasp.net)",
+      "WebFetch(domain:x.com)",
+      "WebFetch(domain:www.linkedin.com)",
+      "WebFetch(domain:andrewlock.net)",
+      "WebFetch(domain:www.milanjovanovic.tech)",
+      "WebFetch(domain:www.syncfusion.com)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:antondevtips.com)",
+      "Bash(winget install:*)",
+      "Bash(dotnet --version:*)",
+      "Bash(dotnet build:*)",
+      "Bash(powershell:*)",
+      "Bash(dotnet test:*)",
+      "Bash(tree:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run check:*)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)",
+      "Bash(docker-compose:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker exec:*)",
+      "Bash(curl:*)",
+      "Bash(findstr:*)",
+      "Bash(docker inspect:*)",
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(taskkill:*)"
+    ]
+  }
+}

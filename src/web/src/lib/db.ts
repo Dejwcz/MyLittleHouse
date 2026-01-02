@@ -1,0 +1,250 @@
+import Dexie, { type Table } from 'dexie';
+
+export type SyncStatus = 'local' | 'synced' | 'syncing' | 'pending' | 'failed';
+export type SyncMode = 'local-only' | 'synced';
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  ownerId: string;
+  memberCount: number;
+  propertyCount: number;
+  myRole: 'owner' | 'editor' | 'viewer';
+  updatedAt: number;
+  syncStatus: SyncStatus;
+  // Hybrid sync fields
+  syncMode: SyncMode;           // 'local-only' = never sync, 'synced' = sync to server
+  lastSyncAt?: number;          // timestamp of last successful sync
+  remoteId?: string;            // ID on server (may differ from local ID)
+}
+
+export interface Property {
+  id: string;
+  projectId: string;
+  name: string;
+  address?: string;
+  description?: string;
+  unitCount: number;
+  zaznamCount: number;
+  totalCost: number;
+  updatedAt: number;
+  syncStatus: SyncStatus;
+}
+
+export interface Unit {
+  id: string;
+  propertyId: string;
+  parentUnitId?: string;
+  name: string;
+  unitType: string;
+  description?: string;
+  childUnitCount: number;
+  zaznamCount: number;
+  updatedAt: number;
+  syncStatus: SyncStatus;
+}
+
+export interface Zaznam {
+  id: string;
+  propertyId: string;
+  unitId?: string;
+  title: string;
+  description?: string;
+  date: string;
+  cost?: number;
+  status: 'draft' | 'complete';
+  propertyName?: string;
+  unitName?: string;
+  updatedAt: number;
+  flags?: number;
+  syncStatus: SyncStatus;
+}
+
+export interface Dokument {
+  id: string;
+  zaznamId: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  url?: string;
+  data?: Blob;
+  updatedAt: number;
+  syncStatus: SyncStatus;
+}
+
+export interface Tag {
+  id: string;
+  name: string;
+  color?: string;
+}
+
+export interface ZaznamTag {
+  zaznamId: string;
+  tagId: string;
+}
+
+export interface SyncQueueItem {
+  id: string;
+  projectId: string;            // Which project this change belongs to
+  entityType: 'projects' | 'properties' | 'units' | 'zaznamy' | 'dokumenty';
+  entityId: string;
+  action: 'create' | 'update' | 'delete';
+  payload: object | null;
+  status: 'pending' | 'syncing' | 'failed';
+  attempts: number;
+  lastError?: string;
+  nextRetryAt?: number;
+  createdAt: number;
+  lastAttemptAt?: number;
+}
+
+class MujDomecekDb extends Dexie {
+  projects!: Table<Project>;
+  properties!: Table<Property>;
+  units!: Table<Unit>;
+  zaznamy!: Table<Zaznam>;
+  dokumenty!: Table<Dokument>;
+  tags!: Table<Tag>;
+  zaznamTags!: Table<ZaznamTag>;
+  syncQueue!: Table<SyncQueueItem>;
+
+  constructor() {
+    super('mujdomecek');
+
+    // v2 - original schema
+    this.version(2).stores({
+      projects: 'id, name, ownerId, updatedAt, syncStatus',
+      properties: 'id, projectId, name, updatedAt, syncStatus',
+      units: 'id, propertyId, parentUnitId, updatedAt, syncStatus',
+      zaznamy: 'id, propertyId, unitId, date, updatedAt, status, syncStatus',
+      dokumenty: 'id, zaznamId, updatedAt, syncStatus',
+      tags: 'id, name',
+      zaznamTags: '[zaznamId+tagId], zaznamId, tagId',
+      syncQueue: 'id, entityType, entityId, action, status, createdAt, attempts, nextRetryAt'
+    });
+
+    // v3 - hybrid sync support
+    this.version(3).stores({
+      projects: 'id, name, ownerId, updatedAt, syncStatus, syncMode',
+      properties: 'id, projectId, name, updatedAt, syncStatus',
+      units: 'id, propertyId, parentUnitId, updatedAt, syncStatus',
+      zaznamy: 'id, propertyId, unitId, date, updatedAt, status, syncStatus',
+      dokumenty: 'id, zaznamId, updatedAt, syncStatus',
+      tags: 'id, name',
+      zaznamTags: '[zaznamId+tagId], zaznamId, tagId',
+      syncQueue: 'id, projectId, entityType, entityId, action, status, createdAt, attempts'
+    }).upgrade(tx => {
+      // Add syncMode to existing projects
+      return tx.table('projects').toCollection().modify(project => {
+        if (!project.syncMode) {
+          project.syncMode = 'local-only';
+        }
+      });
+    });
+  }
+}
+
+export const db = new MujDomecekDb();
+
+// =============================================================================
+// Sync Queue Helpers
+// =============================================================================
+
+/**
+ * Add a change to the sync queue for later synchronization
+ */
+export async function queueChange(
+  projectId: string,
+  entityType: SyncQueueItem['entityType'],
+  entityId: string,
+  action: SyncQueueItem['action'],
+  payload?: object
+): Promise<void> {
+  await db.syncQueue.add({
+    id: crypto.randomUUID(),
+    projectId,
+    entityType,
+    entityId,
+    action,
+    payload: payload ?? null,
+    status: 'pending',
+    attempts: 0,
+    createdAt: Date.now()
+  });
+}
+
+/**
+ * Queue all entities of a project for initial sync
+ */
+export async function queueProjectForSync(projectId: string): Promise<void> {
+  const project = await db.projects.get(projectId);
+  if (!project) return;
+
+  // Queue the project itself
+  await queueChange(projectId, 'projects', projectId, 'create', {
+    name: project.name,
+    description: project.description
+  });
+
+  // Queue all properties
+  const properties = await db.properties.where('projectId').equals(projectId).toArray();
+  for (const property of properties) {
+    await queueChange(projectId, 'properties', property.id, 'create', {
+      name: property.name,
+      address: property.address,
+      description: property.description
+    });
+
+    // Queue all units for this property
+    const units = await db.units.where('propertyId').equals(property.id).toArray();
+    for (const unit of units) {
+      await queueChange(projectId, 'units', unit.id, 'create', {
+        propertyId: unit.propertyId,
+        parentUnitId: unit.parentUnitId,
+        name: unit.name,
+        unitType: unit.unitType,
+        description: unit.description
+      });
+    }
+
+    // Queue all zaznamy for this property
+    const zaznamy = await db.zaznamy.where('propertyId').equals(property.id).toArray();
+    for (const zaznam of zaznamy) {
+      await queueChange(projectId, 'zaznamy', zaznam.id, 'create', {
+        propertyId: zaznam.propertyId,
+        unitId: zaznam.unitId,
+        title: zaznam.title,
+        description: zaznam.description,
+        date: zaznam.date,
+        cost: zaznam.cost,
+        status: zaznam.status
+      });
+    }
+  }
+}
+
+/**
+ * Get pending changes count for a project (or all if no projectId)
+ */
+export async function getPendingChangesCount(projectId?: string): Promise<number> {
+  if (projectId) {
+    return db.syncQueue
+      .where('projectId')
+      .equals(projectId)
+      .and(item => item.status === 'pending')
+      .count();
+  }
+  return db.syncQueue.where('status').equals('pending').count();
+}
+
+/**
+ * Get all pending changes for a project
+ */
+export async function getPendingChanges(projectId: string): Promise<SyncQueueItem[]> {
+  return db.syncQueue
+    .where('projectId')
+    .equals(projectId)
+    .and(item => item.status === 'pending')
+    .toArray();
+}

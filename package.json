@@ -1,0 +1,26 @@
+{
+  "name": "mujdomecek",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "npm@10.9.2",
+  "scripts": {
+    "prepare": "husky install",
+    "lint:web": "npm --prefix src/web run lint",
+    "check:web": "npm --prefix src/web run check",
+    "format:api": "dotnet format src/api/MujDomecek.sln",
+    "test:api": "dotnet test src/api/MujDomecek.sln"
+  },
+  "lint-staged": {
+    "src/web/**/*.{js,ts,svelte,css,md,mdx,json}": [
+      "npm --prefix src/web run lint",
+      "npm --prefix src/web run check"
+    ],
+    "src/api/**/*.cs": [
+      "dotnet format src/api/MujDomecek.sln --verify-no-changes"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.0"
+  }
+}
