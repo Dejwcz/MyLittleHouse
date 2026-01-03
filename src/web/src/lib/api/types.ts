@@ -8,7 +8,8 @@ export interface PaginatedResponse<T> {
 
 export type Role = 'owner' | 'editor' | 'viewer';
 export type ZaznamStatus = 'draft' | 'complete';
-export type UnitType = 'flat' | 'house' | 'garage' | 'garden' | 'room' | 'stairs' | 'other';
+export type PropertyType = 'house' | 'apartment' | 'garage' | 'garden' | 'shed' | 'land' | 'other';
+export type UnitType = 'room' | 'floor' | 'cellar' | 'parking' | 'other';
 export type MediaType = 'photo' | 'document' | 'receipt';
 export type MediaOwnerType = 'property' | 'unit' | 'zaznam';
 export type SyncStatus = 'local' | 'synced' | 'syncing' | 'pending' | 'failed';
@@ -50,6 +51,7 @@ export interface PropertyDto {
   projectName: string;
   name: string;
   description?: string;
+  propertyType: PropertyType;
   latitude?: number;
   longitude?: number;
   geoRadius: number;
@@ -75,6 +77,7 @@ export interface CreatePropertyRequest {
   projectId: string;
   name: string;
   description?: string;
+  propertyType: PropertyType;
   latitude?: number;
   longitude?: number;
   geoRadius?: number;
@@ -83,6 +86,7 @@ export interface CreatePropertyRequest {
 export interface UpdatePropertyRequest {
   name?: string;
   description?: string;
+  propertyType?: PropertyType;
   latitude?: number;
   longitude?: number;
   geoRadius?: number;

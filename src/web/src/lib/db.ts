@@ -25,6 +25,7 @@ export interface Property {
   name: string;
   address?: string;
   description?: string;
+  propertyType?: string;
   unitCount: number;
   zaznamCount: number;
   totalCost: number;
@@ -248,6 +249,42 @@ class MujDomecekDb extends Dexie {
         }
       });
     });
+
+    // v6 - propertyType + simplified unitType
+    this.version(6).stores({
+      projects: 'id, name, ownerId, updatedAt, syncStatus, syncMode',
+      properties: 'id, projectId, name, updatedAt, syncStatus, syncMode',
+      units: 'id, propertyId, parentUnitId, updatedAt, syncStatus',
+      zaznamy: 'id, propertyId, unitId, date, updatedAt, status, syncStatus, syncMode',
+      media: 'id, ownerType, ownerId, updatedAt, syncStatus, mediaType',
+      dokumenty: 'id, zaznamId, updatedAt, syncStatus',
+      tags: 'id, name',
+      zaznamTags: '[zaznamId+tagId], zaznamId, tagId',
+      syncQueue: 'id, scopeType, scopeId, projectId, entityType, entityId, action, status, createdAt, attempts'
+    }).upgrade(async tx => {
+      await tx.table('properties').toCollection().modify(property => {
+        if (!property.propertyType) {
+          property.propertyType = 'other';
+        }
+      });
+
+      await tx.table('units').toCollection().modify(unit => {
+        switch (unit.unitType) {
+          case 'room':
+            unit.unitType = 'room';
+            break;
+          case 'stairs':
+            unit.unitType = 'floor';
+            break;
+          case 'garage':
+            unit.unitType = 'parking';
+            break;
+          default:
+            unit.unitType = 'other';
+            break;
+        }
+      });
+    });
   }
 }
 
@@ -303,7 +340,8 @@ export async function queueProjectForSync(projectId: string): Promise<void> {
     await queueChange('project', projectId, projectId, 'properties', property.id, 'create', {
       name: property.name,
       address: property.address,
-      description: property.description
+      description: property.description,
+      propertyType: property.propertyType ?? 'other'
     });
 
     // Queue all units for this property
@@ -346,7 +384,8 @@ export async function queuePropertyForSync(propertyId: string): Promise<void> {
   await queueChange('property', propertyId, projectId, 'properties', propertyId, 'create', {
     name: property.name,
     address: property.address,
-    description: property.description
+    description: property.description,
+    propertyType: property.propertyType ?? 'other'
   });
 
   const units = await db.units.where('propertyId').equals(propertyId).toArray();

@@ -41,6 +41,7 @@ async function propertyToDto(property: Property): Promise<PropertyDto> {
     projectName: project?.name ?? '',
     name: property.name,
     description: property.description,
+    propertyType: (property.propertyType ?? 'other') as PropertyDto['propertyType'],
     geoRadius: 0,
     unitCount: property.unitCount,
     zaznamCount: property.zaznamCount,
@@ -91,7 +92,7 @@ export const localPropertiesApi = {
         parentUnitId: u.parentUnitId,
         name: u.name,
         description: u.description,
-        unitType: u.unitType as 'flat' | 'house' | 'garage' | 'garden' | 'room' | 'stairs' | 'other',
+        unitType: u.unitType as 'room' | 'floor' | 'cellar' | 'parking' | 'other',
         childCount: u.childUnitCount,
         zaznamCount: u.zaznamCount,
         coverMediaId: u.coverMediaId,
@@ -119,6 +120,7 @@ export const localPropertiesApi = {
       projectId: data.projectId,
       name: data.name,
       description: data.description,
+      propertyType: data.propertyType ?? 'other',
       unitCount: 0,
       zaznamCount: 0,
       totalCost: 0,
@@ -133,7 +135,8 @@ export const localPropertiesApi = {
     if (scope) {
       await queueChange(scope.scopeType, scope.scopeId, scope.projectId, 'properties', id, 'create', {
         name: data.name,
-        description: data.description
+        description: data.description,
+        propertyType: data.propertyType
       });
     }
 
@@ -161,6 +164,7 @@ export const localPropertiesApi = {
 
     if (data.name !== undefined) updated.name = data.name;
     if (data.description !== undefined) updated.description = data.description;
+    if (data.propertyType !== undefined) updated.propertyType = data.propertyType;
 
     const scope = await getPropertySyncScope(property);
     if (scope) {

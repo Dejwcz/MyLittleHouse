@@ -49,11 +49,9 @@
 
   const unitTypeOptions = [
     { value: 'room', label: 'Místnost' },
-    { value: 'flat', label: 'Byt' },
-    { value: 'house', label: 'Dům' },
-    { value: 'garage', label: 'Garáž' },
-    { value: 'garden', label: 'Zahrada' },
-    { value: 'stairs', label: 'Schody' },
+    { value: 'floor', label: 'Podlaží' },
+    { value: 'cellar', label: 'Sklep' },
+    { value: 'parking', label: 'Parkovací stání' },
     { value: 'other', label: 'Jiné' }
   ];
 
@@ -236,6 +234,20 @@
     return unitTypeOptions.find(o => o.value === type)?.label ?? type;
   }
 
+  const propertyTypeLabels = new Map<string, string>([
+    ['house', 'Dům'],
+    ['apartment', 'Byt'],
+    ['garage', 'Garáž'],
+    ['garden', 'Zahrada'],
+    ['shed', 'Kůlna'],
+    ['land', 'Pozemek'],
+    ['other', 'Jiné']
+  ]);
+
+  function getPropertyTypeLabel(type: string): string {
+    return propertyTypeLabels.get(type) ?? type;
+  }
+
   const parentUnitOptions = $derived([
     { value: '', label: 'Žádná (hlavní jednotka)' },
     ...units.filter(u => u.id !== selectedUnit?.id).map(u => ({ value: u.id, label: u.name }))
@@ -252,21 +264,24 @@
   <PageHeader title={property.name} subtitle={property.description}>
     {#snippet actions()}
       {#if canEdit}
-        <Button variant="secondary" onclick={() => goto(`/projects/${projectId}/zaznamy/new?propertyId=${propertyId}`)}>
-          {#snippet children()}
-            <Plus class="h-4 w-4" />
-            Nový záznam
-          {/snippet}
-        </Button>
-        <Button onclick={() => openUnitModal()}>
+        <Button variant="ghost" onclick={() => openUnitModal()}>
           {#snippet children()}
             <Plus class="h-4 w-4" />
             Nová jednotka
           {/snippet}
         </Button>
+        <Button onclick={() => goto(`/projects/${projectId}/zaznamy/new?propertyId=${propertyId}`)}>
+          {#snippet children()}
+            <Plus class="h-4 w-4" />
+            Nový záznam
+          {/snippet}
+        </Button>
       {/if}
     {/snippet}
   </PageHeader>
+  <div class="mb-4">
+    <Badge size="sm" variant="secondary">{getPropertyTypeLabel(property.propertyType)}</Badge>
+  </div>
 
   <!-- Cover + Gallery -->
   <div class="mb-6">
