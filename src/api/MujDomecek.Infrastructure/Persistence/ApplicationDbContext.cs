@@ -92,7 +92,7 @@ public sealed class ApplicationDbContext
         base.OnModelCreating(builder);
 
         var dateOnlyConverter = new ValueConverter<DateOnly, DateTime>(
-            d => d.ToDateTime(TimeOnly.MinValue),
+            d => DateTime.SpecifyKind(d.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc),
             d => DateOnly.FromDateTime(d));
 
         builder.Entity<AppUser>()

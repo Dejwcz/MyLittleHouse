@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using MujDomecek.Application.Abstractions;
 using MujDomecek.Infrastructure.Persistence;
+using MujDomecek.Infrastructure.Services;
 using Testcontainers.PostgreSql;
 
 namespace MujDomecek.Api.Tests;
@@ -39,6 +41,9 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>, I
             services.RemoveAll<ApplicationDbContext>();
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(connectionString));
+
+            services.RemoveAll<IStorageService>();
+            services.AddSingleton<IStorageService, LocalStorageService>();
         });
         builder.ConfigureAppConfiguration((context, config) =>
         {

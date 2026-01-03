@@ -193,7 +193,10 @@ builder.Services.AddQuartzHostedService(options => options.WaitForJobsToComplete
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
-app.UseExceptionHandler();
+if (app.Environment.IsEnvironment("Testing"))
+    app.UseDeveloperExceptionPage();
+else
+    app.UseExceptionHandler();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -211,7 +214,7 @@ app.MapCommentEndpoints();
 app.MapContactEndpoints();
 app.MapContactGroupEndpoints();
 app.MapNotificationEndpoints();
-app.MapDocumentEndpoints();
+app.MapMediaEndpoints();
 app.MapUploadEndpoints();
 app.MapSharingEndpoints();
 app.MapInvitationEndpoints();
