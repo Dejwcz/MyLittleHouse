@@ -16,6 +16,8 @@ public sealed record PropertyDto(
     bool IsShared,
     string SyncMode,
     string SyncStatus,
+    Guid? CoverMediaId,
+    string? CoverUrl,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );

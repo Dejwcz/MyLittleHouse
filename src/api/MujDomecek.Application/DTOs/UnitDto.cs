@@ -9,6 +9,8 @@ public sealed record UnitDto(
     string UnitType,
     int ChildCount,
     int ZaznamCount,
+    Guid? CoverMediaId,
+    string? CoverUrl,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );

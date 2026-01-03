@@ -5,6 +5,7 @@ using MujDomecek.API.Services;
 using MujDomecek.Application.Abstractions;
 using MujDomecek.Application.DTOs;
 using MujDomecek.Domain.Aggregates.Project;
+using MujDomecek.Domain.Aggregates.Zaznam;
 using MujDomecek.Domain.ValueObjects;
 using MujDomecek.Infrastructure.Persistence;
 
@@ -115,6 +116,7 @@ public static class ProjectEndpoints
     private static async Task<IResult> GetProjectAsync(
         ClaimsPrincipal user,
         Guid id,
+        IStorageService storageService,
         ApplicationDbContext dbContext)
     {
         var userId = user.GetUserId();
@@ -127,6 +129,19 @@ public static class ProjectEndpoints
 
         if (!await HasAccessAsync(dbContext, project.Id, userId))
             return Results.Forbid();
+
+        var coverMediaIds = await dbContext.Properties
+            .Where(p => p.ProjectId == project.Id && p.CoverMediaId.HasValue)
+            .Select(p => p.CoverMediaId.GetValueOrDefault())
+            .Distinct()
+            .ToListAsync();
+
+        Dictionary<Guid, string?> coverLookup = coverMediaIds.Count == 0
+            ? new Dictionary<Guid, string?>()
+            : await dbContext.Media
+                .Where(m => coverMediaIds.Contains(m.Id) && m.OwnerType == OwnerType.Property)
+                .Select(m => new { m.Id, m.StorageKey })
+                .ToDictionaryAsync(m => m.Id, m => (string?)m.StorageKey);
 
         var properties = await dbContext.Properties
             .Where(p => p.ProjectId == project.Id)
@@ -146,6 +161,8 @@ public static class ProjectEndpoints
             false,
             ToSyncModeString(p.SyncMode),
             ToSyncStatusString(p.SyncStatus),
+            p.CoverMediaId,
+            GetCoverUrl(storageService, coverLookup, p.CoverMediaId),
             p.CreatedAt,
             p.UpdatedAt))
             .ToListAsync();
@@ -395,6 +412,27 @@ public static class ProjectEndpoints
         dbContext.ProjectMembers.Remove(member);
         await dbContext.SaveChangesAsync();
         return Results.NoContent();
+    }
+
+    private static string? BuildCoverUrl(IStorageService storageService, string? storageKey)
+    {
+        if (string.IsNullOrWhiteSpace(storageKey))
+            return null;
+
+        return storageService.GetThumbnailUrl(storageKey);
+    }
+
+    private static string? GetCoverUrl(
+        IStorageService storageService,
+        IReadOnlyDictionary<Guid, string?> coverLookup,
+        Guid? coverMediaId)
+    {
+        if (!coverMediaId.HasValue)
+            return null;
+
+        return coverLookup.TryGetValue(coverMediaId.Value, out var storageKey)
+            ? BuildCoverUrl(storageService, storageKey)
+            : null;
     }
 
     private static async Task<bool> HasAccessAsync(ApplicationDbContext dbContext, Guid projectId, Guid userId)

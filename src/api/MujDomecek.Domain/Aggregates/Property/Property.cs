@@ -23,6 +23,8 @@ public sealed class Property : SoftDeletableEntity<Guid>
 
     public DateTime? LastSyncAt { get; set; }
 
+    public Guid? CoverMediaId { get; set; }
+
     public List<Unit> Units { get; set; } = [];
 
     public List<PropertyMember> Members { get; set; } = [];

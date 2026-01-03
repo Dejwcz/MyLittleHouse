@@ -14,4 +14,6 @@ public sealed class Unit : SoftDeletableEntity<Guid>
     public string? Description { get; set; }
 
     public UnitType UnitType { get; set; }
+
+    public Guid? CoverMediaId { get; set; }
 }

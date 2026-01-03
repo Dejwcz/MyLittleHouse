@@ -7,6 +7,7 @@ using MujDomecek.Application.Abstractions;
 using MujDomecek.Application.DTOs;
 using MujDomecek.Domain.Aggregates.Project;
 using MujDomecek.Domain.Aggregates.Property;
+using MujDomecek.Domain.Aggregates.Zaznam;
 using MujDomecek.Domain.ValueObjects;
 using MujDomecek.Infrastructure.Persistence;
 
@@ -22,6 +23,7 @@ public static class PropertyEndpoints
         group.MapPost("/", CreatePropertyAsync);
         group.MapGet("/{id:guid}", GetPropertyAsync);
         group.MapPut("/{id:guid}", UpdatePropertyAsync);
+        group.MapPatch("/{id:guid}/cover", UpdatePropertyCoverAsync);
         group.MapDelete("/{id:guid}", DeletePropertyAsync);
         group.MapGet("/{id:guid}/stats", GetStatsAsync);
         group.MapGet("/{id:guid}/members", GetMembersAsync);
@@ -38,6 +40,7 @@ public static class PropertyEndpoints
         ClaimsPrincipal user,
         Guid? projectId,
         bool? shared,
+        IStorageService storageService,
         ApplicationDbContext dbContext)
     {
         var userId = user.GetUserId();
@@ -67,6 +70,20 @@ public static class PropertyEndpoints
             })
             .ToListAsync();
 
+        var coverMediaIds = properties
+            .Select(x => x.Property.CoverMediaId)
+            .Where(id => id.HasValue)
+            .Select(id => id.GetValueOrDefault())
+            .Distinct()
+            .ToList();
+
+        Dictionary<Guid, string?> coverLookup = coverMediaIds.Count == 0
+            ? new Dictionary<Guid, string?>()
+            : await dbContext.Media
+                .Where(m => coverMediaIds.Contains(m.Id) && m.OwnerType == OwnerType.Property)
+                .Select(m => new { m.Id, m.StorageKey })
+                .ToDictionaryAsync(m => m.Id, m => (string?)m.StorageKey);
+
         var items = properties.Select(x => new PropertyDto(
             x.Property.Id,
             x.Property.ProjectId,
@@ -83,6 +100,8 @@ public static class PropertyEndpoints
             x.Project.OwnerId != userId,
             ToSyncModeString(x.Property.SyncMode),
             ToSyncStatusString(x.Property.SyncStatus),
+            x.Property.CoverMediaId,
+            GetCoverUrl(storageService, coverLookup, x.Property.CoverMediaId),
             x.Property.CreatedAt,
             x.Property.UpdatedAt)).ToList();
 
@@ -140,6 +159,8 @@ public static class PropertyEndpoints
             project.OwnerId != userId,
             ToSyncModeString(property.SyncMode),
             ToSyncStatusString(property.SyncStatus),
+            property.CoverMediaId,
+            null,
             property.CreatedAt,
             property.UpdatedAt);
 
@@ -149,6 +170,7 @@ public static class PropertyEndpoints
     private static async Task<IResult> GetPropertyAsync(
         ClaimsPrincipal user,
         Guid id,
+        IStorageService storageService,
         ApplicationDbContext dbContext)
     {
         var userId = user.GetUserId();
@@ -165,6 +187,7 @@ public static class PropertyEndpoints
         var project = await dbContext.Projects.FirstAsync(p => p.Id == property.ProjectId);
         var propertyMember = await dbContext.PropertyMembers.FirstOrDefaultAsync(pm => pm.PropertyId == property.Id && pm.UserId == userId);
         var projectMember = await dbContext.ProjectMembers.FirstOrDefaultAsync(pm => pm.ProjectId == property.ProjectId && pm.UserId == userId);
+        var coverUrl = await GetCoverUrlAsync(dbContext, storageService, OwnerType.Property, property.Id, property.CoverMediaId);
 
         var dto = new PropertyDto(
             property.Id,
@@ -182,6 +205,8 @@ public static class PropertyEndpoints
             project.OwnerId != userId,
             ToSyncModeString(property.SyncMode),
             ToSyncStatusString(property.SyncStatus),
+            property.CoverMediaId,
+            coverUrl,
             property.CreatedAt,
             property.UpdatedAt);
 
@@ -192,6 +217,7 @@ public static class PropertyEndpoints
         ClaimsPrincipal user,
         Guid id,
         [FromBody] UpdatePropertyRequest request,
+        IStorageService storageService,
         ApplicationDbContext dbContext)
     {
         var userId = user.GetUserId();
@@ -220,6 +246,7 @@ public static class PropertyEndpoints
         await dbContext.SaveChangesAsync();
 
         var project = await dbContext.Projects.FirstAsync(p => p.Id == property.ProjectId);
+        var coverUrl = await GetCoverUrlAsync(dbContext, storageService, OwnerType.Property, property.Id, property.CoverMediaId);
 
         var dto = new PropertyDto(
             property.Id,
@@ -237,6 +264,75 @@ public static class PropertyEndpoints
             project.OwnerId != userId,
             ToSyncModeString(property.SyncMode),
             ToSyncStatusString(property.SyncStatus),
+            property.CoverMediaId,
+            coverUrl,
+            property.CreatedAt,
+            property.UpdatedAt);
+
+        return Results.Ok(dto);
+    }
+
+    private static async Task<IResult> UpdatePropertyCoverAsync(
+        ClaimsPrincipal user,
+        Guid id,
+        [FromBody] CoverMediaRequest request,
+        IStorageService storageService,
+        ApplicationDbContext dbContext)
+    {
+        var userId = user.GetUserId();
+        if (userId == Guid.Empty)
+            return Results.Unauthorized();
+
+        var property = await dbContext.Properties.FirstOrDefaultAsync(p => p.Id == id);
+        if (property is null)
+            return Results.NotFound();
+
+        if (!await HasPropertyAccessAsync(dbContext, property.Id, userId))
+            return Results.Forbid();
+
+        Media? coverMedia = null;
+        if (request.CoverMediaId.HasValue)
+        {
+            coverMedia = await dbContext.Media.FirstOrDefaultAsync(m => m.Id == request.CoverMediaId.Value);
+            if (coverMedia is null
+                || coverMedia.OwnerType != OwnerType.Property
+                || coverMedia.OwnerId != property.Id
+                || coverMedia.Type != MediaType.Photo)
+                return Results.BadRequest();
+
+            property.CoverMediaId = coverMedia.Id;
+        }
+        else
+        {
+            property.CoverMediaId = null;
+        }
+
+        property.UpdatedAt = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
+
+        var project = await dbContext.Projects.FirstAsync(p => p.Id == property.ProjectId);
+        var propertyMember = await dbContext.PropertyMembers.FirstOrDefaultAsync(pm => pm.PropertyId == property.Id && pm.UserId == userId);
+        var projectMember = await dbContext.ProjectMembers.FirstOrDefaultAsync(pm => pm.ProjectId == property.ProjectId && pm.UserId == userId);
+        var coverUrl = coverMedia is null ? null : storageService.GetThumbnailUrl(coverMedia.StorageKey);
+
+        var dto = new PropertyDto(
+            property.Id,
+            property.ProjectId,
+            project.Name,
+            property.Name,
+            property.Description,
+            property.Latitude,
+            property.Longitude,
+            property.GeoRadius,
+            dbContext.Units.Count(u => u.PropertyId == property.Id),
+            dbContext.Zaznamy.Count(z => z.PropertyId == property.Id),
+            dbContext.Zaznamy.Where(z => z.PropertyId == property.Id).Sum(z => (decimal?)z.Cost) ?? 0,
+            ToRoleString(propertyMember?.Role ?? projectMember?.Role ?? MemberRole.Viewer, project.OwnerId == userId),
+            project.OwnerId != userId,
+            ToSyncModeString(property.SyncMode),
+            ToSyncStatusString(property.SyncStatus),
+            property.CoverMediaId,
+            coverUrl,
             property.CreatedAt,
             property.UpdatedAt);
 
@@ -612,6 +708,45 @@ public static class PropertyEndpoints
             ActivityType.MemberRoleChanged => "member_role_changed",
             _ => "unknown"
         };
+    }
+
+    private static string? BuildCoverUrl(IStorageService storageService, string? storageKey)
+    {
+        if (string.IsNullOrWhiteSpace(storageKey))
+            return null;
+
+        return storageService.GetThumbnailUrl(storageKey);
+    }
+
+    private static string? GetCoverUrl(
+        IStorageService storageService,
+        IReadOnlyDictionary<Guid, string?> coverLookup,
+        Guid? coverMediaId)
+    {
+        if (!coverMediaId.HasValue)
+            return null;
+
+        return coverLookup.TryGetValue(coverMediaId.Value, out var storageKey)
+            ? BuildCoverUrl(storageService, storageKey)
+            : null;
+    }
+
+    private static async Task<string?> GetCoverUrlAsync(
+        ApplicationDbContext dbContext,
+        IStorageService storageService,
+        OwnerType ownerType,
+        Guid ownerId,
+        Guid? coverMediaId)
+    {
+        if (!coverMediaId.HasValue)
+            return null;
+
+        var storageKey = await dbContext.Media
+            .Where(m => m.Id == coverMediaId.Value && m.OwnerType == ownerType && m.OwnerId == ownerId)
+            .Select(m => m.StorageKey)
+            .FirstOrDefaultAsync();
+
+        return BuildCoverUrl(storageService, storageKey);
     }
 
     private static async Task<bool> HasProjectAccessAsync(ApplicationDbContext dbContext, Guid projectId, Guid userId)

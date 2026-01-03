@@ -1,8 +1,10 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using MujDomecek.API.Extensions;
+using MujDomecek.Application.Abstractions;
 using MujDomecek.Application.DTOs;
 using MujDomecek.Domain.Aggregates.Property;
+using MujDomecek.Domain.Aggregates.Zaznam;
 using MujDomecek.Domain.ValueObjects;
 using MujDomecek.Infrastructure.Persistence;
 
@@ -18,6 +20,7 @@ public static class UnitEndpoints
         group.MapPost("/", CreateUnitAsync);
         group.MapGet("/{id:guid}", GetUnitAsync);
         group.MapPut("/{id:guid}", UpdateUnitAsync);
+        group.MapPatch("/{id:guid}/cover", UpdateUnitCoverAsync);
         group.MapDelete("/{id:guid}", DeleteUnitAsync);
 
         return endpoints;
@@ -27,6 +30,7 @@ public static class UnitEndpoints
         ClaimsPrincipal user,
         Guid propertyId,
         Guid? parentUnitId,
+        IStorageService storageService,
         ApplicationDbContext dbContext)
     {
         var userId = user.GetUserId();
@@ -47,6 +51,20 @@ public static class UnitEndpoints
         if (parentUnitId.HasValue)
             query = query.Where(u => u.ParentUnitId == parentUnitId.Value);
 
+        var coverMediaIds = await query
+            .Select(u => u.CoverMediaId)
+            .Where(id => id.HasValue)
+            .Select(id => id.GetValueOrDefault())
+            .Distinct()
+            .ToListAsync();
+
+        Dictionary<Guid, string?> coverLookup = coverMediaIds.Count == 0
+            ? new Dictionary<Guid, string?>()
+            : await dbContext.Media
+                .Where(m => coverMediaIds.Contains(m.Id) && m.OwnerType == OwnerType.Unit)
+                .Select(m => new { m.Id, m.StorageKey })
+                .ToDictionaryAsync(m => m.Id, m => (string?)m.StorageKey);
+
         var units = await query
             .Select(u => new UnitDto(
                 u.Id,
@@ -57,6 +75,8 @@ public static class UnitEndpoints
                 u.UnitType.ToString().ToLowerInvariant(),
                 dbContext.Units.Count(c => c.ParentUnitId == u.Id),
                 dbContext.Zaznamy.Count(z => z.UnitId == u.Id),
+                u.CoverMediaId,
+                GetCoverUrl(storageService, coverLookup, u.CoverMediaId),
                 u.CreatedAt,
                 u.UpdatedAt))
             .ToListAsync();
@@ -112,6 +132,8 @@ public static class UnitEndpoints
             unit.UnitType.ToString().ToLowerInvariant(),
             0,
             0,
+            unit.CoverMediaId,
+            null,
             unit.CreatedAt,
             unit.UpdatedAt);
 
@@ -121,6 +143,7 @@ public static class UnitEndpoints
     private static async Task<IResult> GetUnitAsync(
         ClaimsPrincipal user,
         Guid id,
+        IStorageService storageService,
         ApplicationDbContext dbContext)
     {
         var userId = user.GetUserId();
@@ -134,6 +157,8 @@ public static class UnitEndpoints
         if (!await HasPropertyAccessAsync(dbContext, unit.PropertyId, userId))
             return Results.Forbid();
 
+        var coverUrl = await GetCoverUrlAsync(dbContext, storageService, OwnerType.Unit, unit.Id, unit.CoverMediaId);
+
         var dto = new UnitDto(
             unit.Id,
             unit.PropertyId,
@@ -143,6 +168,8 @@ public static class UnitEndpoints
             unit.UnitType.ToString().ToLowerInvariant(),
             dbContext.Units.Count(c => c.ParentUnitId == unit.Id),
             dbContext.Zaznamy.Count(z => z.UnitId == unit.Id),
+            unit.CoverMediaId,
+            coverUrl,
             unit.CreatedAt,
             unit.UpdatedAt);
 
@@ -153,6 +180,7 @@ public static class UnitEndpoints
         ClaimsPrincipal user,
         Guid id,
         [FromBody] UpdateUnitRequest request,
+        IStorageService storageService,
         ApplicationDbContext dbContext)
     {
         var userId = user.GetUserId();
@@ -185,6 +213,8 @@ public static class UnitEndpoints
         unit.UpdatedAt = DateTime.UtcNow;
         await dbContext.SaveChangesAsync();
 
+        var coverUrl = await GetCoverUrlAsync(dbContext, storageService, OwnerType.Unit, unit.Id, unit.CoverMediaId);
+
         var dto = new UnitDto(
             unit.Id,
             unit.PropertyId,
@@ -194,6 +224,65 @@ public static class UnitEndpoints
             unit.UnitType.ToString().ToLowerInvariant(),
             dbContext.Units.Count(c => c.ParentUnitId == unit.Id),
             dbContext.Zaznamy.Count(z => z.UnitId == unit.Id),
+            unit.CoverMediaId,
+            coverUrl,
+            unit.CreatedAt,
+            unit.UpdatedAt);
+
+        return Results.Ok(dto);
+    }
+
+    private static async Task<IResult> UpdateUnitCoverAsync(
+        ClaimsPrincipal user,
+        Guid id,
+        [FromBody] CoverMediaRequest request,
+        IStorageService storageService,
+        ApplicationDbContext dbContext)
+    {
+        var userId = user.GetUserId();
+        if (userId == Guid.Empty)
+            return Results.Unauthorized();
+
+        var unit = await dbContext.Units.FirstOrDefaultAsync(u => u.Id == id);
+        if (unit is null)
+            return Results.NotFound();
+
+        if (!await HasPropertyAccessAsync(dbContext, unit.PropertyId, userId))
+            return Results.Forbid();
+
+        Media? coverMedia = null;
+        if (request.CoverMediaId.HasValue)
+        {
+            coverMedia = await dbContext.Media.FirstOrDefaultAsync(m => m.Id == request.CoverMediaId.Value);
+            if (coverMedia is null
+                || coverMedia.OwnerType != OwnerType.Unit
+                || coverMedia.OwnerId != unit.Id
+                || coverMedia.Type != MediaType.Photo)
+                return Results.BadRequest();
+
+            unit.CoverMediaId = coverMedia.Id;
+        }
+        else
+        {
+            unit.CoverMediaId = null;
+        }
+
+        unit.UpdatedAt = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
+
+        var coverUrl = coverMedia is null ? null : storageService.GetThumbnailUrl(coverMedia.StorageKey);
+
+        var dto = new UnitDto(
+            unit.Id,
+            unit.PropertyId,
+            unit.ParentUnitId,
+            unit.Name,
+            unit.Description,
+            unit.UnitType.ToString().ToLowerInvariant(),
+            dbContext.Units.Count(c => c.ParentUnitId == unit.Id),
+            dbContext.Zaznamy.Count(z => z.UnitId == unit.Id),
+            unit.CoverMediaId,
+            coverUrl,
             unit.CreatedAt,
             unit.UpdatedAt);
 
@@ -221,6 +310,45 @@ public static class UnitEndpoints
         await dbContext.SaveChangesAsync();
 
         return Results.NoContent();
+    }
+
+    private static string? BuildCoverUrl(IStorageService storageService, string? storageKey)
+    {
+        if (string.IsNullOrWhiteSpace(storageKey))
+            return null;
+
+        return storageService.GetThumbnailUrl(storageKey);
+    }
+
+    private static string? GetCoverUrl(
+        IStorageService storageService,
+        IReadOnlyDictionary<Guid, string?> coverLookup,
+        Guid? coverMediaId)
+    {
+        if (!coverMediaId.HasValue)
+            return null;
+
+        return coverLookup.TryGetValue(coverMediaId.Value, out var storageKey)
+            ? BuildCoverUrl(storageService, storageKey)
+            : null;
+    }
+
+    private static async Task<string?> GetCoverUrlAsync(
+        ApplicationDbContext dbContext,
+        IStorageService storageService,
+        OwnerType ownerType,
+        Guid ownerId,
+        Guid? coverMediaId)
+    {
+        if (!coverMediaId.HasValue)
+            return null;
+
+        var storageKey = await dbContext.Media
+            .Where(m => m.Id == coverMediaId.Value && m.OwnerType == ownerType && m.OwnerId == ownerId)
+            .Select(m => m.StorageKey)
+            .FirstOrDefaultAsync();
+
+        return BuildCoverUrl(storageService, storageKey);
     }
 
     private static Task<bool> HasPropertyAccessAsync(ApplicationDbContext dbContext, Guid propertyId, Guid userId)

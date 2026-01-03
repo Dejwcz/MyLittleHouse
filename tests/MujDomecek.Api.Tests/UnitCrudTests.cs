@@ -4,7 +4,10 @@ using System.Net.Http.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using MujDomecek.Application.DTOs;
+using MujDomecek.Domain.Aggregates.Zaznam;
 using MujDomecek.Domain.Aggregates.User;
+using MujDomecek.Domain.ValueObjects;
+using MujDomecek.Infrastructure.Persistence;
 
 namespace MujDomecek.Api.Tests;
 
@@ -79,6 +82,51 @@ public sealed class UnitCrudTests : IClassFixture<ApiWebApplicationFactory>
         Assert.Equal("Garage", updated!.Name);
         Assert.Equal("garage", updated.UnitType);
         Assert.Equal(parent.Id, updated.ParentUnitId);
+    }
+
+    [Fact]
+    public async Task UpdateUnitCover_AsOwner_UpdatesCover()
+    {
+        var token = await LoginConfirmedUserAsync();
+        var authClient = CreateAuthenticatedClient(token);
+        var projectId = await CreateProjectAsync(authClient);
+        var propertyId = await CreatePropertyAsync(authClient, projectId);
+
+        var createResponse = await authClient.PostAsJsonAsync(
+            "/units",
+            new CreateUnitRequest(propertyId, null, "Cover Unit", null, "room"));
+        var created = await createResponse.Content.ReadFromJsonAsync<UnitDto>();
+        Assert.NotNull(created);
+
+        var mediaId = Guid.NewGuid();
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            dbContext.Media.Add(new Media
+            {
+                Id = mediaId,
+                OwnerType = OwnerType.Unit,
+                OwnerId = created!.Id,
+                Type = MediaType.Photo,
+                StorageKey = "media/unit-cover.jpg",
+                MimeType = "image/jpeg",
+                SizeBytes = 2345
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
+        var patchResponse = await authClient.SendAsync(new HttpRequestMessage(
+            HttpMethod.Patch,
+            $"/units/{created!.Id}/cover")
+        {
+            Content = JsonContent.Create(new CoverMediaRequest(mediaId))
+        });
+
+        patchResponse.EnsureSuccessStatusCode();
+        var updated = await patchResponse.Content.ReadFromJsonAsync<UnitDto>();
+        Assert.NotNull(updated);
+        Assert.Equal(mediaId, updated!.CoverMediaId);
+        Assert.False(string.IsNullOrWhiteSpace(updated.CoverUrl));
     }
 
     [Fact]
