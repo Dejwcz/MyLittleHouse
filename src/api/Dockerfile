@@ -22,6 +22,9 @@ RUN dotnet publish MujDomecek.API/MujDomecek.API.csproj -c Release -o /app/publi
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
+# Install Kerberos library for PostgreSQL
+RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 && rm -rf /var/lib/apt/lists/*
+
 # Create non-root user
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
