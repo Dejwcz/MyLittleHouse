@@ -31,7 +31,7 @@ public sealed class PropertyCrudTests : IClassFixture<ApiWebApplicationFactory>
 
         var createResponse = await authClient.PostAsJsonAsync(
             "/properties",
-            new CreatePropertyRequest(projectId, "Main House", "Primary property", 50.1m, 14.5m, 150));
+            new CreatePropertyRequest(projectId, "Main House", "Primary property", "house", 50.1m, 14.5m, 150));
 
         Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
         var created = await createResponse.Content.ReadFromJsonAsync<PropertyDto>();
@@ -49,6 +49,7 @@ public sealed class PropertyCrudTests : IClassFixture<ApiWebApplicationFactory>
         Assert.NotNull(detail);
         Assert.Equal(created.Id, detail!.Id);
         Assert.Equal("Main House", detail.Name);
+        Assert.Equal("house", detail.PropertyType);
     }
 
     [Fact]
@@ -60,13 +61,13 @@ public sealed class PropertyCrudTests : IClassFixture<ApiWebApplicationFactory>
 
         var createResponse = await authClient.PostAsJsonAsync(
             "/properties",
-            new CreatePropertyRequest(projectId, "Old Name", null, null, null, null));
+            new CreatePropertyRequest(projectId, "Old Name", null, "other", null, null, null));
         var created = await createResponse.Content.ReadFromJsonAsync<PropertyDto>();
         Assert.NotNull(created);
 
         var updateResponse = await authClient.PutAsJsonAsync(
             $"/properties/{created!.Id}",
-            new UpdatePropertyRequest("New Name", "Updated", 49.0m, 15.0m, 200));
+            new UpdatePropertyRequest("New Name", "Updated", null, 49.0m, 15.0m, 200));
 
         updateResponse.EnsureSuccessStatusCode();
         var updated = await updateResponse.Content.ReadFromJsonAsync<PropertyDto>();
@@ -85,7 +86,7 @@ public sealed class PropertyCrudTests : IClassFixture<ApiWebApplicationFactory>
 
         var createResponse = await authClient.PostAsJsonAsync(
             "/properties",
-            new CreatePropertyRequest(projectId, "Cover Home", null, null, null, null));
+            new CreatePropertyRequest(projectId, "Cover Home", null, "other", null, null, null));
         var created = await createResponse.Content.ReadFromJsonAsync<PropertyDto>();
         Assert.NotNull(created);
 
@@ -129,7 +130,7 @@ public sealed class PropertyCrudTests : IClassFixture<ApiWebApplicationFactory>
 
         var createResponse = await authClient.PostAsJsonAsync(
             "/properties",
-            new CreatePropertyRequest(projectId, "To Delete", null, null, null, null));
+            new CreatePropertyRequest(projectId, "To Delete", null, "other", null, null, null));
         var created = await createResponse.Content.ReadFromJsonAsync<PropertyDto>();
         Assert.NotNull(created);
 
@@ -152,7 +153,7 @@ public sealed class PropertyCrudTests : IClassFixture<ApiWebApplicationFactory>
 
         var response = await otherClient.PostAsJsonAsync(
             "/properties",
-            new CreatePropertyRequest(projectId, "Blocked", null, null, null, null));
+            new CreatePropertyRequest(projectId, "Blocked", null, "other", null, null, null));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }

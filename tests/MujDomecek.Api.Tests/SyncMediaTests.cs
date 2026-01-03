@@ -63,7 +63,7 @@ public sealed class SyncMediaTests : IClassFixture<ApiWebApplicationFactory>
     {
         var response = await client.PostAsJsonAsync(
             "/properties",
-            new CreatePropertyRequest(projectId, "Property", null, null, null, null));
+            new CreatePropertyRequest(projectId, "Property", null, "other", null, null, null));
         response.EnsureSuccessStatusCode();
         var property = await response.Content.ReadFromJsonAsync<PropertyDto>();
         Assert.NotNull(property);
@@ -84,8 +84,8 @@ public sealed class SyncMediaTests : IClassFixture<ApiWebApplicationFactory>
     private async Task<MediaDto> AddMediaAsync(HttpClient client, Guid zaznamId, string storageKey)
     {
         var response = await client.PostAsJsonAsync(
-            $"/zaznamy/{zaznamId}/media",
-            new AddMediaRequest(storageKey, "document", "file.pdf", "application/pdf", 1234, "Doc"));
+            "/media",
+            new AddMediaRequest("zaznam", zaznamId, storageKey, "document", "file.pdf", "application/pdf", 1234, "Doc"));
 
         Assert.Equal(System.Net.HttpStatusCode.Created, response.StatusCode);
         var document = await response.Content.ReadFromJsonAsync<MediaDto>();

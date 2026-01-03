@@ -75,7 +75,7 @@ public sealed class PropertyStatsTests : IClassFixture<ApiWebApplicationFactory>
     {
         var response = await client.PostAsJsonAsync(
             "/properties",
-            new CreatePropertyRequest(projectId, "Property", null, null, null, null));
+            new CreatePropertyRequest(projectId, "Property", null, "other", null, null, null));
         response.EnsureSuccessStatusCode();
         var property = await response.Content.ReadFromJsonAsync<PropertyDto>();
         Assert.NotNull(property);

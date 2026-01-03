@@ -6,6 +6,7 @@ public sealed record PropertyDto(
     string ProjectName,
     string Name,
     string? Description,
+    string PropertyType,
     decimal? Latitude,
     decimal? Longitude,
     int GeoRadius,
@@ -44,6 +45,7 @@ public sealed record CreatePropertyRequest(
     Guid ProjectId,
     string Name,
     string? Description,
+    string PropertyType,
     decimal? Latitude,
     decimal? Longitude,
     int? GeoRadius
@@ -52,6 +54,7 @@ public sealed record CreatePropertyRequest(
 public sealed record UpdatePropertyRequest(
     string? Name,
     string? Description,
+    string? PropertyType,
     decimal? Latitude,
     decimal? Longitude,
     int? GeoRadius

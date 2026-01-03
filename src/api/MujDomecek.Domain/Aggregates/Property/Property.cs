@@ -11,6 +11,8 @@ public sealed class Property : SoftDeletableEntity<Guid>
 
     public string? Description { get; set; }
 
+    public PropertyType PropertyType { get; set; } = PropertyType.Other;
+
     public decimal? Latitude { get; set; }
 
     public decimal? Longitude { get; set; }

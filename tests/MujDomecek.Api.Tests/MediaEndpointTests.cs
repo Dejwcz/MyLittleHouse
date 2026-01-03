@@ -28,24 +28,24 @@ public sealed class MediaEndpointTests : IClassFixture<ApiWebApplicationFactory>
         var propertyId = await CreatePropertyAsync(ownerClient, projectId);
         var zaznam = await CreateZaznamAsync(ownerClient, propertyId);
 
-        var created = await AddMediaAsync(ownerClient, zaznam.Id, "docs/file1.pdf");
+        var created = await AddMediaAsync(ownerClient, "zaznam", zaznam.Id, "docs/file1.pdf");
 
-        var listResponse = await ownerClient.GetAsync($"/zaznamy/{zaznam.Id}/media");
+        var listResponse = await ownerClient.GetAsync($"/media?ownerType=zaznam&ownerId={zaznam.Id}");
         listResponse.EnsureSuccessStatusCode();
-        var list = await listResponse.Content.ReadFromJsonAsync<List<MediaDto>>();
+        var list = await listResponse.Content.ReadFromJsonAsync<MediaListResponse>();
         Assert.NotNull(list);
-        Assert.Contains(list!, d => d.Id == created.Id);
+        Assert.Contains(list!.Items, d => d.Id == created.Id);
 
         var detailResponse = await ownerClient.GetAsync($"/media/{created.Id}");
         detailResponse.EnsureSuccessStatusCode();
         var detail = await detailResponse.Content.ReadFromJsonAsync<MediaDto>();
         Assert.NotNull(detail);
         Assert.Equal(created.Id, detail!.Id);
-        Assert.Equal("document", detail.Type);
+        Assert.Equal("document", detail.MediaType);
     }
 
     [Fact]
-    public async Task UpdateMedia_UpdatesDescription()
+    public async Task UpdateMedia_UpdatesCaption()
     {
         var owner = await RegisterLoginAsync();
         var ownerClient = CreateAuthenticatedClient(owner.Token);
@@ -53,7 +53,7 @@ public sealed class MediaEndpointTests : IClassFixture<ApiWebApplicationFactory>
         var propertyId = await CreatePropertyAsync(ownerClient, projectId);
         var zaznam = await CreateZaznamAsync(ownerClient, propertyId);
 
-        var created = await AddMediaAsync(ownerClient, zaznam.Id, "docs/file2.pdf");
+        var created = await AddMediaAsync(ownerClient, "zaznam", zaznam.Id, "docs/file2.pdf");
 
         var updateResponse = await ownerClient.PutAsJsonAsync(
             $"/media/{created.Id}",
@@ -62,7 +62,7 @@ public sealed class MediaEndpointTests : IClassFixture<ApiWebApplicationFactory>
         updateResponse.EnsureSuccessStatusCode();
         var updated = await updateResponse.Content.ReadFromJsonAsync<MediaDto>();
         Assert.NotNull(updated);
-        Assert.Equal("Updated", updated!.Description);
+        Assert.Equal("Updated", updated!.Caption);
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public sealed class MediaEndpointTests : IClassFixture<ApiWebApplicationFactory>
         var propertyId = await CreatePropertyAsync(ownerClient, projectId);
         var zaznam = await CreateZaznamAsync(ownerClient, propertyId);
 
-        var created = await AddMediaAsync(ownerClient, zaznam.Id, "docs/file3.pdf");
+        var created = await AddMediaAsync(ownerClient, "zaznam", zaznam.Id, "docs/file3.pdf");
 
         var deleteResponse = await ownerClient.DeleteAsync($"/media/{created.Id}");
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
@@ -92,7 +92,7 @@ public sealed class MediaEndpointTests : IClassFixture<ApiWebApplicationFactory>
         var propertyId = await CreatePropertyAsync(ownerClient, projectId);
         var zaznam = await CreateZaznamAsync(ownerClient, propertyId);
 
-        var created = await AddMediaAsync(ownerClient, zaznam.Id, "docs/file4.pdf");
+        var created = await AddMediaAsync(ownerClient, "zaznam", zaznam.Id, "docs/file4.pdf");
 
         var urlResponse = await ownerClient.GetAsync($"/media/{created.Id}/url");
         urlResponse.EnsureSuccessStatusCode();
@@ -122,7 +122,7 @@ public sealed class MediaEndpointTests : IClassFixture<ApiWebApplicationFactory>
     {
         var response = await client.PostAsJsonAsync(
             "/properties",
-            new CreatePropertyRequest(projectId, "Property", null, null, null, null));
+            new CreatePropertyRequest(projectId, "Property", null, "other", null, null, null));
         response.EnsureSuccessStatusCode();
         var property = await response.Content.ReadFromJsonAsync<PropertyDto>();
         Assert.NotNull(property);
@@ -140,16 +140,16 @@ public sealed class MediaEndpointTests : IClassFixture<ApiWebApplicationFactory>
         return zaznam!;
     }
 
-    private async Task<MediaDto> AddMediaAsync(HttpClient client, Guid zaznamId, string storageKey)
+    private async Task<MediaDto> AddMediaAsync(HttpClient client, string ownerType, Guid ownerId, string storageKey)
     {
         var response = await client.PostAsJsonAsync(
-            $"/zaznamy/{zaznamId}/media",
-            new AddMediaRequest(storageKey, "document", "file.pdf", "application/pdf", 1234, "Doc"));
+            "/media",
+            new AddMediaRequest(ownerType, ownerId, storageKey, "document", "file.pdf", "application/pdf", 1234, "Doc"));
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var document = await response.Content.ReadFromJsonAsync<MediaDto>();
-        Assert.NotNull(document);
-        return document!;
+        var media = await response.Content.ReadFromJsonAsync<MediaDto>();
+        Assert.NotNull(media);
+        return media!;
     }
 
     private async Task<(string Token, Guid UserId, string Email)> RegisterLoginAsync()

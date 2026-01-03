@@ -2,11 +2,9 @@ namespace MujDomecek.Domain.ValueObjects;
 
 public enum UnitType
 {
-    Flat = 0,
-    House = 1,
-    Garage = 2,
-    Garden = 3,
-    Room = 4,
-    Stairs = 5,
-    Other = 6
+    Room = 0,
+    Floor = 1,
+    Cellar = 2,
+    Parking = 3,
+    Other = 4
 }

@@ -90,6 +90,7 @@ public static class PropertyEndpoints
             x.Project.Name,
             x.Property.Name,
             x.Property.Description,
+            x.Property.PropertyType.ToString().ToLowerInvariant(),
             x.Property.Latitude,
             x.Property.Longitude,
             x.Property.GeoRadius,
@@ -133,6 +134,7 @@ public static class PropertyEndpoints
             ProjectId = project.Id,
             Name = request.Name,
             Description = request.Description,
+            PropertyType = Enum.TryParse<PropertyType>(request.PropertyType, true, out var parsed) ? parsed : PropertyType.Other,
             Latitude = request.Latitude,
             Longitude = request.Longitude,
             GeoRadius = request.GeoRadius ?? 100,
@@ -149,6 +151,7 @@ public static class PropertyEndpoints
             project.Name,
             property.Name,
             property.Description,
+            property.PropertyType.ToString().ToLowerInvariant(),
             property.Latitude,
             property.Longitude,
             property.GeoRadius,
@@ -195,6 +198,7 @@ public static class PropertyEndpoints
             project.Name,
             property.Name,
             property.Description,
+            property.PropertyType.ToString().ToLowerInvariant(),
             property.Latitude,
             property.Longitude,
             property.GeoRadius,
@@ -235,6 +239,8 @@ public static class PropertyEndpoints
             property.Name = request.Name;
         if (request.Description is not null)
             property.Description = request.Description;
+        if (!string.IsNullOrWhiteSpace(request.PropertyType))
+            property.PropertyType = Enum.TryParse<PropertyType>(request.PropertyType, true, out var parsed) ? parsed : property.PropertyType;
         if (request.Latitude.HasValue)
             property.Latitude = request.Latitude;
         if (request.Longitude.HasValue)
@@ -254,6 +260,7 @@ public static class PropertyEndpoints
             project.Name,
             property.Name,
             property.Description,
+            property.PropertyType.ToString().ToLowerInvariant(),
             property.Latitude,
             property.Longitude,
             property.GeoRadius,
@@ -321,6 +328,7 @@ public static class PropertyEndpoints
             project.Name,
             property.Name,
             property.Description,
+            property.PropertyType.ToString().ToLowerInvariant(),
             property.Latitude,
             property.Longitude,
             property.GeoRadius,

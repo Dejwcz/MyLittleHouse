@@ -62,7 +62,7 @@ public sealed class UnitCrudTests : IClassFixture<ApiWebApplicationFactory>
 
         var parentResponse = await authClient.PostAsJsonAsync(
             "/units",
-            new CreateUnitRequest(propertyId, null, "Parent", null, "house"));
+            new CreateUnitRequest(propertyId, null, "Parent", null, "floor"));
         var parent = await parentResponse.Content.ReadFromJsonAsync<UnitDto>();
         Assert.NotNull(parent);
 
@@ -74,13 +74,13 @@ public sealed class UnitCrudTests : IClassFixture<ApiWebApplicationFactory>
 
         var updateResponse = await authClient.PutAsJsonAsync(
             $"/units/{child!.Id}",
-            new UpdateUnitRequest("Garage", "Updated", "garage", parent!.Id));
+            new UpdateUnitRequest("Parking Spot", "Updated", "parking", parent!.Id));
 
         updateResponse.EnsureSuccessStatusCode();
         var updated = await updateResponse.Content.ReadFromJsonAsync<UnitDto>();
         Assert.NotNull(updated);
-        Assert.Equal("Garage", updated!.Name);
-        Assert.Equal("garage", updated.UnitType);
+        Assert.Equal("Parking Spot", updated!.Name);
+        Assert.Equal("parking", updated.UnitType);
         Assert.Equal(parent.Id, updated.ParentUnitId);
     }
 
@@ -188,7 +188,7 @@ public sealed class UnitCrudTests : IClassFixture<ApiWebApplicationFactory>
     {
         var response = await client.PostAsJsonAsync(
             "/properties",
-            new CreatePropertyRequest(projectId, "Property", null, null, null, null));
+            new CreatePropertyRequest(projectId, "Property", null, "other", null, null, null));
         response.EnsureSuccessStatusCode();
         var property = await response.Content.ReadFromJsonAsync<PropertyDto>();
         Assert.NotNull(property);

@@ -151,6 +151,7 @@ public static class ProjectEndpoints
                 project.Name,
                 p.Name,
                 p.Description,
+                p.PropertyType.ToString().ToLowerInvariant(),
                 p.Latitude,
                 p.Longitude,
                 p.GeoRadius,
