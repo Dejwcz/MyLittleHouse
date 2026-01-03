@@ -180,18 +180,18 @@ public sealed class ExportDataJob : IJob
             })
             .ToListAsync(context.CancellationToken);
 
-        var documentsQuery = _dbContext.ZaznamDokumenty
+        var documentsQuery = _dbContext.Media
             .IgnoreQueryFilters()
-            .Where(d => zaznamIds.Contains(d.ZaznamId));
+            .Where(d => d.OwnerType == OwnerType.Zaznam && zaznamIds.Contains(d.OwnerId));
 
         if (!_options.IncludePhotos)
-            documentsQuery = documentsQuery.Where(d => d.Type != DocumentType.Photo);
+            documentsQuery = documentsQuery.Where(d => d.Type != MediaType.Photo);
 
         var documents = await documentsQuery
             .Select(d => new
             {
                 d.Id,
-                d.ZaznamId,
+                ZaznamId = d.OwnerId,
                 Type = d.Type.ToString().ToLowerInvariant(),
                 d.StorageKey,
                 d.OriginalFileName,

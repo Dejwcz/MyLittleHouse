@@ -282,8 +282,9 @@ public static class PropertyEndpoints
         var totalCost = await dbContext.Zaznamy.Where(z => z.PropertyId == id).SumAsync(z => (decimal?)z.Cost) ?? 0;
         var zaznamCount = await dbContext.Zaznamy.CountAsync(z => z.PropertyId == id);
         var draftCount = await dbContext.Zaznamy.CountAsync(z => z.PropertyId == id && z.Status == ZaznamStatus.Draft);
-        var documentCount = await dbContext.ZaznamDokumenty
-            .Join(dbContext.Zaznamy, d => d.ZaznamId, z => z.Id, (d, z) => new { d, z })
+        var documentCount = await dbContext.Media
+            .Where(d => d.OwnerType == OwnerType.Zaznam)
+            .Join(dbContext.Zaznamy, d => d.OwnerId, z => z.Id, (d, z) => new { d, z })
             .Where(x => x.z.PropertyId == id)
             .CountAsync();
 

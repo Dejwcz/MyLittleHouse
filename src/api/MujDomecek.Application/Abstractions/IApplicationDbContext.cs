@@ -28,7 +28,7 @@ public interface IApplicationDbContext
     DbSet<Activity> Activities { get; }
 
     DbSet<Zaznam> Zaznamy { get; }
-    DbSet<ZaznamDokument> ZaznamDokumenty { get; }
+    DbSet<Media> Media { get; }
     DbSet<Tag> Tags { get; }
     DbSet<ZaznamTag> ZaznamTags { get; }
     DbSet<Comment> Comments { get; }

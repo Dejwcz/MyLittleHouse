@@ -3,11 +3,13 @@ using MujDomecek.Domain.ValueObjects;
 
 namespace MujDomecek.Domain.Aggregates.Zaznam;
 
-public sealed class ZaznamDokument : SoftDeletableEntity<Guid>
+public sealed class Media : SoftDeletableEntity<Guid>
 {
-    public Guid ZaznamId { get; set; }
+    public OwnerType OwnerType { get; set; }
 
-    public DocumentType Type { get; set; }
+    public Guid OwnerId { get; set; }
+
+    public MediaType Type { get; set; }
 
     public string StorageKey { get; set; } = string.Empty;
 

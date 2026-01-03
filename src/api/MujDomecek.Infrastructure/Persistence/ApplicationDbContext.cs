@@ -40,7 +40,7 @@ public sealed class ApplicationDbContext
     public DbSet<Activity> Activities => Set<Activity>();
 
     public DbSet<Zaznam> Zaznamy => Set<Zaznam>();
-    public DbSet<ZaznamDokument> ZaznamDokumenty => Set<ZaznamDokument>();
+    public DbSet<Media> Media => Set<Media>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<ZaznamTag> ZaznamTags => Set<ZaznamTag>();
     public DbSet<ZaznamMember> ZaznamMembers => Set<ZaznamMember>();
@@ -114,7 +114,7 @@ public sealed class ApplicationDbContext
         builder.Entity<Zaznam>()
             .HasQueryFilter(z => !z.IsDeleted);
 
-        builder.Entity<ZaznamDokument>()
+        builder.Entity<Media>()
             .HasQueryFilter(d => !d.IsDeleted);
 
         builder.Entity<Comment>()
@@ -151,6 +151,9 @@ public sealed class ApplicationDbContext
         builder.Entity<ZaznamMember>()
             .HasIndex(x => new { x.ZaznamId, x.UserId })
             .IsUnique();
+
+        builder.Entity<Media>()
+            .HasIndex(x => new { x.OwnerType, x.OwnerId });
 
         builder.Entity<Invitation>()
             .HasIndex(x => x.TokenHash)

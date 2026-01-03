@@ -1,6 +1,6 @@
 namespace MujDomecek.Domain.ValueObjects;
 
-public enum DocumentType
+public enum MediaType
 {
     Photo = 0,
     Document = 1,

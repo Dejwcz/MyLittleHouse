@@ -68,8 +68,8 @@ public static class AdminEndpoints
         var zaznamy = await dbContext.Zaznamy.CountAsync();
         var zaznamy24h = await dbContext.Zaznamy.CountAsync(z => z.CreatedAt >= now.AddHours(-24));
 
-        var storageTotal = await dbContext.ZaznamDokumenty.SumAsync(d => (long?)d.SizeBytes) ?? 0;
-        var storageCount = await dbContext.ZaznamDokumenty.CountAsync();
+        var storageTotal = await dbContext.Media.SumAsync(d => (long?)d.SizeBytes) ?? 0;
+        var storageCount = await dbContext.Media.CountAsync();
         var pendingInvitations = await dbContext.Invitations.CountAsync(i => i.Status == InvitationStatus.Pending);
 
         var response = new AdminDashboardResponse(

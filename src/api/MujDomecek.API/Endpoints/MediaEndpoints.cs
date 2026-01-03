@@ -40,8 +40,8 @@ public static class MediaEndpoints
         if (!await HasZaznamAccessAsync(dbContext, zaznamId, userId))
             return Results.Forbid();
 
-        var documents = await dbContext.ZaznamDokumenty
-            .Where(d => d.ZaznamId == zaznamId)
+        var documents = await dbContext.Media
+            .Where(d => d.OwnerType == OwnerType.Zaznam && d.OwnerId == zaznamId)
             .OrderByDescending(d => d.CreatedAt)
             .ToListAsync();
 
@@ -66,14 +66,15 @@ public static class MediaEndpoints
         if (string.IsNullOrWhiteSpace(request.StorageKey))
             return Results.BadRequest();
 
-        if (!TryParseMediaType(request.Type, out var docType))
+        if (!TryParseMediaType(request.Type, out var mediaType))
             return Results.BadRequest();
 
-        var document = new ZaznamDokument
+        var document = new Media
         {
             Id = Guid.NewGuid(),
-            ZaznamId = zaznamId,
-            Type = docType,
+            OwnerType = OwnerType.Zaznam,
+            OwnerId = zaznamId,
+            Type = mediaType,
             StorageKey = request.StorageKey,
             OriginalFileName = request.OriginalFileName,
             MimeType = request.MimeType,
@@ -83,7 +84,7 @@ public static class MediaEndpoints
             UpdatedAt = DateTime.UtcNow
         };
 
-        dbContext.ZaznamDokumenty.Add(document);
+        dbContext.Media.Add(document);
         await dbContext.SaveChangesAsync();
 
         return Results.Created($"/media/{document.Id}", ToMediaDto(document, storageService));
@@ -99,11 +100,12 @@ public static class MediaEndpoints
         if (userId == Guid.Empty)
             return Results.Unauthorized();
 
-        var document = await dbContext.ZaznamDokumenty.FirstOrDefaultAsync(d => d.Id == id);
+        var document = await dbContext.Media.FirstOrDefaultAsync(d => d.Id == id);
         if (document is null)
             return Results.NotFound();
 
-        if (!await HasZaznamAccessAsync(dbContext, document.ZaznamId, userId))
+        if (document.OwnerType != OwnerType.Zaznam
+            || !await HasZaznamAccessAsync(dbContext, document.OwnerId, userId))
             return Results.Forbid();
 
         return Results.Ok(ToMediaDto(document, storageService));
@@ -120,11 +122,12 @@ public static class MediaEndpoints
         if (userId == Guid.Empty)
             return Results.Unauthorized();
 
-        var document = await dbContext.ZaznamDokumenty.FirstOrDefaultAsync(d => d.Id == id);
+        var document = await dbContext.Media.FirstOrDefaultAsync(d => d.Id == id);
         if (document is null)
             return Results.NotFound();
 
-        if (!await HasZaznamAccessAsync(dbContext, document.ZaznamId, userId))
+        if (document.OwnerType != OwnerType.Zaznam
+            || !await HasZaznamAccessAsync(dbContext, document.OwnerId, userId))
             return Results.Forbid();
 
         if (request.Description is not null)
@@ -145,11 +148,12 @@ public static class MediaEndpoints
         if (userId == Guid.Empty)
             return Results.Unauthorized();
 
-        var document = await dbContext.ZaznamDokumenty.FirstOrDefaultAsync(d => d.Id == id);
+        var document = await dbContext.Media.FirstOrDefaultAsync(d => d.Id == id);
         if (document is null)
             return Results.NotFound();
 
-        if (!await HasZaznamAccessAsync(dbContext, document.ZaznamId, userId))
+        if (document.OwnerType != OwnerType.Zaznam
+            || !await HasZaznamAccessAsync(dbContext, document.OwnerId, userId))
             return Results.Forbid();
 
         document.IsDeleted = true;
@@ -170,11 +174,12 @@ public static class MediaEndpoints
         if (userId == Guid.Empty)
             return Results.Unauthorized();
 
-        var document = await dbContext.ZaznamDokumenty.FirstOrDefaultAsync(d => d.Id == id);
+        var document = await dbContext.Media.FirstOrDefaultAsync(d => d.Id == id);
         if (document is null)
             return Results.NotFound();
 
-        if (!await HasZaznamAccessAsync(dbContext, document.ZaznamId, userId))
+        if (document.OwnerType != OwnerType.Zaznam
+            || !await HasZaznamAccessAsync(dbContext, document.OwnerId, userId))
             return Results.Forbid();
 
         var expiresIn = GetPresignedExpiry(storageOptions.Value);
@@ -206,16 +211,16 @@ public static class MediaEndpoints
     }
 
     private static MediaDto ToMediaDto(
-        ZaznamDokument document,
+        Media document,
         IStorageService storageService)
     {
-        var thumbnailUrl = document.Type == DocumentType.Photo
+        var thumbnailUrl = document.Type == MediaType.Photo
             ? storageService.GetThumbnailUrl(document.StorageKey)
             : null;
 
         return new MediaDto(
             document.Id,
-            document.ZaznamId,
+            document.OwnerId,
             ToMediaTypeString(document.Type),
             document.StorageKey,
             document.OriginalFileName,
@@ -226,34 +231,34 @@ public static class MediaEndpoints
             document.CreatedAt);
     }
 
-    private static bool TryParseMediaType(string? type, out DocumentType documentType)
+    private static bool TryParseMediaType(string? type, out MediaType mediaType)
     {
-        documentType = DocumentType.Document;
+        mediaType = MediaType.Document;
         if (string.IsNullOrWhiteSpace(type))
             return false;
 
         return type.Trim().ToLowerInvariant() switch
         {
-            "photo" => SetMediaType(DocumentType.Photo, out documentType),
-            "document" => SetMediaType(DocumentType.Document, out documentType),
-            "receipt" => SetMediaType(DocumentType.Receipt, out documentType),
+            "photo" => SetMediaType(MediaType.Photo, out mediaType),
+            "document" => SetMediaType(MediaType.Document, out mediaType),
+            "receipt" => SetMediaType(MediaType.Receipt, out mediaType),
             _ => false
         };
     }
 
-    private static bool SetMediaType(DocumentType type, out DocumentType documentType)
+    private static bool SetMediaType(MediaType type, out MediaType mediaType)
     {
-        documentType = type;
+        mediaType = type;
         return true;
     }
 
-    private static string ToMediaTypeString(DocumentType type)
+    private static string ToMediaTypeString(MediaType type)
     {
         return type switch
         {
-            DocumentType.Photo => "photo",
-            DocumentType.Document => "document",
-            DocumentType.Receipt => "receipt",
+            MediaType.Photo => "photo",
+            MediaType.Document => "document",
+            MediaType.Receipt => "receipt",
             _ => "document"
         };
     }

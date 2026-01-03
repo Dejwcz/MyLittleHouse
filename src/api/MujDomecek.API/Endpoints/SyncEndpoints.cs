@@ -265,9 +265,9 @@ public static class SyncEndpoints
                     .Select(z => z.Id)
                     .ToListAsync();
 
-        var documentsQuery = dbContext.ZaznamDokumenty
+        var documentsQuery = dbContext.Media
             .IgnoreQueryFilters()
-            .Where(d => accessibleZaznamIds.Contains(d.ZaznamId));
+            .Where(d => d.OwnerType == OwnerType.Zaznam && accessibleZaznamIds.Contains(d.OwnerId));
         if (sinceRevision > 0)
             documentsQuery = documentsQuery.Where(d => d.ServerRevision > sinceRevision);
 
@@ -625,11 +625,13 @@ public static class SyncEndpoints
         string operation,
         DateTime timestamp)
     {
-        var existing = await dbContext.ZaznamDokumenty
+        var existing = await dbContext.Media
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(d => d.Id == change.EntityId);
 
-        if (existing is not null && !await HasZaznamAccessAsync(dbContext, existing.ZaznamId, userId))
+        if (existing is not null
+            && (existing.OwnerType != OwnerType.Zaznam
+                || !await HasZaznamAccessAsync(dbContext, existing.OwnerId, userId)))
             return "forbidden";
 
         if (operation == "delete")
@@ -665,10 +667,11 @@ public static class SyncEndpoints
             TryGetString(data, "originalFileName", out var originalFileName);
             TryGetString(data, "description", out var description);
 
-            var document = new ZaznamDokument
+            var document = new Media
             {
                 Id = change.EntityId,
-                ZaznamId = zaznamId,
+                OwnerType = OwnerType.Zaznam,
+                OwnerId = zaznamId,
                 Type = docType,
                 StorageKey = storageKey,
                 OriginalFileName = originalFileName,
@@ -679,7 +682,7 @@ public static class SyncEndpoints
                 UpdatedAt = timestamp
             };
 
-            dbContext.ZaznamDokumenty.Add(document);
+            dbContext.Media.Add(document);
             return null;
         }
         if (TryGetString(data, "type", out var updatedTypeRaw)
@@ -878,7 +881,8 @@ public static class SyncEndpoints
             "property" => await dbContext.Properties.AnyAsync(p => p.Id == entityId && p.ProjectId == projectId),
             "unit" => await dbContext.Units.AnyAsync(u => u.Id == entityId && dbContext.Properties.Any(p => p.Id == u.PropertyId && p.ProjectId == projectId)),
             "zaznam" => await dbContext.Zaznamy.AnyAsync(z => z.Id == entityId && dbContext.Properties.Any(p => p.Id == z.PropertyId && p.ProjectId == projectId)),
-            "document" => await dbContext.ZaznamDokumenty.AnyAsync(d => d.Id == entityId && dbContext.Zaznamy.Any(z => z.Id == d.ZaznamId && dbContext.Properties.Any(p => p.Id == z.PropertyId && p.ProjectId == projectId))),
+            "document" => await dbContext.Media.AnyAsync(d => d.Id == entityId && d.OwnerType == OwnerType.Zaznam
+                && dbContext.Zaznamy.Any(z => z.Id == d.OwnerId && dbContext.Properties.Any(p => p.Id == z.PropertyId && p.ProjectId == projectId))),
             "comment" => await dbContext.Comments.AnyAsync(c => c.Id == entityId && dbContext.Zaznamy.Any(z => z.Id == c.ZaznamId && dbContext.Properties.Any(p => p.Id == z.PropertyId && p.ProjectId == projectId))),
             _ => false
         };
@@ -903,7 +907,8 @@ public static class SyncEndpoints
             "property" => entityId == propertyId,
             "unit" => await dbContext.Units.AnyAsync(u => u.Id == entityId && u.PropertyId == propertyId),
             "zaznam" => await dbContext.Zaznamy.AnyAsync(z => z.Id == entityId && z.PropertyId == propertyId),
-            "document" => await dbContext.ZaznamDokumenty.AnyAsync(d => d.Id == entityId && dbContext.Zaznamy.Any(z => z.Id == d.ZaznamId && z.PropertyId == propertyId)),
+            "document" => await dbContext.Media.AnyAsync(d => d.Id == entityId && d.OwnerType == OwnerType.Zaznam
+                && dbContext.Zaznamy.Any(z => z.Id == d.OwnerId && z.PropertyId == propertyId)),
             "comment" => await dbContext.Comments.AnyAsync(c => c.Id == entityId && dbContext.Zaznamy.Any(z => z.Id == c.ZaznamId && z.PropertyId == propertyId)),
             _ => false
         };
@@ -928,7 +933,7 @@ public static class SyncEndpoints
             "property" => false,
             "unit" => false,
             "zaznam" => entityId == zaznamId,
-            "document" => await dbContext.ZaznamDokumenty.AnyAsync(d => d.Id == entityId && d.ZaznamId == zaznamId),
+            "document" => await dbContext.Media.AnyAsync(d => d.Id == entityId && d.OwnerType == OwnerType.Zaznam && d.OwnerId == zaznamId),
             "comment" => await dbContext.Comments.AnyAsync(c => c.Id == entityId && c.ZaznamId == zaznamId),
             _ => false
         };
@@ -1086,14 +1091,14 @@ public static class SyncEndpoints
             data,
             RevisionToTimestamp(zaznam.ServerRevision));
     }
-    private static SyncPullChange BuildDocumentChange(ZaznamDokument document)
+    private static SyncPullChange BuildDocumentChange(Media document)
     {
         if (document.IsDeleted)
             return new SyncPullChange("document", document.Id, "delete", null, RevisionToTimestamp(document.ServerRevision));
 
         var data = JsonSerializer.SerializeToElement(new
         {
-            zaznamId = document.ZaznamId,
+            zaznamId = document.OwnerId,
             type = ToDocumentType(document.Type),
             storageKey = document.StorageKey,
             originalFileName = document.OriginalFileName,
@@ -1401,34 +1406,34 @@ public static class SyncEndpoints
         return Enum.TryParse<UnitType>(raw, true, out unitType);
     }
 
-    private static bool TryParseDocumentType(string? type, out DocumentType documentType)
+    private static bool TryParseDocumentType(string? type, out MediaType documentType)
     {
-        documentType = DocumentType.Document;
+        documentType = MediaType.Document;
         if (string.IsNullOrWhiteSpace(type))
             return false;
 
         return type.Trim().ToLowerInvariant() switch
         {
-            "photo" => SetDocumentType(DocumentType.Photo, out documentType),
-            "document" => SetDocumentType(DocumentType.Document, out documentType),
-            "receipt" => SetDocumentType(DocumentType.Receipt, out documentType),
+            "photo" => SetDocumentType(MediaType.Photo, out documentType),
+            "document" => SetDocumentType(MediaType.Document, out documentType),
+            "receipt" => SetDocumentType(MediaType.Receipt, out documentType),
             _ => false
         };
     }
 
-    private static bool SetDocumentType(DocumentType type, out DocumentType documentType)
+    private static bool SetDocumentType(MediaType type, out MediaType documentType)
     {
         documentType = type;
         return true;
     }
 
-    private static string ToDocumentType(DocumentType type)
+    private static string ToDocumentType(MediaType type)
     {
         return type switch
         {
-            DocumentType.Photo => "photo",
-            DocumentType.Document => "document",
-            DocumentType.Receipt => "receipt",
+            MediaType.Photo => "photo",
+            MediaType.Document => "document",
+            MediaType.Receipt => "receipt",
             _ => "document"
         };
     }

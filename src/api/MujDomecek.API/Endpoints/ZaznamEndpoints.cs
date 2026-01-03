@@ -146,9 +146,9 @@ public static class ZaznamEndpoints
             .GroupBy(r => r.ZaznamId)
             .ToDictionary(g => g.Key, g => g.Select(r => r.Name).ToList());
 
-        var documentCounts = await dbContext.ZaznamDokumenty
-            .Where(d => zaznamIds.Contains(d.ZaznamId))
-            .GroupBy(d => d.ZaznamId)
+        var documentCounts = await dbContext.Media
+            .Where(d => d.OwnerType == OwnerType.Zaznam && zaznamIds.Contains(d.OwnerId))
+            .GroupBy(d => d.OwnerId)
             .Select(g => new { g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Key, x => x.Count);
 
@@ -158,9 +158,9 @@ public static class ZaznamEndpoints
             .Select(g => new { g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Key, x => x.Count);
 
-        var thumbnailLookup = await dbContext.ZaznamDokumenty
-            .Where(d => zaznamIds.Contains(d.ZaznamId) && d.Type == DocumentType.Photo)
-            .GroupBy(d => d.ZaznamId)
+        var thumbnailLookup = await dbContext.Media
+            .Where(d => d.OwnerType == OwnerType.Zaznam && zaznamIds.Contains(d.OwnerId) && d.Type == MediaType.Photo)
+            .GroupBy(d => d.OwnerId)
             .Select(g => new
             {
                 g.Key,
@@ -342,8 +342,8 @@ public static class ZaznamEndpoints
             return Results.Forbid();
 
         var dto = await ToDtoAsync(dbContext, zaznam, userId, storageService);
-        var documents = await dbContext.ZaznamDokumenty
-            .Where(d => d.ZaznamId == zaznam.Id)
+        var documents = await dbContext.Media
+            .Where(d => d.OwnerType == OwnerType.Zaznam && d.OwnerId == zaznam.Id)
             .OrderByDescending(d => d.CreatedAt)
             .ToListAsync();
         var documentDtos = documents.Select(ToDocumentDto).ToList();
@@ -796,10 +796,10 @@ public static class ZaznamEndpoints
         var tags = await dbContext.ZaznamTags.Where(t => t.ZaznamId == zaznam.Id)
             .Join(dbContext.Tags, t => t.TagId, tag => tag.Id, (t, tag) => tag.Name)
             .ToListAsync();
-        var documentCount = await dbContext.ZaznamDokumenty.CountAsync(d => d.ZaznamId == zaznam.Id);
+        var documentCount = await dbContext.Media.CountAsync(d => d.OwnerType == OwnerType.Zaznam && d.OwnerId == zaznam.Id);
         var commentCount = await dbContext.Comments.CountAsync(c => c.ZaznamId == zaznam.Id);
-        var thumbnailKey = await dbContext.ZaznamDokumenty
-            .Where(d => d.ZaznamId == zaznam.Id && d.Type == DocumentType.Photo)
+        var thumbnailKey = await dbContext.Media
+            .Where(d => d.OwnerType == OwnerType.Zaznam && d.OwnerId == zaznam.Id && d.Type == MediaType.Photo)
             .OrderBy(d => d.CreatedAt)
             .Select(d => d.StorageKey)
             .FirstOrDefaultAsync();
@@ -847,11 +847,11 @@ public static class ZaznamEndpoints
             new SimpleUserDto(createdByUserId, createdByName ?? string.Empty));
     }
 
-    private static DocumentDto ToDocumentDto(ZaznamDokument document)
+    private static DocumentDto ToDocumentDto(Media document)
     {
         return new DocumentDto(
             document.Id,
-            document.ZaznamId,
+            document.OwnerId,
             ToDocumentTypeString(document.Type),
             document.StorageKey,
             document.OriginalFileName,
@@ -862,13 +862,13 @@ public static class ZaznamEndpoints
             document.CreatedAt);
     }
 
-    private static string ToDocumentTypeString(DocumentType type)
+    private static string ToDocumentTypeString(MediaType type)
     {
         return type switch
         {
-            DocumentType.Photo => "photo",
-            DocumentType.Document => "document",
-            DocumentType.Receipt => "receipt",
+            MediaType.Photo => "photo",
+            MediaType.Document => "document",
+            MediaType.Receipt => "receipt",
             _ => "document"
         };
     }
@@ -1015,4 +1015,3 @@ public static class ZaznamEndpoints
 
     private sealed record TagResolution(IReadOnlyList<short> TagIds, IReadOnlyList<string> MissingTags);
 }
-

@@ -27,8 +27,6 @@ public sealed class Zaznam : SoftDeletableEntity<Guid>
 
     public DateTime? LastSyncAt { get; set; }
 
-    public List<ZaznamDokument> Documents { get; set; } = [];
-
     public List<ZaznamTag> Tags { get; set; } = [];
 
     public List<Comment> Comments { get; set; } = [];

@@ -69,4 +69,19 @@ public class ApplicationDbContextTests
 
         Assert.Equal(2, all.Count);
     }
+
+    [Fact]
+    public void MediaEntity_ConfiguresOwnerIndex()
+    {
+        using var context = _fixture.CreateDbContext();
+        var entityType = context.Model.FindEntityType("MujDomecek.Domain.Aggregates.Zaznam.Media");
+
+        Assert.NotNull(entityType);
+
+        var hasOwnerIndex = entityType!.GetIndexes()
+            .Any(index =>
+                index.Properties.Select(p => p.Name).SequenceEqual(["OwnerType", "OwnerId"]));
+
+        Assert.True(hasOwnerIndex);
+    }
 }

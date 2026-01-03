@@ -44,8 +44,8 @@ public sealed class DraftCleanupJob : IJob
             return;
 
         var draftIds = drafts.Select(d => d.Id).ToList();
-        var documents = await _dbContext.ZaznamDokumenty
-            .Where(d => draftIds.Contains(d.ZaznamId))
+        var documents = await _dbContext.Media
+            .Where(d => d.OwnerType == OwnerType.Zaznam && draftIds.Contains(d.OwnerId))
             .Where(d => !d.IsDeleted)
             .ToListAsync(context.CancellationToken);
 
