@@ -306,7 +306,7 @@ public static class SyncEndpoints
             "property" => await ApplyPropertyChangeAsync(dbContext, userId, change, operation, timestamp),
             "unit" => await ApplyUnitChangeAsync(dbContext, userId, change, operation, timestamp),
             "zaznam" => await ApplyZaznamChangeAsync(dbContext, userId, change, operation, timestamp),
-            "document" => await ApplyDocumentChangeAsync(dbContext, userId, change, operation, timestamp),
+            "media" => await ApplyDocumentChangeAsync(dbContext, userId, change, operation, timestamp),
             "comment" => await ApplyCommentChangeAsync(dbContext, userId, change, operation, timestamp),
             _ => "unsupported entityType"
         };
@@ -881,7 +881,7 @@ public static class SyncEndpoints
             "property" => await dbContext.Properties.AnyAsync(p => p.Id == entityId && p.ProjectId == projectId),
             "unit" => await dbContext.Units.AnyAsync(u => u.Id == entityId && dbContext.Properties.Any(p => p.Id == u.PropertyId && p.ProjectId == projectId)),
             "zaznam" => await dbContext.Zaznamy.AnyAsync(z => z.Id == entityId && dbContext.Properties.Any(p => p.Id == z.PropertyId && p.ProjectId == projectId)),
-            "document" => await dbContext.Media.AnyAsync(d => d.Id == entityId && d.OwnerType == OwnerType.Zaznam
+            "media" => await dbContext.Media.AnyAsync(d => d.Id == entityId && d.OwnerType == OwnerType.Zaznam
                 && dbContext.Zaznamy.Any(z => z.Id == d.OwnerId && dbContext.Properties.Any(p => p.Id == z.PropertyId && p.ProjectId == projectId))),
             "comment" => await dbContext.Comments.AnyAsync(c => c.Id == entityId && dbContext.Zaznamy.Any(z => z.Id == c.ZaznamId && dbContext.Properties.Any(p => p.Id == z.PropertyId && p.ProjectId == projectId))),
             _ => false
@@ -907,7 +907,7 @@ public static class SyncEndpoints
             "property" => entityId == propertyId,
             "unit" => await dbContext.Units.AnyAsync(u => u.Id == entityId && u.PropertyId == propertyId),
             "zaznam" => await dbContext.Zaznamy.AnyAsync(z => z.Id == entityId && z.PropertyId == propertyId),
-            "document" => await dbContext.Media.AnyAsync(d => d.Id == entityId && d.OwnerType == OwnerType.Zaznam
+            "media" => await dbContext.Media.AnyAsync(d => d.Id == entityId && d.OwnerType == OwnerType.Zaznam
                 && dbContext.Zaznamy.Any(z => z.Id == d.OwnerId && z.PropertyId == propertyId)),
             "comment" => await dbContext.Comments.AnyAsync(c => c.Id == entityId && dbContext.Zaznamy.Any(z => z.Id == c.ZaznamId && z.PropertyId == propertyId)),
             _ => false
@@ -933,7 +933,7 @@ public static class SyncEndpoints
             "property" => false,
             "unit" => false,
             "zaznam" => entityId == zaznamId,
-            "document" => await dbContext.Media.AnyAsync(d => d.Id == entityId && d.OwnerType == OwnerType.Zaznam && d.OwnerId == zaznamId),
+            "media" => await dbContext.Media.AnyAsync(d => d.Id == entityId && d.OwnerType == OwnerType.Zaznam && d.OwnerId == zaznamId),
             "comment" => await dbContext.Comments.AnyAsync(c => c.Id == entityId && c.ZaznamId == zaznamId),
             _ => false
         };
@@ -956,7 +956,7 @@ public static class SyncEndpoints
                 && await dbContext.Properties.AnyAsync(p => p.Id == unitPropertyId && p.ProjectId == projectId),
             "zaznam" => TryGetRequiredGuid(data, "propertyId", out var zaznamPropertyId)
                 && await dbContext.Properties.AnyAsync(p => p.Id == zaznamPropertyId && p.ProjectId == projectId),
-            "document" => TryGetRequiredGuid(data, "zaznamId", out var docZaznamId)
+            "media" => TryGetRequiredGuid(data, "zaznamId", out var docZaznamId)
                 && await dbContext.Zaznamy.AnyAsync(z => z.Id == docZaznamId && dbContext.Properties.Any(p => p.Id == z.PropertyId && p.ProjectId == projectId)),
             "comment" => TryGetRequiredGuid(data, "zaznamId", out var commentZaznamId)
                 && await dbContext.Zaznamy.AnyAsync(z => z.Id == commentZaznamId && dbContext.Properties.Any(p => p.Id == z.PropertyId && p.ProjectId == projectId)),
@@ -978,7 +978,7 @@ public static class SyncEndpoints
             "property" => change.EntityId == propertyId,
             "unit" => TryGetRequiredGuid(data, "propertyId", out var unitPropertyId) && unitPropertyId == propertyId,
             "zaznam" => TryGetRequiredGuid(data, "propertyId", out var zaznamPropertyId) && zaznamPropertyId == propertyId,
-            "document" => TryGetRequiredGuid(data, "zaznamId", out var docZaznamId)
+            "media" => TryGetRequiredGuid(data, "zaznamId", out var docZaznamId)
                 && await dbContext.Zaznamy.AnyAsync(z => z.Id == docZaznamId && z.PropertyId == propertyId),
             "comment" => TryGetRequiredGuid(data, "zaznamId", out var commentZaznamId)
                 && await dbContext.Zaznamy.AnyAsync(z => z.Id == commentZaznamId && z.PropertyId == propertyId),
@@ -998,7 +998,7 @@ public static class SyncEndpoints
         return entityType switch
         {
             "zaznam" => change.EntityId == zaznamId,
-            "document" => TryGetRequiredGuid(data, "zaznamId", out var docZaznamId) && docZaznamId == zaznamId,
+            "media" => TryGetRequiredGuid(data, "zaznamId", out var docZaznamId) && docZaznamId == zaznamId,
             "comment" => TryGetRequiredGuid(data, "zaznamId", out var commentZaznamId) && commentZaznamId == zaznamId,
             _ => false
         };
@@ -1094,7 +1094,7 @@ public static class SyncEndpoints
     private static SyncPullChange BuildDocumentChange(Media document)
     {
         if (document.IsDeleted)
-            return new SyncPullChange("document", document.Id, "delete", null, RevisionToTimestamp(document.ServerRevision));
+            return new SyncPullChange("media", document.Id, "delete", null, RevisionToTimestamp(document.ServerRevision));
 
         var data = JsonSerializer.SerializeToElement(new
         {
@@ -1108,7 +1108,7 @@ public static class SyncEndpoints
         });
 
         return new SyncPullChange(
-            "document",
+            "media",
             document.Id,
             ResolveOperation(document.CreatedAt, document.UpdatedAt),
             data,
@@ -1184,7 +1184,10 @@ public static class SyncEndpoints
     internal static bool TryNormalizeEntityType(string? raw, out string normalized)
     {
         normalized = raw?.Trim().ToLowerInvariant() ?? string.Empty;
-        return normalized is "project" or "property" or "unit" or "zaznam" or "document" or "comment";
+        if (normalized == "document")
+            normalized = "media";
+
+        return normalized is "project" or "property" or "unit" or "zaznam" or "media" or "comment";
     }
 
     internal static bool TryNormalizeOperation(string? raw, out string normalized)
