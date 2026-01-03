@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MujDomecek.Domain.Aggregates.Project;
+using MujDomecek.Domain.ValueObjects;
 using MujDomecek.Infrastructure.Persistence;
 
 namespace MujDomecek.Infrastructure.Tests;
@@ -83,5 +84,26 @@ public class ApplicationDbContextTests
                 index.Properties.Select(p => p.Name).SequenceEqual(["OwnerType", "OwnerId"]));
 
         Assert.True(hasOwnerIndex);
+    }
+
+    [Fact]
+    public void PropertyEntity_IncludesPropertyTypeColumn()
+    {
+        using var context = _fixture.CreateDbContext();
+        var entityType = context.Model.FindEntityType("MujDomecek.Domain.Aggregates.Property.Property");
+
+        Assert.NotNull(entityType);
+
+        var propertyType = entityType!.FindProperty("PropertyType");
+        Assert.NotNull(propertyType);
+        Assert.Equal(typeof(PropertyType), propertyType!.ClrType);
+    }
+
+    [Fact]
+    public void UnitType_Enum_UsesSimplifiedValues()
+    {
+        var names = Enum.GetNames(typeof(UnitType));
+
+        Assert.Equal(new[] { "Room", "Floor", "Cellar", "Parking", "Other" }, names);
     }
 }
