@@ -1,0 +1,62 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: mujdomecek-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mujdomecek
+      POSTGRES_USER: mujdomecek
+      POSTGRES_PASSWORD: XpfcJooXefDvDKrJ0odL
+    volumes:
+      - mujdomecek_pgdata:/var/lib/postgresql/data
+    networks:
+      - mujdomecek-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mujdomecek -d mujdomecek"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: src/api/Dockerfile
+    container_name: mujdomecek-api
+    restart: unless-stopped
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=mujdomecek;Username=mujdomecek;Password=XpfcJooXefDvDKrJ0odL
+      - Jwt__SigningKey=aNERjfN6VIK1udnHi/S5yJN6f9iHf5cNH7nfwTTSJT4=
+      - Jwt__Issuer=mujdomecek.x213.cz
+      - Jwt__Audience=mujdomecek.x213.cz
+      - Cors__AllowedOrigins=https://mujdomecek.x213.cz
+      - ASPNETCORE_ENVIRONMENT=Production
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - mujdomecek-network
+    ports:
+      - "127.0.0.1:8080:8080"
+
+  web:
+    build:
+      context: ./src/web
+      dockerfile: Dockerfile
+    container_name: mujdomecek-web
+    restart: unless-stopped
+    environment:
+      - ORIGIN=https://mujdomecek.x213.cz
+      - PUBLIC_API_BASE=https://mujdomecek.x213.cz/api
+    depends_on:
+      - api
+    networks:
+      - mujdomecek-network
+    ports:
+      - "127.0.0.1:3000:3000"
+
+networks:
+  mujdomecek-network:
+    driver: bridge
+
+volumes:
+  mujdomecek_pgdata:

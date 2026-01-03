@@ -4,6 +4,7 @@ using MujDomecek.API.Extensions;
 using MujDomecek.Application.Abstractions;
 using MujDomecek.API.Services;
 using MujDomecek.Application.DTOs;
+using MujDomecek.Domain.Aggregates.Project;
 using MujDomecek.Domain.Aggregates.Zaznam;
 using MujDomecek.Domain.ValueObjects;
 using MujDomecek.Infrastructure.Persistence;
@@ -115,6 +116,8 @@ public static class ZaznamEndpoints
                 z.Cost,
                 z.Status,
                 z.Flags,
+                z.SyncMode,
+                z.SyncStatus,
                 z.CreatedAt,
                 z.UpdatedAt
             })
