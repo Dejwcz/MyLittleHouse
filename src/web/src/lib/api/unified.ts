@@ -10,9 +10,10 @@
  */
 
 import { auth } from '$lib/stores/auth.svelte';
-import { localProjectsApi, localPropertiesApi, localZaznamyApi } from './local';
+import { localProjectsApi, localPropertiesApi, localUnitsApi, localZaznamyApi } from './local';
 import { projectsApi as remoteProjectsApi, type ProjectListResponse } from './projects';
 import { propertiesApi as remotePropertiesApi, type PropertyListResponse } from './properties';
+import { unitsApi as remoteUnitsApi, type UnitListResponse } from './units';
 import { zaznamyApi as remoteZaznamyApi, type ZaznamListResponse } from './zaznamy';
 import type {
   ProjectDto,
@@ -28,6 +29,10 @@ import type {
   UpdatePropertyRequest,
   PropertyQueryParams,
   PropertyStatsDto,
+  UnitDto,
+  CreateUnitRequest,
+  UpdateUnitRequest,
+  UnitQueryParams,
   ZaznamDto,
   ZaznamDetailDto,
   CreateZaznamRequest,
@@ -165,6 +170,43 @@ export const unifiedApi = {
     }
   },
 
+  units: {
+    async list(params: UnitQueryParams): Promise<UnitListResponse> {
+      if (isGuest()) {
+        return localUnitsApi.list(params);
+      }
+      return remoteUnitsApi.list(params);
+    },
+
+    async get(id: string): Promise<UnitDto> {
+      if (isGuest()) {
+        return localUnitsApi.get(id);
+      }
+      return remoteUnitsApi.get(id);
+    },
+
+    async create(data: CreateUnitRequest): Promise<UnitDto> {
+      if (isGuest()) {
+        return localUnitsApi.create(data);
+      }
+      return remoteUnitsApi.create(data);
+    },
+
+    async update(id: string, data: UpdateUnitRequest): Promise<UnitDto> {
+      if (isGuest()) {
+        return localUnitsApi.update(id, data);
+      }
+      return remoteUnitsApi.update(id, data);
+    },
+
+    async delete(id: string): Promise<void> {
+      if (isGuest()) {
+        return localUnitsApi.delete(id);
+      }
+      return remoteUnitsApi.delete(id);
+    }
+  },
+
   zaznamy: {
     async list(params: ZaznamQueryParams = {}): Promise<ZaznamListResponse> {
       if (isGuest()) {
@@ -248,4 +290,4 @@ export const unifiedApi = {
 };
 
 // Re-export for convenience
-export type { ProjectListResponse, PropertyListResponse, ZaznamListResponse };
+export type { ProjectListResponse, PropertyListResponse, UnitListResponse, ZaznamListResponse };

@@ -30,6 +30,8 @@ export interface Property {
   totalCost: number;
   updatedAt: number;
   syncStatus: SyncStatus;
+  syncMode: SyncMode;
+  lastSyncAt?: number;
 }
 
 export interface Unit {
@@ -59,6 +61,8 @@ export interface Zaznam {
   updatedAt: number;
   flags?: number;
   syncStatus: SyncStatus;
+  syncMode: SyncMode;
+  lastSyncAt?: number;
 }
 
 export interface Dokument {
@@ -86,7 +90,9 @@ export interface ZaznamTag {
 
 export interface SyncQueueItem {
   id: string;
-  projectId: string;            // Which project this change belongs to
+  scopeType: 'project' | 'property' | 'zaznam';
+  scopeId: string;
+  projectId?: string;           // Optional for UI filtering
   entityType: 'projects' | 'properties' | 'units' | 'zaznamy' | 'dokumenty';
   entityId: string;
   action: 'create' | 'update' | 'delete';
@@ -142,6 +148,39 @@ class MujDomecekDb extends Dexie {
         }
       });
     });
+
+    // v4 - per-scope sync support
+    this.version(4).stores({
+      projects: 'id, name, ownerId, updatedAt, syncStatus, syncMode',
+      properties: 'id, projectId, name, updatedAt, syncStatus, syncMode',
+      units: 'id, propertyId, parentUnitId, updatedAt, syncStatus',
+      zaznamy: 'id, propertyId, unitId, date, updatedAt, status, syncStatus, syncMode',
+      dokumenty: 'id, zaznamId, updatedAt, syncStatus',
+      tags: 'id, name',
+      zaznamTags: '[zaznamId+tagId], zaznamId, tagId',
+      syncQueue: 'id, scopeType, scopeId, projectId, entityType, entityId, action, status, createdAt, attempts'
+    }).upgrade(async tx => {
+      await tx.table('properties').toCollection().modify(property => {
+        if (!property.syncMode) {
+          property.syncMode = 'local-only';
+        }
+      });
+
+      await tx.table('zaznamy').toCollection().modify(zaznam => {
+        if (!zaznam.syncMode) {
+          zaznam.syncMode = 'local-only';
+        }
+      });
+
+      await tx.table('syncQueue').toCollection().modify(item => {
+        if (!item.scopeType) {
+          item.scopeType = 'project';
+        }
+        if (!item.scopeId) {
+          item.scopeId = item.projectId ?? item.entityId;
+        }
+      });
+    });
   }
 }
 
@@ -155,7 +194,9 @@ export const db = new MujDomecekDb();
  * Add a change to the sync queue for later synchronization
  */
 export async function queueChange(
-  projectId: string,
+  scopeType: SyncQueueItem['scopeType'],
+  scopeId: string,
+  projectId: string | undefined,
   entityType: SyncQueueItem['entityType'],
   entityId: string,
   action: SyncQueueItem['action'],
@@ -163,6 +204,8 @@ export async function queueChange(
 ): Promise<void> {
   await db.syncQueue.add({
     id: crypto.randomUUID(),
+    scopeType,
+    scopeId,
     projectId,
     entityType,
     entityId,
@@ -182,7 +225,7 @@ export async function queueProjectForSync(projectId: string): Promise<void> {
   if (!project) return;
 
   // Queue the project itself
-  await queueChange(projectId, 'projects', projectId, 'create', {
+  await queueChange('project', projectId, projectId, 'projects', projectId, 'create', {
     name: project.name,
     description: project.description
   });
@@ -190,7 +233,7 @@ export async function queueProjectForSync(projectId: string): Promise<void> {
   // Queue all properties
   const properties = await db.properties.where('projectId').equals(projectId).toArray();
   for (const property of properties) {
-    await queueChange(projectId, 'properties', property.id, 'create', {
+    await queueChange('project', projectId, projectId, 'properties', property.id, 'create', {
       name: property.name,
       address: property.address,
       description: property.description
@@ -199,7 +242,7 @@ export async function queueProjectForSync(projectId: string): Promise<void> {
     // Queue all units for this property
     const units = await db.units.where('propertyId').equals(property.id).toArray();
     for (const unit of units) {
-      await queueChange(projectId, 'units', unit.id, 'create', {
+      await queueChange('project', projectId, projectId, 'units', unit.id, 'create', {
         propertyId: unit.propertyId,
         parentUnitId: unit.parentUnitId,
         name: unit.name,
@@ -211,7 +254,7 @@ export async function queueProjectForSync(projectId: string): Promise<void> {
     // Queue all zaznamy for this property
     const zaznamy = await db.zaznamy.where('propertyId').equals(property.id).toArray();
     for (const zaznam of zaznamy) {
-      await queueChange(projectId, 'zaznamy', zaznam.id, 'create', {
+      await queueChange('project', projectId, projectId, 'zaznamy', zaznam.id, 'create', {
         propertyId: zaznam.propertyId,
         unitId: zaznam.unitId,
         title: zaznam.title,
@@ -225,14 +268,87 @@ export async function queueProjectForSync(projectId: string): Promise<void> {
 }
 
 /**
+ * Queue all entities of a property for initial sync
+ */
+export async function queuePropertyForSync(propertyId: string): Promise<void> {
+  const property = await db.properties.get(propertyId);
+  if (!property) return;
+
+  const projectId = property.projectId;
+
+  await queueChange('property', propertyId, projectId, 'properties', propertyId, 'create', {
+    name: property.name,
+    address: property.address,
+    description: property.description
+  });
+
+  const units = await db.units.where('propertyId').equals(propertyId).toArray();
+  for (const unit of units) {
+    await queueChange('property', propertyId, projectId, 'units', unit.id, 'create', {
+      propertyId: unit.propertyId,
+      parentUnitId: unit.parentUnitId,
+      name: unit.name,
+      unitType: unit.unitType,
+      description: unit.description
+    });
+  }
+
+  const zaznamy = await db.zaznamy.where('propertyId').equals(propertyId).toArray();
+  for (const zaznam of zaznamy) {
+    await queueChange('property', propertyId, projectId, 'zaznamy', zaznam.id, 'create', {
+      propertyId: zaznam.propertyId,
+      unitId: zaznam.unitId,
+      title: zaznam.title,
+      description: zaznam.description,
+      date: zaznam.date,
+      cost: zaznam.cost,
+      status: zaznam.status
+    });
+  }
+}
+
+/**
+ * Queue a zaznam and its documents for initial sync
+ */
+export async function queueZaznamForSync(zaznamId: string): Promise<void> {
+  const zaznam = await db.zaznamy.get(zaznamId);
+  if (!zaznam) return;
+
+  const property = await db.properties.get(zaznam.propertyId);
+  const projectId = property?.projectId;
+
+  await queueChange('zaznam', zaznamId, projectId, 'zaznamy', zaznamId, 'create', {
+    propertyId: zaznam.propertyId,
+    unitId: zaznam.unitId,
+    title: zaznam.title,
+    description: zaznam.description,
+    date: zaznam.date,
+    cost: zaznam.cost,
+    status: zaznam.status
+  });
+
+  const dokumenty = await db.dokumenty.where('zaznamId').equals(zaznamId).toArray();
+  for (const dokument of dokumenty) {
+    await queueChange('zaznam', zaznamId, projectId, 'dokumenty', dokument.id, 'create', {
+      zaznamId: dokument.zaznamId,
+      fileName: dokument.fileName,
+      mimeType: dokument.mimeType,
+      size: dokument.size
+    });
+  }
+}
+
+/**
  * Get pending changes count for a project (or all if no projectId)
  */
-export async function getPendingChangesCount(projectId?: string): Promise<number> {
-  if (projectId) {
+export async function getPendingChangesCount(
+  scope?: { scopeType: SyncQueueItem['scopeType']; scopeId: string }
+): Promise<number> {
+  if (scope) {
     return db.syncQueue
-      .where('projectId')
-      .equals(projectId)
-      .and(item => item.status === 'pending')
+      .where('scopeType')
+      .equals(scope.scopeType)
+      .and(item => item.scopeId === scope.scopeId && item.status === 'pending')
       .count();
   }
   return db.syncQueue.where('status').equals('pending').count();
@@ -241,10 +357,13 @@ export async function getPendingChangesCount(projectId?: string): Promise<number
 /**
  * Get all pending changes for a project
  */
-export async function getPendingChanges(projectId: string): Promise<SyncQueueItem[]> {
+export async function getPendingChanges(
+  scopeType: SyncQueueItem['scopeType'],
+  scopeId: string
+): Promise<SyncQueueItem[]> {
   return db.syncQueue
-    .where('projectId')
-    .equals(projectId)
-    .and(item => item.status === 'pending')
+    .where('scopeType')
+    .equals(scopeType)
+    .and(item => item.scopeId === scopeId && item.status === 'pending')
     .toArray();
 }

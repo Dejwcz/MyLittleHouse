@@ -253,6 +253,8 @@ interface ProjectDto {
   propertyCount: number;
   memberCount: number;
   myRole: 'owner' | 'editor' | 'viewer';
+  syncMode: 'local-only' | 'synced';
+  syncStatus: 'local' | 'pending' | 'syncing' | 'synced' | 'failed';
   createdAt: string;
   updatedAt: string;
 }
@@ -325,6 +327,8 @@ interface PropertyDto {
   totalCost: number;
   myRole: 'owner' | 'editor' | 'viewer';
   isShared: boolean;
+  syncMode: 'local-only' | 'synced';
+  syncStatus: 'local' | 'pending' | 'syncing' | 'synced' | 'failed';
   createdAt: string;
   updatedAt: string;
 }
@@ -423,6 +427,10 @@ interface UpdateUnitRequest {
 | `/zaznamy/{id}` | GET | JWT | Detail záznamu |
 | `/zaznamy/{id}` | PUT | JWT | Upravit záznam |
 | `/zaznamy/{id}` | DELETE | JWT | Smazat záznam |
+| `/zaznamy/{id}/members` | GET | JWT | Seznam členů |
+| `/zaznamy/{id}/members` | POST | JWT | Přidat člena (pozvánka) |
+| `/zaznamy/{id}/members/{userId}` | PUT | JWT | Změnit roli člena |
+| `/zaznamy/{id}/members/{userId}` | DELETE | JWT | Odebrat člena |
 | `/zaznamy/{id}/complete` | POST | JWT | Dokončit draft |
 | `/zaznamy/drafts` | GET | JWT | Seznam draftů |
 
@@ -469,6 +477,7 @@ interface ZaznamDto {
   documentCount: number;
   commentCount: number;
   thumbnailUrl?: string;  // první fotka
+  syncMode: 'local-only' | 'synced';
   syncStatus: 'local' | 'synced' | 'syncing' | 'failed';
   createdAt: string;
   updatedAt: string;
@@ -648,7 +657,7 @@ interface UploadConfirmResponse {
 // GET /sharing/my-shares
 interface MySharesResponse {
   items: {
-    type: 'project' | 'property';
+    type: 'project' | 'property' | 'zaznam';
     id: string;
     name: string;
     projectName?: string;
@@ -668,7 +677,7 @@ interface MySharesResponse {
 // GET /sharing/shared-with-me
 interface SharedWithMeResponse {
   items: {
-    type: 'project' | 'property';
+    type: 'project' | 'property' | 'zaznam';
     id: string;
     name: string;
     owner: { userId: string; email: string; displayName: string };
@@ -681,7 +690,7 @@ interface SharedWithMeResponse {
 interface PendingInvitationsResponse {
   invitations: {
     id: string;
-    type: 'project' | 'property';
+    type: 'project' | 'property' | 'zaznam';
     targetId: string;
     targetName: string;
     role: 'owner' | 'editor' | 'viewer';
@@ -710,7 +719,7 @@ interface PendingInvitationsResponse {
 ```typescript
 interface InvitationDto {
   id: string;
-  type: 'project' | 'property';
+  type: 'project' | 'property' | 'zaznam';
   targetId: string;
   targetName: string;
   email: string;
@@ -879,14 +888,14 @@ interface ActivityListResponse {
 
 | Endpoint | Metoda | Auth | Popis |
 |----------|--------|------|-------|
-| `/sync/status` | GET | JWT | Stav synchronizace |
-| `/sync/push` | POST | JWT | Push lokálních změn |
-| `/sync/pull` | GET | JWT | Pull změn ze serveru |
+| `/sync/status` | GET | JWT | Stav synchronizace (per scope) |
+| `/sync/push` | POST | JWT | Push lokálních změn (per scope) |
+| `/sync/pull` | GET | JWT | Pull změn ze serveru (per scope) |
 
 ### Request/Response
 
 ```typescript
-// GET /sync/status
+// GET /sync/status?scopeType={project|property|zaznam}&scopeId={id}
 interface SyncStatusResponse {
   lastSyncAt?: string;
   pendingChanges: number;
@@ -896,6 +905,8 @@ interface SyncStatusResponse {
 // POST /sync/push
 interface SyncPushRequest {
   correlationId: string;
+  scopeType: 'project' | 'property' | 'zaznam';
+  scopeId: string;
   changes: SyncChange[];
 }
 
@@ -916,7 +927,7 @@ interface SyncPushResponse {
   serverTimestamp: string;
 }
 
-// GET /sync/pull?since={timestamp}
+// GET /sync/pull?since={timestamp}&scopeType={project|property|zaznam}&scopeId={id}
 interface SyncPullResponse {
   changes: {
     entityType: string;
@@ -971,7 +982,9 @@ interface MemberDto {
   joinedAt?: string;
 }
 
-// POST /properties/{id}/members nebo /projects/{id}/members
+// Sdílení u property/záznamů může spravovat pouze owner projektu.
+
+// POST /properties/{id}/members, /projects/{id}/members nebo /zaznamy/{id}/members
 interface AddMemberRequest {
   email: string;
   role: 'editor' | 'viewer';
@@ -988,7 +1001,7 @@ interface InvitationLinkResponse {
 // POST /invitations/{id}/resend
 // Response: InvitationLinkResponse
 
-// PUT /properties/{id}/members/{userId}
+// PUT /properties/{id}/members/{userId} nebo /zaznamy/{id}/members/{userId}
 interface UpdateMemberRequest {
   role?: 'editor' | 'viewer';
   permissions?: Record<string, boolean>;

@@ -10,6 +10,8 @@ public sealed record SyncStatusResponse(
 
 public sealed record SyncPushRequest(
     string CorrelationId,
+    string ScopeType,
+    Guid ScopeId,
     IReadOnlyList<SyncChange> Changes
 );
 

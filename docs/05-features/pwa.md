@@ -52,6 +52,12 @@
 - Sync po obnovení spojení
 - Offline zápis: vytvoření/upravy se ukládají do IndexedDB + sync queue (local-first)
 
+### Offline fotky (mobile)
+
+- Offline originaly fotek se ukladaji do app-privatniho uloziste pres Capacitor Filesystem.
+- PWA bez Capacitoru drzi pouze metadata + nahledy (originály se neukladaji).
+- Export do systemove galerie je volitelna akce "Ulozit do galerie".
+
 ---
 
 ## Later
@@ -66,6 +72,12 @@
 
 - Periodický sync na pozadí (kde to prohlížeč dovolí)
 - Retry/backoff strategie
+
+### Capacitor wrapper (store distribuce)
+
+- Pro verejne vydani na iOS/Android pouzit Capacitor nad PWA.
+- Zachova SvelteKit kod, prida App Store / Google Play distribuci.
+- Native funkce (push, kamera, background sync) resit pres Capacitor pluginy.
 
 ---
 

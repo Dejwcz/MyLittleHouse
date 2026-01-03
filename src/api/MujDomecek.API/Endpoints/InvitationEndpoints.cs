@@ -7,6 +7,7 @@ using MujDomecek.Application.Abstractions;
 using MujDomecek.Application.DTOs;
 using MujDomecek.Domain.Aggregates.Project;
 using MujDomecek.Domain.Aggregates.Property;
+using MujDomecek.Domain.Aggregates.Zaznam;
 using MujDomecek.Domain.ValueObjects;
 using MujDomecek.Infrastructure.Persistence;
 
@@ -118,9 +119,7 @@ public static class InvitationEndpoints
             return Results.BadRequest();
         }
 
-        var targetName = invitation.TargetType == InvitationTargetType.Project
-            ? await dbContext.Projects.Where(p => p.Id == invitation.TargetId).Select(p => p.Name).FirstOrDefaultAsync(ct)
-            : await dbContext.Properties.Where(p => p.Id == invitation.TargetId).Select(p => p.Name).FirstOrDefaultAsync(ct);
+        var targetName = await GetTargetNameAsync(dbContext, invitation, ct);
 
         if (invitation.TargetType == InvitationTargetType.Project)
         {
@@ -139,7 +138,7 @@ public static class InvitationEndpoints
                 });
             }
         }
-        else
+        else if (invitation.TargetType == InvitationTargetType.Property)
         {
             var exists = await dbContext.PropertyMembers
                 .AnyAsync(m => m.PropertyId == invitation.TargetId && m.UserId == userId, ct);
@@ -153,6 +152,24 @@ public static class InvitationEndpoints
                     Role = invitation.Role,
                     PermissionsJson = invitation.PermissionsJson,
                     CreatedAt = DateTime.UtcNow
+                });
+            }
+        }
+        else
+        {
+            var exists = await dbContext.ZaznamMembers
+                .AnyAsync(m => m.ZaznamId == invitation.TargetId && m.UserId == userId, ct);
+            if (!exists)
+            {
+                dbContext.ZaznamMembers.Add(new ZaznamMember
+                {
+                    Id = Guid.NewGuid(),
+                    ZaznamId = invitation.TargetId,
+                    UserId = userId,
+                    Role = invitation.Role,
+                    PermissionsJson = invitation.PermissionsJson,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 });
             }
         }
@@ -236,9 +253,7 @@ public static class InvitationEndpoints
             return Results.BadRequest();
         }
 
-        var targetName = invitation.TargetType == InvitationTargetType.Project
-            ? await dbContext.Projects.Where(p => p.Id == invitation.TargetId).Select(p => p.Name).FirstOrDefaultAsync(ct)
-            : await dbContext.Properties.Where(p => p.Id == invitation.TargetId).Select(p => p.Name).FirstOrDefaultAsync(ct);
+        var targetName = await GetTargetNameAsync(dbContext, invitation, ct);
 
         if (invitation.CreatedBy != userId)
         {
@@ -392,15 +407,22 @@ public static class InvitationEndpoints
         Invitation invitation,
         CancellationToken ct)
     {
-        return invitation.TargetType == InvitationTargetType.Project
-            ? await dbContext.Projects
+        return invitation.TargetType switch
+        {
+            InvitationTargetType.Project => await dbContext.Projects
                 .Where(p => p.Id == invitation.TargetId)
                 .Select(p => p.Name)
-                .FirstOrDefaultAsync(ct) ?? string.Empty
-            : await dbContext.Properties
+                .FirstOrDefaultAsync(ct) ?? string.Empty,
+            InvitationTargetType.Property => await dbContext.Properties
                 .Where(p => p.Id == invitation.TargetId)
                 .Select(p => p.Name)
-                .FirstOrDefaultAsync(ct) ?? string.Empty;
+                .FirstOrDefaultAsync(ct) ?? string.Empty,
+            InvitationTargetType.Zaznam => await dbContext.Zaznamy
+                .Where(z => z.Id == invitation.TargetId)
+                .Select(z => z.Title ?? string.Empty)
+                .FirstOrDefaultAsync(ct) ?? string.Empty,
+            _ => string.Empty
+        };
     }
 
     private static async Task<InvitationDto> BuildInvitationDtoAsync(
@@ -408,21 +430,7 @@ public static class InvitationEndpoints
         Invitation invitation,
         CancellationToken ct)
     {
-        string targetName;
-        if (invitation.TargetType == InvitationTargetType.Project)
-        {
-            targetName = await dbContext.Projects
-                .Where(p => p.Id == invitation.TargetId)
-                .Select(p => p.Name)
-                .FirstOrDefaultAsync(ct) ?? string.Empty;
-        }
-        else
-        {
-            targetName = await dbContext.Properties
-                .Where(p => p.Id == invitation.TargetId)
-                .Select(p => p.Name)
-                .FirstOrDefaultAsync(ct) ?? string.Empty;
-        }
+        var targetName = await GetTargetNameAsync(dbContext, invitation, ct);
 
         var inviter = await dbContext.Users
             .Where(u => u.Id == invitation.CreatedBy)
@@ -471,7 +479,13 @@ public static class InvitationEndpoints
 
     private static string ToTypeString(InvitationTargetType type)
     {
-        return type == InvitationTargetType.Property ? "property" : "project";
+        return type switch
+        {
+            InvitationTargetType.Project => "project",
+            InvitationTargetType.Property => "property",
+            InvitationTargetType.Zaznam => "zaznam",
+            _ => "project"
+        };
     }
 
     private static IDictionary<string, bool>? DeserializePermissions(string? json)

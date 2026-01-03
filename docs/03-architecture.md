@@ -21,15 +21,15 @@ Aplikace používá **local-first** architekturu:
 
 ### Důsledky
 - Při ztrátě zařízení bez zálohy = ztráta dat
-- Sdílené projekty vyžadují sync
+- Sdílení vyžaduje zapnutý sync pro daný scope
 
 ---
 
 ## Hybrid Sync Architecture
 
-### Per-Project Sync Mode
+### Per-Scope Sync Mode
 
-Každý projekt může být v jednom ze dvou režimů:
+Každý scope (Project / Property / Zaznam) může být v jednom ze dvou režimů:
 
 | Režim | Popis | Use case |
 |-------|-------|----------|
@@ -50,7 +50,7 @@ Každý projekt může být v jednom ze dvou režimů:
 ├─────────────────────────────────────────────────────────┤
 │                    Sync Manager                         │
 │   - sleduje online/offline stav                        │
-│   - spouští sync pro "synced" projekty                 │
+│   - spouští sync pro "synced" scope                    │
 │   - řeší konflikty                                     │
 ├─────────────────────────────────────────────────────────┤
 │                    Backend API                          │
@@ -59,7 +59,7 @@ Každý projekt může být v jednom ze dvou režimů:
 ```
 
 1. **Všechny operace** jdou nejdřív do IndexedDB (offline-first)
-2. Pro `synced` projekty se změny přidají do SyncQueue
+2. Pro `synced` scope se změny přidají do SyncQueue
 3. SyncManager periodicky/automaticky synchronizuje s backendem
 4. Při konfliktu uživatel rozhodne kterou verzi ponechat
 
@@ -79,16 +79,21 @@ Každá entita má `syncStatus`:
 - `synced` - synchronizováno
 - `failed` - sync selhal
 
-### Project Sync Mode
+### Scope Sync Mode
 
-Projekt má `syncMode`:
+Project / Property / Zaznam mají `syncMode`:
 - `local-only` - data se nikdy nesynchronizují
 - `synced` - data se synchronizují s backendem
 
+Pravidla scope:
+- Child scope může být `synced` i když parent je `local-only`
+- Při syncu se posílají pouze data z vybraného scope
+- Pro Property / Zaznam se na server posílají jen minimální metadata rodičů
+
 ### Sync Mode Toggle
 
-V nastavení projektu uživatel může:
-1. **Zapnout sync** - data se nahrají na server, projekt je pak sdílitelný
+V nastavení scope (Project/Property/Zaznam) uživatel může:
+1. **Zapnout sync** - data scope se nahrají na server a lze je sdílet
 2. **Vypnout sync** - dialog nabídne:
    - Ponechat kopii na serveru (archiv)
    - Smazat data ze serveru
@@ -240,13 +245,13 @@ Dexie.js schema (v3 - s hybrid sync):
 ```typescript
 db.version(3).stores({
   projects: 'id, name, ownerId, updatedAt, syncStatus, syncMode',
-  properties: 'id, projectId, name, updatedAt, syncStatus',
+  properties: 'id, projectId, name, updatedAt, syncStatus, syncMode',
   units: 'id, propertyId, parentUnitId, updatedAt, syncStatus',
-  zaznamy: 'id, propertyId, unitId, date, updatedAt, status, syncStatus',
+  zaznamy: 'id, propertyId, unitId, date, updatedAt, status, syncStatus, syncMode',
   dokumenty: 'id, zaznamId, updatedAt, syncStatus',
   tags: 'id, name',
   zaznamTags: '[zaznamId+tagId], zaznamId, tagId',
-  syncQueue: 'id, projectId, entityType, entityId, action, status, createdAt, attempts'
+  syncQueue: 'id, scopeType, scopeId, projectId, entityType, entityId, action, status, createdAt, attempts'
 });
 ```
 
@@ -270,12 +275,16 @@ interface Project {
 }
 ```
 
+Property a Zaznam mají stejné `syncStatus` a `syncMode` jako Project.
+
 ### SyncQueue struktura
 
 ```typescript
 interface SyncQueueItem {
   id: string;
-  projectId: string;            // Which project this change belongs to
+  scopeType: 'project' | 'property' | 'zaznam';
+  scopeId: string;
+  projectId?: string;           // pomocné filtrování v UI
   entityType: 'projects' | 'properties' | 'units' | 'zaznamy' | 'dokumenty';
   entityId: string;
   action: "create" | "update" | "delete";
@@ -300,16 +309,16 @@ interface SyncQueueItem {
 ### Základní flow
 
 1. Klient vytvoří/upraví záznam lokálně
-2. Záznam se přidá do sync fronty
+2. Záznam se přidá do sync fronty jen pokud je jeho scope `synced`
 3. Při online stavu se fronta odešle na server
 4. Server zpracuje a vrátí potvrzení
 5. Klient označí položky jako synchronizované
 
 ### Push & pull (MVP)
 
-- **Push (klient → server):** okamžitě po změně, pokud je online; batch max 50 položek.
+- **Push (klient → server):** okamžitě po změně, pokud je online; batch max 50 položek; vždy v rámci scope.
 - **Pull (server → klient):** při startu app, po úspěšném push a každých 5 minut.
-- **Delta sync:** `GET /api/sync/pull?since={timestamp}`.
+- **Delta sync:** `GET /api/sync/pull?since={timestamp}&scopeType={...}&scopeId={...}`.
 
 ### Retry
 

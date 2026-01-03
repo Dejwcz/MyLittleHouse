@@ -1,21 +1,26 @@
 <script lang="ts">
   import {
     PageHeader, Card, Button, EmptyState, Badge, Modal, Input, Textarea,
-    Spinner, ConfirmDialog, Avatar, Select
+    Spinner, ConfirmDialog, Select, Toggle, SyncBadge, DisableSyncDialog
   } from '$lib';
   import {
     propertiesApi, unitsApi, zaznamyApi,
     type PropertyDetailDto, type UnitDto, type ZaznamDto
   } from '$lib/api';
+  import { localPropertiesApi } from '$lib/api/local/properties';
   import { toast } from '$lib/stores/ui.svelte';
+  import { auth } from '$lib/stores/auth.svelte';
+  import { sync } from '$lib/stores/sync.svelte';
+  import type { SyncMode, SyncStatus } from '$lib/db';
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import {
-    Plus, Building2, Home, FileText, ArrowLeft, Pencil, Trash2,
+    Plus, Building2, FileText, Pencil, Trash2,
     Calendar, DollarSign, ChevronRight, Layers
   } from 'lucide-svelte';
 
+  const projectId = $derived($page.params.projectId ?? '');
   const propertyId = $derived($page.params.id ?? '');
 
   let property = $state<PropertyDetailDto | null>(null);
@@ -27,8 +32,12 @@
   let showDeleteConfirm = $state(false);
   let saving = $state(false);
   let selectedUnit = $state<UnitDto | null>(null);
+  let showDisableSyncDialog = $state(false);
+  let syncModeChanging = $state(false);
 
-  // Unit form
+  let syncMode = $state<SyncMode>('local-only');
+  let syncStatus = $state<SyncStatus>('local');
+
   let unitName = $state('');
   let unitDescription = $state('');
   let unitType = $state('room');
@@ -60,11 +69,67 @@
       property = prop;
       units = unitList.items;
       recentZaznamy = zaznamList.items;
+      await loadSyncMode();
     } catch (err) {
       toast.error('Nepodařilo se načíst data');
-      goto('/properties');
+      goto(`/projects/${projectId}/properties`);
     } finally {
       loading = false;
+    }
+  }
+
+  async function loadSyncMode() {
+    try {
+      const localProperty = await localPropertiesApi.get(propertyId);
+      syncMode = localProperty.syncMode ?? 'local-only';
+      syncStatus = (localProperty.syncStatus as SyncStatus) ?? 'local';
+    } catch (err) {
+      console.error('Failed to load sync mode:', err);
+    }
+  }
+
+  function handleSyncToggle() {
+    if (syncMode === 'synced') {
+      showDisableSyncDialog = true;
+    } else {
+      enableSync();
+    }
+  }
+
+  async function enableSync() {
+    if (!auth.isAuthenticated) {
+      toast.error('Pro synchronizaci je potřeba se přihlásit');
+      return;
+    }
+
+    syncModeChanging = true;
+    try {
+      await localPropertiesApi.setSyncMode(propertyId, 'synced');
+      syncMode = 'synced';
+      syncStatus = 'pending';
+      toast.success('Synchronizace zapnuta');
+      sync.triggerSync();
+    } catch (err) {
+      toast.error('Nepodařilo se zapnout synchronizaci');
+    } finally {
+      syncModeChanging = false;
+    }
+  }
+
+  async function handleDisableSync(deleteFromServer: boolean) {
+    syncModeChanging = true;
+    try {
+      await localPropertiesApi.setSyncMode(propertyId, 'local-only');
+      syncMode = 'local-only';
+      syncStatus = 'local';
+      toast.success(deleteFromServer
+        ? 'Synchronizace vypnuta, data budou smazána ze serveru'
+        : 'Synchronizace vypnuta, data zůstala na serveru'
+      );
+    } catch (err) {
+      toast.error('Nepodařilo se vypnout synchronizaci');
+    } finally {
+      syncModeChanging = false;
     }
   }
 
@@ -163,16 +228,10 @@
     <Spinner size="lg" />
   </div>
 {:else if property}
-  <PageHeader title={property.name} subtitle={property.description || property.projectName}>
-    {#snippet breadcrumb()}
-      <a href="/properties" class="flex items-center gap-1 text-sm text-foreground-muted hover:text-foreground">
-        <ArrowLeft class="h-4 w-4" />
-        Nemovitosti
-      </a>
-    {/snippet}
+  <PageHeader title={property.name} subtitle={property.description}>
     {#snippet actions()}
       {#if canEdit}
-        <Button variant="secondary" onclick={() => goto(`/zaznamy/new?propertyId=${propertyId}`)}>
+        <Button variant="secondary" onclick={() => goto(`/projects/${projectId}/zaznamy/new?propertyId=${propertyId}`)}>
           {#snippet children()}
             <Plus class="h-4 w-4" />
             Nový záznam
@@ -249,7 +308,7 @@
       {:else}
         <div class="space-y-2">
           {#each units as unit (unit.id)}
-            <Card hover class="group cursor-pointer" onclick={() => goto(`/units/${unit.id}`)}>
+            <Card hover class="group cursor-pointer" onclick={() => goto(`/projects/${projectId}/units/${unit.id}`)}>
               <div class="flex items-center gap-3">
                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-bg-secondary">
                   <Layers class="h-5 w-5 text-foreground-muted" />
@@ -287,7 +346,7 @@
     <div>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-lg font-semibold">Poslední záznamy</h2>
-        <Button size="sm" variant="ghost" onclick={() => goto(`/zaznamy?propertyId=${propertyId}`)}>
+        <Button size="sm" variant="ghost" onclick={() => goto(`/projects/${projectId}/zaznamy?propertyId=${propertyId}`)}>
           {#snippet children()}Všechny{/snippet}
         </Button>
       </div>
@@ -298,7 +357,7 @@
       {:else}
         <div class="space-y-2">
           {#each recentZaznamy as zaznam (zaznam.id)}
-            <Card hover class="cursor-pointer" onclick={() => goto(`/zaznamy/${zaznam.id}`)}>
+            <Card hover class="cursor-pointer" onclick={() => goto(`/projects/${projectId}/zaznamy/${zaznam.id}`)}>
               <h4 class="font-medium">{zaznam.title || 'Bez názvu'}</h4>
               <div class="mt-1 flex items-center gap-3 text-sm text-foreground-muted">
                 <span class="flex items-center gap-1">
@@ -367,12 +426,17 @@
     </form>
   </Modal>
 
-  <!-- Delete Confirmation -->
   <ConfirmDialog
     bind:open={showDeleteConfirm}
     title="Smazat jednotku?"
     message="Tato akce je nevratná. Záznamy zůstanou zachovány."
     confirmText="Smazat"
     onconfirm={handleUnitDelete}
+  />
+
+  <DisableSyncDialog
+    bind:open={showDisableSyncDialog}
+    onConfirm={handleDisableSync}
+    onCancel={() => showDisableSyncDialog = false}
   />
 {/if}

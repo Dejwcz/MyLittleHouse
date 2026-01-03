@@ -1463,19 +1463,19 @@ Umožňuje výjimky (např. Editor na projektu, ale Viewer na citlivé Property)
 
 ---
 
-### [065] Hybrid Sync (per-project sync mode)
+### [065] Hybrid Sync (per-scope sync mode)
 
 **Datum:** 2025-12-31
 **Stav:** Rozhodnuto
 
-**Kontext:** Uživatelé chtějí mít možnost rozhodnout, která data se synchronizují na server a která zůstanou pouze lokálně. Při local-first architektuře je potřeba umožnit per-projekt volbu režimu synchronizace.
+**Kontext:** Uživatelé chtějí mít možnost rozhodnout, která data se synchronizují na server a která zůstanou pouze lokálně. Při local-first architektuře je potřeba umožnit volbu režimu synchronizace na úrovni scope (Project/Property/Zaznam).
 
 **Možnosti:**
 1. **Vše local, opt-in sync per projekt** - uživatel explicitně zapíná sync pro každý projekt
-2. **Vše synced, opt-out** - příliš invazivní, uživatel nemusí chtít posílat data na server
-3. **Per-entity sync** - příliš složité, granularita na úrovni jednotlivých záznamů
+2. **Vše local, opt-in sync per scope (Project/Property/Zaznam)** - jemná granularita bez nutnosti per-field nastavení
+3. **Vše synced, opt-out** - příliš invazivní, uživatel nemusí chtít posílat data na server
 
-**Rozhodnutí:** Možnost 1 - Per-projekt sync mode s volbami:
+**Rozhodnutí:** Možnost 2 - Per-scope sync mode s volbami:
 - `local-only`: data pouze v IndexedDB, nikdy se nesynchronizují
 - `synced`: data v IndexedDB + synchronizace na server
 
@@ -1491,23 +1491,111 @@ Umožňuje výjimky (např. Editor na projektu, ale Viewer na citlivé Property)
 - "Smazat ze serveru"
 
 **Důsledky:**
-- Přidat `syncMode` a `lastSyncAt` field do Project entity
-- Přidat `projectId` do SyncQueueItem
-- Implementovat SyncManager a SyncEngine
+- Přidat `syncMode` a `lastSyncAt` do Project/Property/Zaznam
+- SyncQueueItem musí nést `scopeType` a `scopeId`
+- API sync endpointy musí respektovat scope (push/pull/status)
 - UI: SyncBadge, ConflictDialog, DisableSyncDialog
-- Sync toggle v nastavení projektu
+- Sync toggle v nastavení Project/Property/Zaznam
 - Global sync status v hlavičce (pending count, offline status)
 
 **Příklad uživatelského flow:**
 ```
 1. Guest vytvoří projekt "Chalupa" → local-only, v IndexedDB
 2. Guest se rozhodne registrovat → stále local-only
-3. V nastavení projektu zapne sync → projekt se nahraje na server
-4. Přidá člena rodiny → sdílí přes server
+3. U projektu zapne sync pro Property "Střecha" → nahraje jen vybraný scope
+4. Přidá člena rodiny → sdílí pouze vybraný scope
 5. Vytvoří nový projekt "Soukromé poznámky" → nechá local-only
 6. Offline: edituje oba projekty → změny v IndexedDB
-7. Online: "Chalupa" se synchronizuje, "Soukromé" zůstává local
+7. Online: "Střecha" se synchronizuje, "Soukromé" zůstává local
 ```
+
+---
+
+### [066] Mobilni distribuce (PWA + Capacitor wrapper)
+
+**Datum:** 2026-01-03
+**Stav:** Rozhodnuto
+
+**Kontext:** Potrebujeme verejnou distribuci na iOS/Android (App Store / Google Play) a pritom zachovat local-first architekturu a rychly vyvoj.
+
+**Moznosti:**
+1. **PWA only** - nejmensi effort, ale omezeni na iOS (push, background).
+2. **PWA + Capacitor wrapper** - zachova SvelteKit kod, prida store distribuci a native API.
+3. **Full native (RN/Flutter/Tauri)** - nejlepsi native feel, ale rewrite.
+
+**Rozhodnuti:** Moznost 2 - PWA jako primarni klient + Capacitor wrapper pro store distribuci.
+
+**Dusledky:**
+- Udrzujeme jednu kodovou bazi (SvelteKit) + Capacitor konfiguraci.
+- Build pipeline musi produkovat iOS/Android buildy.
+- Push/notifikace a pristup k native API budou reseny pres Capacitor pluginy.
+- PWA zustava jako rychla webova distribuce (Add to Home Screen).
+
+---
+
+### [067] Offline fotky (Capacitor storage + volitelny export do galerie)
+
+**Datum:** 2026-01-03
+**Stav:** Rozhodnuto
+
+**Kontext:** PWA IndexedDB storage je na mobilech nepredvidatelne (kvoty, eviction). Potrebujeme stabilni offline uloziste pro fotky a zaroven dat kontrolu uzivateli.
+
+**Moznosti:**
+1. **IndexedDB bloby** - rychle nasazeni, ale riziko ztraty dat pri eviction.
+2. **Native storage pres Capacitor** - stabilni uloziste, potrebuje wrapper.
+3. **Systemova galerie jako primary** - uzivatelsky prijatelne, ale ztrata kontroly (uzivatel muze smazat).
+
+**Rozhodnuti:** Moznost 2 + doplnkova moznost exportu do galerie.
+
+**Dusledky:**
+- Offline originaly jsou ulozene v app-privatnim ulozisti (Capacitor Filesystem).
+- PWA bez Capacitoru drzi jen metadata + nahledy, originaly ne.
+- UI prida akci "Ulozit do galerie" (kopie do systemove galerie).
+- Pri smazani z galerie app data zustavaji beze zmeny.
+
+---
+
+### [068] Projekt-centrická navigace (Frontend routing)
+
+**Datum:** 2026-01-03
+**Stav:** Rozhodnuto
+
+**Kontext:** Frontend potřebuje jasnou navigační strukturu. Projekty jsou hlavní kontejnery pro nemovitosti, jednotky a záznamy.
+
+**Možnosti:**
+1. **Route-based scoping** - `/projects/[projectId]/properties`, `/projects/[projectId]/zaznamy`
+   - Přehledné URL, snadné sdílení odkazů
+   - Nested layouts s project-aware sidebarem
+   - Jasná hierarchie
+
+2. **Context-based (flat routes)** - `/properties`, `/zaznamy` + context v store
+   - Kratší URL
+   - Méně explicitní vazba na projekt
+
+**Rozhodnutí:** Možnost 1 - Route-based scoping.
+
+**Route struktura:**
+```
+/projects                              → Seznam projektů
+/projects/[projectId]                  → Projekt dashboard
+/projects/[projectId]/properties       → Nemovitosti v projektu
+/projects/[projectId]/properties/[id]  → Detail nemovitosti
+/projects/[projectId]/units/[id]       → Detail jednotky
+/projects/[projectId]/zaznamy          → Záznamy v projektu
+/projects/[projectId]/zaznamy/[id]     → Detail záznamu
+/projects/[projectId]/zaznamy/new      → Nový záznam
+/projects/[projectId]/settings         → Nastavení projektu
+```
+
+**Navigace:**
+- Hlavní sidebar (mimo projekt): Projekty, Notifikace, Nastavení
+- Projekt sidebar (uvnitř projektu): Dashboard, Nemovitosti, Záznamy, Nastavení projektu + "← Zpět"
+
+**Důsledky:**
+- `[projectId]/+layout.svelte` poskytuje project context přes Svelte Context API
+- Stránky uvnitř projektu čtou project data z contextu
+- URL jsou sdílitelné (obsahují project ID)
+- Čistší separace hlavního a projekt-specifického layoutu
 
 ---
 

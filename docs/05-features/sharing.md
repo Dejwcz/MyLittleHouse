@@ -5,6 +5,7 @@
 - Sdílení je opt-in
 - Při zapnutí sdílení se zapne automatický sync na server
 - Uživatel je informován, že data budou na serveru
+- Sdílený scope určuje, která data mohou opustit zařízení
 
 ---
 
@@ -14,6 +15,9 @@
 |--------|-------|
 | Project | Sdílení celého projektu (všechny nemovitosti) |
 | Property | Sdílení konkrétní nemovitosti |
+| Zaznam | Sdílení konkrétního záznamu |
+
+Pozn.: Při sdílení Property/Zaznam se v UI zobrazí kontext projektu, ale dostupná data jsou omezená na sdílený scope.
 
 ---
 
@@ -96,7 +100,7 @@ Detaily práv viz [04-auth-permissions.md](../04-auth-permissions.md).
 
 Při zapnutí sdílení:
 1. Sync se zapne automaticky
-2. Data se uploadují na server
+2. Na server se uploadují jen data z vybraného scope
 3. Změny se synchronizují průběžně
 
 ### Konflikt
@@ -131,18 +135,20 @@ Při zapnutí sdílení:
 
 ## Rozhodnuto
 
-### Sdílení per Project vs per Property
+### Sdílení per Project vs per Property vs per Zaznam
 
-**Rozhodnutí:** Obojí.
+**Rozhodnutí:** Obojí + Zaznam.
 
 - **Project-level:** Sdílí všechny properties v projektu (bulk operace)
 - **Property-level:** Sdílí konkrétní property (pro výjimky)
-- **Precedence:** Property-level přebíjí Project-level (viz 04-auth-permissions.md)
+- **Zaznam-level:** Sdílí konkrétní záznam (nejmenší scope)
+- **Precedence:** Zaznam-level přebíjí Property-level, Property-level přebíjí Project-level (viz 04-auth-permissions.md)
 
 **Příklad:**
 ```
 Projekt "Rodina" - Jan je Editor
 ├── Chalupa - Jan je explicitně Viewer → Viewer (přebito)
+│   └── Revize střechy (Zaznam) - Jan je explicitně Viewer → Viewer (přebito)
 ├── Byt - Jan nemá explicitní roli → Editor (dědí)
 └── Garáž - Jan nemá explicitní roli → Editor (dědí)
 ```

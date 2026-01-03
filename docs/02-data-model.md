@@ -100,6 +100,9 @@ Nová entita pro seskupení nemovitostí.
 | Name | string | Název projektu |
 | CreatedAt | datetime | Vytvořeno |
 | UpdatedAt | datetime | Upraveno |
+| SyncMode | enum | `local-only` / `synced` |
+| SyncStatus | enum | local / pending / syncing / synced / failed |
+| LastSyncAt | datetime? | Poslední úspěšný sync |
 | IsDeleted | bool | Soft delete |
 | DeletedAt | datetime? | Kdy smazáno |
 
@@ -116,6 +119,9 @@ Nová entita pro seskupení nemovitostí.
 | GeoRadius | int | Radius v metrech (default 100) |
 | CreatedAt | datetime | Vytvořeno |
 | UpdatedAt | datetime | Upraveno |
+| SyncMode | enum | `local-only` / `synced` |
+| SyncStatus | enum | local / pending / syncing / synced / failed |
+| LastSyncAt | datetime? | Poslední úspěšný sync |
 | IsDeleted | bool | Soft delete |
 | DeletedAt | datetime? | Kdy smazáno |
 
@@ -160,6 +166,9 @@ Obecný záznam (nahrazuje Repair).
 | Flags | int | Bitové flagy (MissingPhoto, TODO, Čeká, Důležité...) |
 | CreatedAt | datetime | Vytvořeno |
 | UpdatedAt | datetime | Upraveno |
+| SyncMode | enum | `local-only` / `synced` |
+| SyncStatus | enum | local / pending / syncing / synced / failed |
+| LastSyncAt | datetime? | Poslední úspěšný sync |
 | IsDeleted | bool | Soft delete |
 | DeletedAt | datetime? | Kdy smazáno |
 
@@ -269,13 +278,24 @@ Junction tabulka (many-to-many).
 | Permissions | json? | Granulární práva (override) |
 | CreatedAt | datetime | Vytvořeno |
 
+### ZaznamMember
+
+| Pole | Typ | Popis |
+|------|-----|-------|
+| Id | uuid (Guid) | PK |
+| ZaznamId | uuid (Guid) | FK → Zaznam |
+| UserId | uuid (Guid) | FK → User |
+| Role | enum | Owner / Editor / Viewer |
+| Permissions | json? | Granulární práva (override) |
+| CreatedAt | datetime | Vytvořeno |
+
 ### Invitation
 
 | Pole | Typ | Popis |
 |------|-----|-------|
 | Id | uuid (Guid) | PK |
 | TokenHash | string | Hash tajného tokenu pro invite link (neukládat plaintext) |
-| TargetType | enum | Project / Property |
+| TargetType | enum | Project / Property / Zaznam |
 | TargetId | uuid (Guid) | ID cíle |
 | Email | string | Email pozvaného |
 | Role | enum | Owner / Editor / Viewer |

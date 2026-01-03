@@ -11,6 +11,7 @@ export type ZaznamStatus = 'draft' | 'complete';
 export type UnitType = 'flat' | 'house' | 'garage' | 'garden' | 'room' | 'stairs' | 'other';
 export type DocumentType = 'photo' | 'document' | 'receipt';
 export type SyncStatus = 'local' | 'synced' | 'syncing' | 'pending' | 'failed';
+export type SyncMode = 'local-only' | 'synced';
 
 // Project types
 export interface ProjectDto {
@@ -20,6 +21,8 @@ export interface ProjectDto {
   propertyCount: number;
   memberCount: number;
   myRole: Role;
+  syncMode?: SyncMode;
+  syncStatus?: SyncStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -54,6 +57,8 @@ export interface PropertyDto {
   totalCost: number;
   myRole: Role;
   isShared: boolean;
+  syncMode?: SyncMode;
+  syncStatus?: SyncStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -135,6 +140,7 @@ export interface ZaznamDto {
   documentCount: number;
   commentCount: number;
   thumbnailUrl?: string;
+  syncMode?: SyncMode;
   syncStatus: SyncStatus;
   createdAt: string;
   updatedAt: string;

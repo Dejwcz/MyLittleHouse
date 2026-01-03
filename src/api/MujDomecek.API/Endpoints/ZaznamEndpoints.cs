@@ -24,6 +24,10 @@ public static class ZaznamEndpoints
         group.MapGet("/{id:guid}", GetZaznamAsync);
         group.MapPut("/{id:guid}", UpdateZaznamAsync);
         group.MapDelete("/{id:guid}", DeleteZaznamAsync);
+        group.MapGet("/{id:guid}/members", GetMembersAsync);
+        group.MapPost("/{id:guid}/members", AddMemberAsync);
+        group.MapPut("/{id:guid}/members/{userId:guid}", UpdateMemberAsync);
+        group.MapDelete("/{id:guid}/members/{userId:guid}", RemoveMemberAsync);
         group.MapPost("/{id:guid}/complete", CompleteZaznamAsync);
         group.MapGet("/drafts", GetDraftsAsync);
 
@@ -55,10 +59,11 @@ public static class ZaznamEndpoints
 
         var query = dbContext.Zaznamy.AsQueryable();
 
-        query = query.Where(z => dbContext.Properties.Any(p => p.Id == z.PropertyId &&
-            (dbContext.Projects.Any(pr => pr.Id == p.ProjectId && pr.OwnerId == userId)
-             || dbContext.ProjectMembers.Any(pm => pm.ProjectId == p.ProjectId && pm.UserId == userId)
-             || dbContext.PropertyMembers.Any(pm => pm.PropertyId == p.Id && pm.UserId == userId))));
+        query = query.Where(z => dbContext.ZaznamMembers.Any(m => m.ZaznamId == z.Id && m.UserId == userId)
+            || dbContext.Properties.Any(p => p.Id == z.PropertyId &&
+                (dbContext.Projects.Any(pr => pr.Id == p.ProjectId && pr.OwnerId == userId)
+                 || dbContext.ProjectMembers.Any(pm => pm.ProjectId == p.ProjectId && pm.UserId == userId)
+                 || dbContext.PropertyMembers.Any(pm => pm.PropertyId == p.Id && pm.UserId == userId))));
 
         if (propertyId.HasValue)
             query = query.Where(z => z.PropertyId == propertyId.Value);
@@ -207,7 +212,8 @@ public static class ZaznamEndpoints
                 documentCount,
                 commentCount,
                 BuildThumbnailUrl(storageService, thumbnailKey),
-                "synced",
+                ToSyncModeString(item.SyncMode),
+                ToSyncStatusString(item.SyncStatus),
                 item.CreatedAt,
                 item.UpdatedAt,
                 new SimpleUserDto(createdById, BuildDisplayName(createdByUser.First, createdByUser.Last, createdByUser.Email)));
@@ -356,6 +362,7 @@ public static class ZaznamEndpoints
             dto.DocumentCount,
             dto.CommentCount,
             dto.ThumbnailUrl,
+            dto.SyncMode,
             dto.SyncStatus,
             dto.CreatedAt,
             dto.UpdatedAt,
@@ -479,6 +486,200 @@ public static class ZaznamEndpoints
         return Results.NoContent();
     }
 
+    private static async Task<IResult> GetMembersAsync(
+        ClaimsPrincipal user,
+        Guid id,
+        ApplicationDbContext dbContext)
+    {
+        var userId = user.GetUserId();
+        if (userId == Guid.Empty)
+            return Results.Unauthorized();
+
+        if (!await HasZaznamAccessAsync(dbContext, id, userId))
+            return Results.Forbid();
+
+        var members = await dbContext.ZaznamMembers
+            .Where(m => m.ZaznamId == id)
+            .Join(dbContext.Users, m => m.UserId, u => u.Id, (m, u) => new MemberDto(
+                u.Id,
+                u.Email ?? string.Empty,
+                $"{u.FirstName} {u.LastName}".Trim(),
+                null,
+                m.Role.ToString().ToLowerInvariant(),
+                m.PermissionsJson == null ? null : System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, bool>>(m.PermissionsJson),
+                "active",
+                m.CreatedAt))
+            .ToListAsync();
+
+        return Results.Ok(members);
+    }
+
+    private static async Task<IResult> AddMemberAsync(
+        ClaimsPrincipal user,
+        HttpRequest httpRequest,
+        Guid id,
+        [FromBody] AddMemberRequest request,
+        ApplicationDbContext dbContext,
+        IEmailDispatcher emailDispatcher,
+        EmailTemplateService emailTemplates,
+        IConfiguration configuration,
+        CancellationToken ct)
+    {
+        var userId = user.GetUserId();
+        if (userId == Guid.Empty)
+            return Results.Unauthorized();
+
+        var zaznam = await dbContext.Zaznamy.FirstOrDefaultAsync(z => z.Id == id, ct);
+        if (zaznam is null)
+            return Results.NotFound();
+
+        var property = await dbContext.Properties.FirstAsync(p => p.Id == zaznam.PropertyId, ct);
+        var project = await dbContext.Projects.FirstAsync(p => p.Id == property.ProjectId, ct);
+        if (project.OwnerId != userId)
+            return Results.Forbid();
+
+        var token = InvitationTokenHelper.CreateToken();
+        var inviteUrl = InvitationTokenHelper.BuildInviteUrl(httpRequest, configuration, token.Token);
+
+        var invitation = new Invitation
+        {
+            Id = Guid.NewGuid(),
+            TokenHash = token.TokenHash,
+            TargetType = InvitationTargetType.Zaznam,
+            TargetId = zaznam.Id,
+            Email = request.Email,
+            Role = ToRole(request.Role),
+            PermissionsJson = request.Permissions is null ? null : System.Text.Json.JsonSerializer.Serialize(request.Permissions),
+            Status = InvitationStatus.Pending,
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = userId
+        };
+
+        dbContext.Invitations.Add(invitation);
+
+        var normalizedEmail = NormalizeEmail(request.Email);
+        if (normalizedEmail is not null)
+        {
+            var recipient = await dbContext.Users.FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail, ct);
+            if (recipient is not null && recipient.Id != userId)
+            {
+                ActivityNotificationHelper.AddNotification(dbContext, recipient.Id, NotificationType.InvitationReceived, new
+                {
+                    invitationId = invitation.Id,
+                    targetType = "zaznam",
+                    targetId = zaznam.Id,
+                    targetName = zaznam.Title ?? string.Empty,
+                    role = ToRoleString(invitation.Role, isOwner: false),
+                    invitedByUserId = userId
+                });
+            }
+        }
+
+        await dbContext.SaveChangesAsync(ct);
+
+        await InvitationEmailHelper.SendInvitationAsync(
+            dbContext,
+            emailDispatcher,
+            emailTemplates,
+            invitation,
+            inviteUrl,
+            zaznam.Title ?? string.Empty,
+            ct);
+
+        return Results.Accepted(value: new InvitationLinkResponse(invitation.Id, inviteUrl, invitation.ExpiresAt));
+    }
+
+    private static async Task<IResult> UpdateMemberAsync(
+        ClaimsPrincipal user,
+        Guid id,
+        Guid userId,
+        [FromBody] UpdateMemberRequest request,
+        ApplicationDbContext dbContext)
+    {
+        var actorId = user.GetUserId();
+        if (actorId == Guid.Empty)
+            return Results.Unauthorized();
+
+        var zaznam = await dbContext.Zaznamy.FirstOrDefaultAsync(z => z.Id == id);
+        if (zaznam is null)
+            return Results.NotFound();
+
+        var property = await dbContext.Properties.FirstAsync(p => p.Id == zaznam.PropertyId);
+        var project = await dbContext.Projects.FirstAsync(p => p.Id == property.ProjectId);
+        if (project.OwnerId != actorId)
+            return Results.Forbid();
+
+        var member = await dbContext.ZaznamMembers.FirstOrDefaultAsync(m => m.ZaznamId == id && m.UserId == userId);
+        if (member is null)
+            return Results.NotFound();
+
+        var roleChanged = false;
+        if (!string.IsNullOrWhiteSpace(request.Role))
+        {
+            var parsed = ToRole(request.Role);
+            if (member.Role != parsed)
+            {
+                member.Role = parsed;
+                roleChanged = true;
+            }
+        }
+        if (request.Permissions is not null)
+            member.PermissionsJson = System.Text.Json.JsonSerializer.Serialize(request.Permissions);
+
+        if (roleChanged)
+        {
+            ActivityNotificationHelper.AddActivity(
+                dbContext,
+                property.Id,
+                actorId,
+                ActivityType.MemberRoleChanged,
+                "member",
+                userId,
+                new { userId, role = ToRoleString(member.Role, isOwner: false) });
+        }
+
+        member.UpdatedAt = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> RemoveMemberAsync(
+        ClaimsPrincipal user,
+        Guid id,
+        Guid userId,
+        ApplicationDbContext dbContext)
+    {
+        var actorId = user.GetUserId();
+        if (actorId == Guid.Empty)
+            return Results.Unauthorized();
+
+        var zaznam = await dbContext.Zaznamy.FirstOrDefaultAsync(z => z.Id == id);
+        if (zaznam is null)
+            return Results.NotFound();
+
+        var property = await dbContext.Properties.FirstAsync(p => p.Id == zaznam.PropertyId);
+        var project = await dbContext.Projects.FirstAsync(p => p.Id == property.ProjectId);
+        if (project.OwnerId != actorId)
+            return Results.Forbid();
+
+        var member = await dbContext.ZaznamMembers.FirstOrDefaultAsync(m => m.ZaznamId == id && m.UserId == userId);
+        if (member is null)
+            return Results.NotFound();
+
+        dbContext.ZaznamMembers.Remove(member);
+        ActivityNotificationHelper.AddActivity(
+            dbContext,
+            property.Id,
+            actorId,
+            ActivityType.MemberLeft,
+            "member",
+            userId,
+            new { userId });
+        await dbContext.SaveChangesAsync();
+        return Results.NoContent();
+    }
+
     private static async Task<IResult> CompleteZaznamAsync(
         ClaimsPrincipal user,
         Guid id,
@@ -516,6 +717,9 @@ public static class ZaznamEndpoints
 
     private static async Task<bool> HasZaznamAccessAsync(ApplicationDbContext dbContext, Guid zaznamId, Guid userId)
     {
+        if (await dbContext.ZaznamMembers.AnyAsync(m => m.ZaznamId == zaznamId && m.UserId == userId))
+            return true;
+
         var propertyId = await dbContext.Zaznamy
             .Where(z => z.Id == zaznamId)
             .Select(z => z.PropertyId)
@@ -633,7 +837,8 @@ public static class ZaznamEndpoints
             documentCount,
             commentCount,
             BuildThumbnailUrl(storageService, thumbnailKey),
-            "synced",
+            ToSyncModeString(zaznam.SyncMode),
+            ToSyncStatusString(zaznam.SyncStatus),
             zaznam.CreatedAt,
             zaznam.UpdatedAt,
             new SimpleUserDto(createdByUserId, createdByName ?? string.Empty));
@@ -663,6 +868,33 @@ public static class ZaznamEndpoints
             DocumentType.Receipt => "receipt",
             _ => "document"
         };
+    }
+
+    private static string ToSyncModeString(SyncMode mode)
+    {
+        return mode == SyncMode.Synced ? "synced" : "local-only";
+    }
+
+    private static string ToSyncStatusString(SyncStatus status)
+    {
+        return status.ToString().ToLowerInvariant();
+    }
+
+    private static string ToRoleString(MemberRole role, bool isOwner)
+    {
+        return isOwner ? "owner" : role.ToString().ToLowerInvariant();
+    }
+
+    private static MemberRole ToRole(string role)
+    {
+        return Enum.TryParse<MemberRole>(role, true, out var parsed) ? parsed : MemberRole.Viewer;
+    }
+
+    private static string? NormalizeEmail(string? email)
+    {
+        return string.IsNullOrWhiteSpace(email)
+            ? null
+            : email.Trim().ToUpperInvariant();
     }
 
     private static List<string> NormalizeTagNames(IReadOnlyList<string>? tags)

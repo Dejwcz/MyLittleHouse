@@ -76,14 +76,18 @@ class SyncStore {
     this.error = null;
 
     try {
-      // Get all projects with syncMode = 'synced'
-      const syncedProjects = await db.projects
-        .where('syncMode')
-        .equals('synced')
-        .toArray();
+      const syncedProjects = await db.projects.where('syncMode').equals('synced').toArray();
+      const syncedProperties = await db.properties.where('syncMode').equals('synced').toArray();
+      const syncedZaznamy = await db.zaznamy.where('syncMode').equals('synced').toArray();
 
       for (const project of syncedProjects) {
-        await this.syncProject(project.id);
+        await this.syncScope('project', project.id);
+      }
+      for (const property of syncedProperties) {
+        await this.syncScope('property', property.id);
+      }
+      for (const zaznam of syncedZaznamy) {
+        await this.syncScope('zaznam', zaznam.id);
       }
 
       this.lastSyncAt = Date.now();
@@ -97,12 +101,18 @@ class SyncStore {
   }
 
   /**
-   * Sync a single project using the sync engine
+   * Sync a single scope using the sync engine
+   */
+  async syncScope(scopeType: 'project' | 'property' | 'zaznam', scopeId: string): Promise<void> {
+    const { syncEngine } = await import('$lib/api/sync');
+    await syncEngine.syncScope(scopeType, scopeId);
+  }
+
+  /**
+   * Backwards-compatible project sync wrapper
    */
   async syncProject(projectId: string): Promise<void> {
-    // Dynamic import to avoid circular dependency
-    const { syncEngine } = await import('$lib/api/sync');
-    await syncEngine.syncProject(projectId);
+    return this.syncScope('project', projectId);
   }
 
   /**
@@ -110,15 +120,15 @@ class SyncStore {
    */
   async pullProject(projectId: string): Promise<void> {
     const { syncEngine } = await import('$lib/api/sync');
-    await syncEngine.pullChanges(projectId);
+    await syncEngine.pullChanges('project', projectId);
   }
 
   /**
    * Retry failed sync operations
    */
-  async retryFailed(projectId?: string): Promise<void> {
+  async retryFailed(scope?: { scopeType: 'project' | 'property' | 'zaznam'; scopeId: string }): Promise<void> {
     const { syncEngine } = await import('$lib/api/sync');
-    await syncEngine.retryFailed(projectId);
+    await syncEngine.retryFailed(scope);
   }
 
   /**

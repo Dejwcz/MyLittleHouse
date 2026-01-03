@@ -21,9 +21,17 @@ public sealed class Zaznam : SoftDeletableEntity<Guid>
 
     public ZaznamFlags Flags { get; set; } = ZaznamFlags.None;
 
+    public SyncMode SyncMode { get; set; } = SyncMode.Synced;
+
+    public SyncStatus SyncStatus { get; set; } = SyncStatus.Synced;
+
+    public DateTime? LastSyncAt { get; set; }
+
     public List<ZaznamDokument> Documents { get; set; } = [];
 
     public List<ZaznamTag> Tags { get; set; } = [];
 
     public List<Comment> Comments { get; set; } = [];
+
+    public List<ZaznamMember> Members { get; set; } = [];
 }

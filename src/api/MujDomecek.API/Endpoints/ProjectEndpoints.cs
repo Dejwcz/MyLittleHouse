@@ -57,6 +57,8 @@ public static class ProjectEndpoints
                     : dbContext.ProjectMembers.Where(pm => pm.ProjectId == p.Id && pm.UserId == userId)
                         .Select(pm => ToRoleString(pm.Role))
                         .FirstOrDefault() ?? "viewer",
+                ToSyncModeString(p.SyncMode),
+                ToSyncStatusString(p.SyncStatus),
                 p.CreatedAt,
                 p.UpdatedAt))
             .ToListAsync();
@@ -102,6 +104,8 @@ public static class ProjectEndpoints
             0,
             1,
             "owner",
+            ToSyncModeString(project.SyncMode),
+            ToSyncStatusString(project.SyncStatus),
             project.CreatedAt,
             project.UpdatedAt);
 
@@ -137,11 +141,13 @@ public static class ProjectEndpoints
                 p.GeoRadius,
                 dbContext.Units.Count(u => u.PropertyId == p.Id),
                 dbContext.Zaznamy.Count(z => z.PropertyId == p.Id),
-                dbContext.Zaznamy.Where(z => z.PropertyId == p.Id).Sum(z => (decimal?)z.Cost) ?? 0,
-                "owner",
-                false,
-                p.CreatedAt,
-                p.UpdatedAt))
+            dbContext.Zaznamy.Where(z => z.PropertyId == p.Id).Sum(z => (decimal?)z.Cost) ?? 0,
+            "owner",
+            false,
+            ToSyncModeString(p.SyncMode),
+            ToSyncStatusString(p.SyncStatus),
+            p.CreatedAt,
+            p.UpdatedAt))
             .ToListAsync();
 
         var members = await GetMemberDtosAsync(dbContext, project.Id);
@@ -153,6 +159,8 @@ public static class ProjectEndpoints
             properties.Count,
             members.Count,
             project.OwnerId == userId ? "owner" : "editor",
+            ToSyncModeString(project.SyncMode),
+            ToSyncStatusString(project.SyncStatus),
             project.CreatedAt,
             project.UpdatedAt,
             properties,
@@ -193,6 +201,8 @@ public static class ProjectEndpoints
             dbContext.Properties.Count(p => p.ProjectId == project.Id),
             dbContext.ProjectMembers.Count(pm => pm.ProjectId == project.Id) + 1,
             "owner",
+            ToSyncModeString(project.SyncMode),
+            ToSyncStatusString(project.SyncStatus),
             project.CreatedAt,
             project.UpdatedAt);
 
@@ -412,6 +422,16 @@ public static class ProjectEndpoints
     }
 
     private static string ToRoleString(MemberRole role) => role.ToString().ToLowerInvariant();
+
+    private static string ToSyncModeString(SyncMode mode)
+    {
+        return mode == SyncMode.Synced ? "synced" : "local-only";
+    }
+
+    private static string ToSyncStatusString(SyncStatus status)
+    {
+        return status.ToString().ToLowerInvariant();
+    }
 
     private static MemberRole ToRole(string role)
     {

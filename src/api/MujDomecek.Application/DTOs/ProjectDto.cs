@@ -7,6 +7,8 @@ public sealed record ProjectDto(
     int PropertyCount,
     int MemberCount,
     string MyRole,
+    string SyncMode,
+    string SyncStatus,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );
@@ -18,6 +20,8 @@ public sealed record ProjectDetailDto(
     int PropertyCount,
     int MemberCount,
     string MyRole,
+    string SyncMode,
+    string SyncStatus,
     DateTime CreatedAt,
     DateTime UpdatedAt,
     IReadOnlyList<PropertyDto> Properties,

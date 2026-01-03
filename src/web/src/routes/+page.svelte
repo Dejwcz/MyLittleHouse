@@ -27,7 +27,7 @@
 
   function startWithoutAccount() {
     auth.startAsGuest();
-    goto('/dashboard');
+    goto('/projects');
   }
 </script>
 
@@ -125,7 +125,7 @@
         </div>
         {#if hasLocalData && !checking}
           <p class="text-sm text-foreground-muted">
-            Máte {projectCount} {projectCount === 1 ? 'projekt' : projectCount < 5 ? 'projekty' : 'projektů'} uložených lokálně
+            Máte {projectCount} {projectCount === 1 ? 'projekt uložený' : projectCount < 5 ? 'projekty uložené' : 'projektů uložených'} lokálně
           </p>
         {/if}
       </div>

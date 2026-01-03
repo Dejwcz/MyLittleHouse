@@ -3,7 +3,10 @@
 This file tracks remaining tasks while working through the spec.
 
 ## Open
-- None.
+- Capacitor wrapper setup (see `docs/plans/2026-01-03-capacitor-wrapper-plan.md`).
+- Add Capacitor config and scripts in `src/web`.
+- Ensure static build output for mobile web view.
+- Add iOS/Android platforms and run `npx cap sync`.
 
 ## Done
 - Added SyncRetry + SendEmail jobs and scheduling.

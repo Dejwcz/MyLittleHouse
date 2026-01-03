@@ -651,8 +651,8 @@ interface UpdateMemberRequest {
 
 ## Flow: Pozvánky
 
-1. Owner otevře Project/Property detail → **Sdílet**
-2. Zvolí scope (Project/Property) a roli (Owner/Editor/Viewer)
+1. Owner otevře Project/Property/Zaznam detail → **Sdílet**
+2. Zvolí scope (Project/Property/Zaznam) a roli (Owner/Editor/Viewer)
 3. Volitelně nastaví per-user overrides (checkboxy)
 4. Vybere příjemce z kontaktů/skupin nebo zadá email
 5. Potvrdí → vytvoří se `Invitation` (expirace 7 dní) + vygeneruje se invite link (token)
@@ -683,14 +683,15 @@ public bool IsExpired => ExpiresAt < DateTime.UtcNow;
 
 ## Permission precedence
 
-Uživatel může mít roli na Project i Property úrovni.
+Uživatel může mít roli na Project, Property i Zaznam úrovni.
 
-**Pravidlo:** Explicitní PropertyMember přebíjí implicitní ProjectMember
+**Pravidlo:** Explicitní ZaznamMember přebíjí PropertyMember, PropertyMember přebíjí ProjectMember.
 
 **Příklad:**
 ```
 Projekt "Rodina" - User je Editor
   └── Property "Chalupa" - User je explicitně Viewer → Viewer
+      └── Zaznam "Revize střechy" - User je explicitně Viewer → Viewer
   └── Property "Byt" - User nemá explicitní roli → Editor (dědí)
 ```
 

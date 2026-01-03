@@ -11,11 +11,21 @@ const RETRY_DELAY_MS = 5000;
  */
 export const syncEngine = {
   /**
-   * Sync all pending changes for a project to the server
+   * Sync all pending changes for a scope to the server
    */
-  async syncProject(projectId: string): Promise<void> {
-    const project = await db.projects.get(projectId);
-    if (!project || project.syncMode !== 'synced') return;
+  async syncScope(scopeType: SyncQueueItem['scopeType'], scopeId: string): Promise<void> {
+    if (scopeType === 'project') {
+      const project = await db.projects.get(scopeId);
+      if (!project || project.syncMode !== 'synced') return;
+    }
+    if (scopeType === 'property') {
+      const property = await db.properties.get(scopeId);
+      if (!property || property.syncMode !== 'synced') return;
+    }
+    if (scopeType === 'zaznam') {
+      const zaznam = await db.zaznamy.get(scopeId);
+      if (!zaznam || zaznam.syncMode !== 'synced') return;
+    }
 
     // Check if user is authenticated
     if (!auth.isAuthenticated) {
@@ -23,7 +33,7 @@ export const syncEngine = {
       return;
     }
 
-    const pendingChanges = await getPendingChanges(projectId);
+    const pendingChanges = await getPendingChanges(scopeType, scopeId);
 
     // Sort by createdAt to maintain order
     pendingChanges.sort((a, b) => a.createdAt - b.createdAt);
@@ -70,11 +80,23 @@ export const syncEngine = {
       }
     }
 
-    // Update project last sync timestamp
-    await db.projects.update(projectId, {
-      lastSyncAt: Date.now(),
-      syncStatus: 'synced'
-    });
+    const now = Date.now();
+    if (scopeType === 'project') {
+      await db.projects.update(scopeId, { lastSyncAt: now, syncStatus: 'synced' });
+    }
+    if (scopeType === 'property') {
+      await db.properties.update(scopeId, { lastSyncAt: now, syncStatus: 'synced' });
+    }
+    if (scopeType === 'zaznam') {
+      await db.zaznamy.update(scopeId, { lastSyncAt: now, syncStatus: 'synced' });
+    }
+  },
+
+  /**
+   * Backwards-compatible project sync wrapper
+   */
+  async syncProject(projectId: string): Promise<void> {
+    return this.syncScope('project', projectId);
   },
 
   /**
@@ -244,16 +266,33 @@ export const syncEngine = {
   },
 
   /**
-   * Pull changes from server for a project
+   * Pull changes from server for a scope
    */
-  async pullChanges(projectId: string, since?: number): Promise<void> {
-    const project = await db.projects.get(projectId);
-    if (!project || project.syncMode !== 'synced') return;
+  async pullChanges(scopeType: SyncQueueItem['scopeType'], scopeId: string, since?: number): Promise<void> {
+    if (scopeType === 'project') {
+      const project = await db.projects.get(scopeId);
+      if (!project || project.syncMode !== 'synced') return;
+    }
+    if (scopeType === 'property') {
+      const property = await db.properties.get(scopeId);
+      if (!property || property.syncMode !== 'synced') return;
+    }
+    if (scopeType === 'zaznam') {
+      const zaznam = await db.zaznamy.get(scopeId);
+      if (!zaznam || zaznam.syncMode !== 'synced') return;
+    }
 
     if (!auth.isAuthenticated) return;
 
     try {
-      const sinceTs = since ?? project.lastSyncAt ?? 0;
+      const lastSyncAt =
+        scopeType === 'project'
+          ? (await db.projects.get(scopeId))?.lastSyncAt
+          : scopeType === 'property'
+            ? (await db.properties.get(scopeId))?.lastSyncAt
+            : (await db.zaznamy.get(scopeId))?.lastSyncAt;
+
+      const sinceTs = since ?? lastSyncAt ?? 0;
       const response = await api.get<{
         changes: Array<{
           entityType: string;
@@ -263,7 +302,7 @@ export const syncEngine = {
           updatedAt: number;
         }>;
         serverTime: number;
-      }>(`/sync/pull?projectId=${projectId}&since=${sinceTs}`);
+      }>(`/sync/pull?scopeType=${scopeType}&scopeId=${scopeId}&since=${sinceTs}`);
 
       const { changes, serverTime } = response;
 
@@ -271,10 +310,15 @@ export const syncEngine = {
         await this.applyServerChange(change);
       }
 
-      // Update last sync time
-      await db.projects.update(projectId, {
-        lastSyncAt: serverTime
-      });
+      if (scopeType === 'project') {
+        await db.projects.update(scopeId, { lastSyncAt: serverTime });
+      }
+      if (scopeType === 'property') {
+        await db.properties.update(scopeId, { lastSyncAt: serverTime });
+      }
+      if (scopeType === 'zaznam') {
+        await db.zaznamy.update(scopeId, { lastSyncAt: serverTime });
+      }
 
     } catch (err) {
       console.error('Failed to pull changes:', err);
@@ -412,12 +456,12 @@ export const syncEngine = {
   /**
    * Retry failed changes
    */
-  async retryFailed(projectId?: string): Promise<void> {
+  async retryFailed(scope?: { scopeType: SyncQueueItem['scopeType']; scopeId: string }): Promise<void> {
     const now = Date.now();
     let query = db.syncQueue.where('status').equals('failed');
 
-    if (projectId) {
-      query = query.and(item => item.projectId === projectId);
+    if (scope) {
+      query = query.and(item => item.scopeType === scope.scopeType && item.scopeId === scope.scopeId);
     }
 
     const failedChanges = await query.and(item =>

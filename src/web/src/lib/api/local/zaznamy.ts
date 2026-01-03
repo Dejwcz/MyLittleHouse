@@ -1,4 +1,4 @@
-import { db, queueChange, type Zaznam } from '$lib/db';
+import { db, queueChange, queueZaznamForSync, type Zaznam, type SyncMode } from '$lib/db';
 import type {
   ZaznamDto,
   ZaznamDetailDto,
@@ -10,16 +10,47 @@ import type {
 
 const LOCAL_USER_ID = 'local-user';
 
-async function getProjectIdForProperty(propertyId: string): Promise<string | null> {
+async function getDefaultZaznamSyncMode(propertyId: string): Promise<SyncMode> {
   const property = await db.properties.get(propertyId);
-  return property?.projectId ?? null;
+  if (!property) return 'local-only';
+  return property.syncMode === 'synced' ? 'synced' : 'local-only';
 }
 
-async function isPropertySynced(propertyId: string): Promise<boolean> {
-  const property = await db.properties.get(propertyId);
-  if (!property) return false;
-  const project = await db.projects.get(property.projectId);
-  return project?.syncMode === 'synced';
+async function getZaznamSyncScope(zaznam: Zaznam): Promise<{
+  scopeType: 'project' | 'property' | 'zaznam';
+  scopeId: string;
+  projectId?: string;
+} | null> {
+  if (zaznam.syncMode === 'synced') {
+    const property = await db.properties.get(zaznam.propertyId);
+    return {
+      scopeType: 'zaznam',
+      scopeId: zaznam.id,
+      projectId: property?.projectId
+    };
+  }
+
+  const property = await db.properties.get(zaznam.propertyId);
+  if (property?.syncMode === 'synced') {
+    return {
+      scopeType: 'property',
+      scopeId: property.id,
+      projectId: property.projectId
+    };
+  }
+
+  if (property) {
+    const project = await db.projects.get(property.projectId);
+    if (project?.syncMode === 'synced') {
+      return {
+        scopeType: 'project',
+        scopeId: project.id,
+        projectId: project.id
+      };
+    }
+  }
+
+  return null;
 }
 
 async function zaznamToDto(zaznam: Zaznam): Promise<ZaznamDto> {
@@ -49,6 +80,7 @@ async function zaznamToDto(zaznam: Zaznam): Promise<ZaznamDto> {
     tags: tagNames.filter(Boolean),
     documentCount,
     commentCount: 0,
+    syncMode: zaznam.syncMode,
     syncStatus: zaznam.syncStatus,
     createdAt: new Date(zaznam.updatedAt).toISOString(),
     updatedAt: new Date(zaznam.updatedAt).toISOString(),
@@ -159,8 +191,7 @@ export const localZaznamyApi = {
     const now = Date.now();
     const property = await db.properties.get(data.propertyId);
     const unit = data.unitId ? await db.units.get(data.unitId) : null;
-    const synced = await isPropertySynced(data.propertyId);
-    const projectId = await getProjectIdForProperty(data.propertyId);
+    const syncMode = await getDefaultZaznamSyncMode(data.propertyId);
 
     const zaznam: Zaznam = {
       id,
@@ -174,14 +205,15 @@ export const localZaznamyApi = {
       propertyName: property?.name,
       unitName: unit?.name,
       updatedAt: now,
-      syncStatus: synced ? 'pending' : 'local'
+      syncStatus: syncMode === 'synced' ? 'pending' : 'local',
+      syncMode
     };
 
     await db.zaznamy.add(zaznam);
 
-    // Queue change if project is synced
-    if (synced && projectId) {
-      await queueChange(projectId, 'zaznamy', id, 'create', {
+    const scope = await getZaznamSyncScope(zaznam);
+    if (scope) {
+      await queueChange(scope.scopeType, scope.scopeId, scope.projectId, 'zaznamy', id, 'create', {
         propertyId: data.propertyId,
         unitId: data.unitId,
         title: zaznam.title,
@@ -235,12 +267,8 @@ export const localZaznamyApi = {
     const oldCost = zaznam.cost ?? 0;
     const newCost = data.cost ?? oldCost;
     const costDiff = newCost - oldCost;
-    const synced = await isPropertySynced(zaznam.propertyId);
-    const projectId = await getProjectIdForProperty(zaznam.propertyId);
-
     const updated: Partial<Zaznam> = {
-      updatedAt: now,
-      syncStatus: synced ? 'pending' : 'local'
+      updatedAt: now
     };
 
     if (data.title !== undefined) updated.title = data.title;
@@ -259,9 +287,12 @@ export const localZaznamyApi = {
 
     await db.zaznamy.update(id, updated);
 
-    // Queue change if project is synced
-    if (synced && projectId) {
-      await queueChange(projectId, 'zaznamy', id, 'update', data);
+    const scope = await getZaznamSyncScope(zaznam);
+    if (scope) {
+      updated.syncStatus = 'pending';
+      await queueChange(scope.scopeType, scope.scopeId, scope.projectId, 'zaznamy', id, 'update', data);
+    } else {
+      updated.syncStatus = 'local';
     }
 
     // Update property total cost
@@ -298,12 +329,9 @@ export const localZaznamyApi = {
     if (!zaznam) return;
 
     const now = Date.now();
-    const synced = await isPropertySynced(zaznam.propertyId);
-    const projectId = await getProjectIdForProperty(zaznam.propertyId);
-
-    // Queue delete if project is synced
-    if (synced && projectId) {
-      await queueChange(projectId, 'zaznamy', id, 'delete');
+    const scope = await getZaznamSyncScope(zaznam);
+    if (scope) {
+      await queueChange(scope.scopeType, scope.scopeId, scope.projectId, 'zaznamy', id, 'delete');
     }
 
     // Update property stats
@@ -339,22 +367,39 @@ export const localZaznamyApi = {
       throw new Error('Zaznam nenalezen');
     }
 
-    const synced = await isPropertySynced(zaznam.propertyId);
-    const projectId = await getProjectIdForProperty(zaznam.propertyId);
+    const scope = await getZaznamSyncScope(zaznam);
 
     await db.zaznamy.update(id, {
       status: 'complete',
       updatedAt: Date.now(),
-      syncStatus: synced ? 'pending' : 'local'
+      syncStatus: scope ? 'pending' : 'local'
     });
 
-    // Queue change if project is synced
-    if (synced && projectId) {
-      await queueChange(projectId, 'zaznamy', id, 'update', { status: 'complete' });
+    if (scope) {
+      await queueChange(scope.scopeType, scope.scopeId, scope.projectId, 'zaznamy', id, 'update', { status: 'complete' });
     }
 
     const result = await db.zaznamy.get(id);
     return zaznamToDto(result!);
+  },
+
+  async setSyncMode(id: string, mode: SyncMode): Promise<void> {
+    const zaznam = await db.zaznamy.get(id);
+    if (!zaznam) {
+      throw new Error('Zaznam nenalezen');
+    }
+
+    await db.zaznamy.update(id, {
+      syncMode: mode,
+      syncStatus: mode === 'synced' ? 'pending' : 'local',
+      updatedAt: Date.now()
+    });
+
+    if (mode === 'synced') {
+      await queueZaznamForSync(id);
+    } else {
+      await db.syncQueue.where('scopeType').equals('zaznam').and(item => item.scopeId === id).delete();
+    }
   },
 
   async getDrafts(): Promise<PaginatedResponse<ZaznamDto>> {

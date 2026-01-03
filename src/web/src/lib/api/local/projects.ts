@@ -63,6 +63,8 @@ export const localProjectsApi = {
         totalCost: p.totalCost,
         myRole: 'owner' as const,
         isShared: false,
+        syncMode: p.syncMode,
+        syncStatus: p.syncStatus,
         createdAt: new Date(p.updatedAt).toISOString(),
         updatedAt: new Date(p.updatedAt).toISOString()
       })),
@@ -113,7 +115,7 @@ export const localProjectsApi = {
     // If project is synced, queue the change
     if (project.syncMode === 'synced') {
       updated.syncStatus = 'pending';
-      await queueChange(id, 'projects', id, 'update', data);
+      await queueChange('project', id, id, 'projects', id, 'update', data);
     } else {
       updated.syncStatus = 'local';
     }
@@ -128,7 +130,7 @@ export const localProjectsApi = {
 
     // If project was synced, queue delete
     if (project?.syncMode === 'synced') {
-      await queueChange(id, 'projects', id, 'delete');
+      await queueChange('project', id, id, 'projects', id, 'delete');
     }
 
     // Delete all related data
@@ -167,13 +169,31 @@ export const localProjectsApi = {
       throw new Error('Projekt nenalezen');
     }
 
+    const now = Date.now();
     await db.projects.update(id, {
       syncMode: mode,
       syncStatus: mode === 'synced' ? 'pending' : 'local',
-      updatedAt: Date.now()
+      updatedAt: now
     });
 
     if (mode === 'synced') {
+      // Ensure child scopes follow project sync
+      await db.properties.where('projectId').equals(id).modify({
+        syncMode: 'synced',
+        syncStatus: 'pending',
+        updatedAt: now
+      });
+
+      const projectProperties = await db.properties.where('projectId').equals(id).toArray();
+      const propertyIds = projectProperties.map(p => p.id);
+      if (propertyIds.length > 0) {
+        await db.zaznamy.where('propertyId').anyOf(propertyIds).modify({
+          syncMode: 'synced',
+          syncStatus: 'pending',
+          updatedAt: now
+        });
+      }
+
       // Queue entire project for initial sync
       await queueProjectForSync(id);
     } else {

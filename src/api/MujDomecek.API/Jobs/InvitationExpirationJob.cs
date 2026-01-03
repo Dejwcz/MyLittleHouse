@@ -53,6 +53,12 @@ public sealed class InvitationExpirationJob : IJob
             .Distinct()
             .ToList();
 
+        var zaznamIds = invitations
+            .Where(i => i.TargetType == InvitationTargetType.Zaznam)
+            .Select(i => i.TargetId)
+            .Distinct()
+            .ToList();
+
         var projectNames = projectIds.Count == 0
             ? []
             : await _dbContext.Projects
@@ -65,13 +71,23 @@ public sealed class InvitationExpirationJob : IJob
                 .Where(p => propertyIds.Contains(p.Id))
                 .ToDictionaryAsync(p => p.Id, p => p.Name, context.CancellationToken);
 
+        var zaznamNames = zaznamIds.Count == 0
+            ? []
+            : await _dbContext.Zaznamy
+                .Where(z => zaznamIds.Contains(z.Id))
+                .ToDictionaryAsync(z => z.Id, z => z.Title ?? string.Empty, context.CancellationToken);
+
         foreach (var invitation in invitations)
         {
             invitation.Status = InvitationStatus.Expired;
 
-            var targetName = invitation.TargetType == InvitationTargetType.Project
-                ? (projectNames.TryGetValue(invitation.TargetId, out var projectName) ? projectName : string.Empty)
-                : (propertyNames.TryGetValue(invitation.TargetId, out var propertyName) ? propertyName : string.Empty);
+            var targetName = invitation.TargetType switch
+            {
+                InvitationTargetType.Project => projectNames.TryGetValue(invitation.TargetId, out var projectName) ? projectName : string.Empty,
+                InvitationTargetType.Property => propertyNames.TryGetValue(invitation.TargetId, out var propertyName) ? propertyName : string.Empty,
+                InvitationTargetType.Zaznam => zaznamNames.TryGetValue(invitation.TargetId, out var zaznamName) ? zaznamName : string.Empty,
+                _ => string.Empty
+            };
 
             ActivityNotificationHelper.AddNotification(
                 _dbContext,
@@ -96,6 +112,12 @@ public sealed class InvitationExpirationJob : IJob
 
     private static string ToTypeString(InvitationTargetType type)
     {
-        return type == InvitationTargetType.Property ? "property" : "project";
+        return type switch
+        {
+            InvitationTargetType.Project => "project",
+            InvitationTargetType.Property => "property",
+            InvitationTargetType.Zaznam => "zaznam",
+            _ => "project"
+        };
     }
 }

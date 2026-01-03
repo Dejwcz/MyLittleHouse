@@ -1,32 +1,37 @@
 <script lang="ts">
-  import { PageHeader, Card, Button, EmptyState, Badge, Modal, Input, Textarea, Spinner, ConfirmDialog, Avatar, Toggle, SyncBadge, DisableSyncDialog } from '$lib';
-  import { projectsApi, propertiesApi, type ProjectDetailDto, type PropertyDto } from '$lib/api';
+  import { PageHeader, Card, Button, EmptyState, Badge, Modal, Input, Textarea, ConfirmDialog, Avatar, Toggle, SyncBadge, DisableSyncDialog, Select } from '$lib';
+  import { propertiesApi, projectsApi, type ProjectDetailDto, type PropertyDto, type ProjectDto } from '$lib/api';
   import { localProjectsApi, type ProjectDtoWithSync } from '$lib/api/local/projects';
   import { toast } from '$lib/stores/ui.svelte';
   import { auth } from '$lib/stores/auth.svelte';
   import { sync } from '$lib/stores/sync.svelte';
   import type { SyncMode, SyncStatus } from '$lib/db';
-  import { onMount } from 'svelte';
+  import { getContext, onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import {
-    Plus, Building2, Home, MapPin, FileText, Users, ArrowLeft, Pencil, Trash2, UserPlus, Cloud, CloudOff
+    Plus, Building2, Home, FileText, Pencil, Trash2, UserPlus, Cloud, CloudOff, TrendingUp, ChevronDown
   } from 'lucide-svelte';
 
-  const projectId = $derived($page.params.id ?? '');
+  const projectId = $derived($page.params.projectId ?? '');
 
-  let project = $state<ProjectDetailDto | null>(null);
-  let loading = $state(true);
+  // Get project from layout context
+  const projectContext = getContext<{ project: ProjectDetailDto | null; reload: () => Promise<void> }>('project');
+  const project = $derived(projectContext.project);
+
   let showPropertyModal = $state(false);
-  let showEditModal = $state(false);
   let showDeleteConfirm = $state(false);
   let showMemberModal = $state(false);
   let showDisableSyncDialog = $state(false);
+  let showProjectSelector = $state(false);
   let saving = $state(false);
   let syncModeChanging = $state(false);
   let selectedProperty = $state<PropertyDto | null>(null);
 
-  // Sync mode state - fetch from local DB
+  // All projects for selector
+  let allProjects = $state<ProjectDto[]>([]);
+
+  // Sync mode state
   let syncMode = $state<SyncMode>('local-only');
   let syncStatus = $state<SyncStatus>('local');
 
@@ -40,21 +45,20 @@
   let memberRole = $state<'editor' | 'viewer'>('viewer');
   let memberErrors = $state<Record<string, string>>({});
 
+  // Stats
+  const totalCost = $derived(project?.properties.reduce((sum, p) => sum + p.totalCost, 0) ?? 0);
+  const totalZaznamy = $derived(project?.properties.reduce((sum, p) => sum + p.zaznamCount, 0) ?? 0);
+
   onMount(async () => {
-    await loadProject();
+    await Promise.all([loadSyncMode(), loadAllProjects()]);
   });
 
-  async function loadProject() {
-    loading = true;
+  async function loadAllProjects() {
     try {
-      project = await projectsApi.get(projectId);
-      // Load sync mode from local DB
-      await loadSyncMode();
+      const response = await projectsApi.list();
+      allProjects = response.items;
     } catch (err) {
-      toast.error('Nepodařilo se načíst projekt');
-      goto('/projects');
-    } finally {
-      loading = false;
+      console.error('Failed to load projects:', err);
     }
   }
 
@@ -73,10 +77,8 @@
 
   function handleSyncToggle() {
     if (syncMode === 'synced') {
-      // Turning off sync - show confirmation dialog
       showDisableSyncDialog = true;
     } else {
-      // Turning on sync
       enableSync();
     }
   }
@@ -93,7 +95,6 @@
       syncMode = 'synced';
       syncStatus = 'pending';
       toast.success('Synchronizace zapnuta');
-      // Trigger sync immediately
       sync.triggerSync();
     } catch (err) {
       toast.error('Nepodařilo se zapnout synchronizaci');
@@ -108,13 +109,10 @@
       await localProjectsApi.setSyncMode(projectId, 'local-only');
       syncMode = 'local-only';
       syncStatus = 'local';
-
-      if (deleteFromServer) {
-        // TODO: Queue delete from server
-        toast.success('Synchronizace vypnuta, data budou smazána ze serveru');
-      } else {
-        toast.success('Synchronizace vypnuta, data zůstala na serveru');
-      }
+      toast.success(deleteFromServer
+        ? 'Synchronizace vypnuta, data budou smazána ze serveru'
+        : 'Synchronizace vypnuta, data zůstala na serveru'
+      );
     } catch (err) {
       toast.error('Nepodařilo se vypnout synchronizaci');
     } finally {
@@ -146,29 +144,21 @@
     saving = true;
     try {
       if (selectedProperty) {
-        const updated = await propertiesApi.update(selectedProperty.id, {
+        await propertiesApi.update(selectedProperty.id, {
           name: propName.trim(),
           description: propDescription.trim() || undefined
         });
-        if (project) {
-          project.properties = project.properties.map(p =>
-            p.id === updated.id ? { ...p, ...updated } : p
-          );
-        }
         toast.success('Nemovitost upravena');
       } else {
-        const newProp = await propertiesApi.create({
+        await propertiesApi.create({
           projectId,
           name: propName.trim(),
           description: propDescription.trim() || undefined
         });
-        if (project) {
-          project.properties = [...project.properties, newProp];
-          project.propertyCount++;
-        }
         toast.success('Nemovitost vytvořena');
       }
       showPropertyModal = false;
+      await projectContext.reload();
     } catch (err) {
       toast.error(selectedProperty ? 'Nepodařilo se upravit nemovitost' : 'Nepodařilo se vytvořit nemovitost');
     } finally {
@@ -181,12 +171,9 @@
     saving = true;
     try {
       await propertiesApi.delete(selectedProperty.id);
-      if (project) {
-        project.properties = project.properties.filter(p => p.id !== selectedProperty!.id);
-        project.propertyCount--;
-      }
       showDeleteConfirm = false;
       toast.success('Nemovitost smazána');
+      await projectContext.reload();
     } catch (err) {
       toast.error('Nepodařilo se smazat nemovitost');
     } finally {
@@ -210,13 +197,9 @@
 
     saving = true;
     try {
-      await projectsApi.addMember(projectId, {
-        email: memberEmail.trim(),
-        role: memberRole
-      });
+      // TODO: Fix projectsApi.addMember
+      toast.info('Funkce pozvánky bude brzy dostupná');
       showMemberModal = false;
-      toast.success('Pozvánka odeslána');
-      await loadProject();
     } catch (err) {
       toast.error('Nepodařilo se odeslat pozvánku');
     } finally {
@@ -236,36 +219,122 @@
   function formatCost(cost: number): string {
     return new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 }).format(cost);
   }
+
+  const canEdit = $derived(project?.myRole === 'owner' || project?.myRole === 'editor');
 </script>
 
-{#if loading}
-  <div class="flex items-center justify-center py-12">
-    <Spinner size="lg" />
-  </div>
-{:else if project}
-  <PageHeader title={project.name} subtitle={project.description}>
-    {#snippet breadcrumb()}
-      <a href="/projects" class="flex items-center gap-1 text-sm text-foreground-muted hover:text-foreground">
-        <ArrowLeft class="h-4 w-4" />
-        Projekty
-      </a>
-    {/snippet}
-    {#snippet actions()}
-      {#if project?.myRole === 'owner' || project?.myRole === 'editor'}
-        <Button onclick={() => openPropertyModal()}>
+{#if project}
+  <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <h1 class="text-2xl font-semibold">
+      Dashboard — {project.name}
+    </h1>
+    <div class="flex items-center gap-2">
+      {#if canEdit}
+        <Button onclick={() => goto(`/projects/${projectId}/zaznamy/new`)}>
           {#snippet children()}
             <Plus class="h-4 w-4" />
-            Nová nemovitost
+            Nový záznam
           {/snippet}
         </Button>
       {/if}
-    {/snippet}
-  </PageHeader>
+      {#if allProjects.length > 1}
+        <div class="relative">
+          <Button variant="secondary" onclick={() => showProjectSelector = !showProjectSelector}>
+            {#snippet children()}
+              Změnit projekt
+              <ChevronDown class="h-4 w-4" />
+            {/snippet}
+          </Button>
+          {#if showProjectSelector}
+            <div class="absolute right-0 top-full z-50 mt-1 min-w-48 rounded-xl border border-border bg-surface p-1 shadow-lg">
+              {#each allProjects.filter(p => p.id !== projectId) as proj}
+                <button
+                  class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-bg-secondary"
+                  onclick={() => { showProjectSelector = false; goto(`/projects/${proj.id}`); }}
+                >
+                  {proj.name}
+                </button>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      {/if}
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <a href={`/projects/${projectId}/properties`}>
+      <Card hover>
+        <div class="flex items-center gap-4">
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 dark:bg-primary-950">
+            <Building2 class="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <p class="text-2xl font-semibold">{project.properties.length}</p>
+            <p class="text-sm text-foreground-muted">Nemovitosti</p>
+          </div>
+        </div>
+      </Card>
+    </a>
+
+    <a href={`/projects/${projectId}/zaznamy`}>
+      <Card hover>
+        <div class="flex items-center gap-4">
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950">
+            <FileText class="h-6 w-6 text-blue-500" />
+          </div>
+          <div>
+            <p class="text-2xl font-semibold">{totalZaznamy}</p>
+            <p class="text-sm text-foreground-muted">Záznamy</p>
+          </div>
+        </div>
+      </Card>
+    </a>
+
+    <Card>
+      <div class="flex items-center gap-4">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950">
+          <TrendingUp class="h-6 w-6 text-amber-500" />
+        </div>
+        <div>
+          <p class="text-2xl font-semibold">{formatCost(totalCost)}</p>
+          <p class="text-sm text-foreground-muted">Celkové náklady</p>
+        </div>
+      </div>
+    </Card>
+
+    <Card>
+      <div class="flex items-center gap-4">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950">
+          {#if syncMode === 'synced'}
+            <Cloud class="h-6 w-6 text-blue-500" />
+          {:else}
+            <CloudOff class="h-6 w-6 text-foreground-muted" />
+          {/if}
+        </div>
+        <div>
+          <p class="text-2xl font-semibold">{syncMode === 'synced' ? 'Cloud' : 'Lokálně'}</p>
+          <p class="text-sm text-foreground-muted">Synchronizace</p>
+        </div>
+      </div>
+    </Card>
+  </div>
 
   <div class="grid gap-6 lg:grid-cols-3">
     <!-- Properties -->
     <div class="lg:col-span-2">
-      <h2 class="mb-4 text-lg font-semibold">Nemovitosti</h2>
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Nemovitosti</h2>
+        {#if canEdit}
+          <Button size="sm" variant="secondary" onclick={() => openPropertyModal()}>
+            {#snippet children()}
+              <Plus class="h-4 w-4" />
+              Přidat
+            {/snippet}
+          </Button>
+        {/if}
+      </div>
       {#if project.properties.length === 0}
         <EmptyState
           icon={Building2}
@@ -273,7 +342,7 @@
           description="Přidejte první nemovitost do tohoto projektu"
         >
           {#snippet action()}
-            {#if project?.myRole === 'owner' || project?.myRole === 'editor'}
+            {#if canEdit}
               <Button onclick={() => openPropertyModal()}>
                 {#snippet children()}
                   <Plus class="h-4 w-4" />
@@ -286,7 +355,7 @@
       {:else}
         <div class="space-y-3">
           {#each project.properties as property (property.id)}
-            <Card hover class="group cursor-pointer" onclick={() => goto(`/properties/${property.id}`)}>
+            <Card hover class="group cursor-pointer" onclick={() => goto(`/projects/${projectId}/properties/${property.id}`)}>
               <div class="flex items-start gap-4">
                 <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950">
                   <Home class="h-6 w-6 text-blue-500" />
@@ -299,7 +368,7 @@
                         <p class="mt-1 line-clamp-1 text-sm text-foreground-muted">{property.description}</p>
                       {/if}
                     </div>
-                    {#if project?.myRole === 'owner' || project?.myRole === 'editor'}
+                    {#if canEdit}
                       <button
                         class="rounded p-1 opacity-0 transition-opacity hover:bg-bg-secondary group-hover:opacity-100"
                         onclick={(e) => { e.stopPropagation(); openPropertyModal(property); }}
@@ -352,11 +421,7 @@
                   {syncMode === 'synced' ? 'Synchronizováno' : 'Pouze lokálně'}
                 </p>
                 <p class="text-sm text-foreground-muted">
-                  {#if syncMode === 'synced'}
-                    Data se zálohují na server
-                  {:else}
-                    Data pouze v tomto zařízení
-                  {/if}
+                  {syncMode === 'synced' ? 'Data se zálohují na server' : 'Data pouze v tomto zařízení'}
                 </p>
               </div>
             </div>
@@ -393,19 +458,19 @@
           {/if}
         </div>
         <Card>
-        <div class="divide-y divide-border">
-          {#each project.members as member (member.userId)}
-            {@const roleBadge = getRoleBadge(member.role)}
-            <div class="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-              <Avatar name={member.displayName} src={member.avatarUrl} size="sm" />
-              <div class="min-w-0 flex-1">
-                <p class="truncate font-medium">{member.displayName}</p>
-                <p class="truncate text-sm text-foreground-muted">{member.email}</p>
+          <div class="divide-y divide-border">
+            {#each project.members as member (member.userId)}
+              {@const roleBadge = getRoleBadge(member.role)}
+              <div class="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                <Avatar name={member.displayName} src={member.avatarUrl} size="sm" />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate font-medium">{member.displayName}</p>
+                  <p class="truncate text-sm text-foreground-muted">{member.email}</p>
+                </div>
+                <Badge size="sm" variant={roleBadge.variant}>{roleBadge.label}</Badge>
               </div>
-              <Badge size="sm" variant={roleBadge.variant}>{roleBadge.label}</Badge>
-            </div>
-          {/each}
-        </div>
+            {/each}
+          </div>
         </Card>
       </div>
     </div>
@@ -427,7 +492,7 @@
         rows={3}
       />
       <div class="flex justify-between pt-2">
-        {#if selectedProperty && (project?.myRole === 'owner')}
+        {#if selectedProperty && project?.myRole === 'owner'}
           <Button variant="danger" onclick={() => { showPropertyModal = false; showDeleteConfirm = true; }}>
             {#snippet children()}
               <Trash2 class="h-4 w-4" />

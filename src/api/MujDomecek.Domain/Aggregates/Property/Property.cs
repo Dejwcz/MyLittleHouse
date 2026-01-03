@@ -1,4 +1,5 @@
 using MujDomecek.Domain.Abstractions;
+using MujDomecek.Domain.ValueObjects;
 
 namespace MujDomecek.Domain.Aggregates.Property;
 
@@ -15,6 +16,12 @@ public sealed class Property : SoftDeletableEntity<Guid>
     public decimal? Longitude { get; set; }
 
     public int GeoRadius { get; set; } = 100;
+
+    public SyncMode SyncMode { get; set; } = SyncMode.Synced;
+
+    public SyncStatus SyncStatus { get; set; } = SyncStatus.Synced;
+
+    public DateTime? LastSyncAt { get; set; }
 
     public List<Unit> Units { get; set; } = [];
 

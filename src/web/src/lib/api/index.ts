@@ -5,10 +5,8 @@ export { authApi } from './auth';
 import { unifiedApi } from './unified';
 export const projectsApi = unifiedApi.projects;
 export const propertiesApi = unifiedApi.properties;
+export const unitsApi = unifiedApi.units;
 export const zaznamyApi = unifiedApi.zaznamy;
-
-// Units API - only remote for now (TODO: add local support if needed)
-export { unitsApi } from './units';
 
 // Re-export unified for explicit usage
 export { unifiedApi };

@@ -43,6 +43,7 @@ public sealed class ApplicationDbContext
     public DbSet<ZaznamDokument> ZaznamDokumenty => Set<ZaznamDokument>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<ZaznamTag> ZaznamTags => Set<ZaznamTag>();
+    public DbSet<ZaznamMember> ZaznamMembers => Set<ZaznamMember>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<CommentMention> CommentMentions => Set<CommentMention>();
 
@@ -145,6 +146,10 @@ public sealed class ApplicationDbContext
 
         builder.Entity<PropertyMember>()
             .HasIndex(x => new { x.PropertyId, x.UserId })
+            .IsUnique();
+
+        builder.Entity<ZaznamMember>()
+            .HasIndex(x => new { x.ZaznamId, x.UserId })
             .IsUnique();
 
         builder.Entity<Invitation>()

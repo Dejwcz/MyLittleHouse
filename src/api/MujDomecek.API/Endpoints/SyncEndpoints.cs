@@ -27,14 +27,24 @@ public static class SyncEndpoints
         return endpoints;
     }
 
-    private static Task<IResult> GetStatusAsync(ClaimsPrincipal user)
+    private static async Task<IResult> GetStatusAsync(
+        ClaimsPrincipal user,
+        string? scopeType,
+        Guid? scopeId,
+        ApplicationDbContext dbContext)
     {
         var userId = user.GetUserId();
         if (userId == Guid.Empty)
-            return Task.FromResult(Results.Unauthorized());
+            return Results.Unauthorized();
+
+        if (!TryNormalizeScopeType(scopeType, out var normalizedScope) || scopeId is null || scopeId == Guid.Empty)
+            return Results.BadRequest();
+
+        if (!await HasScopeAccessAsync(dbContext, normalizedScope, scopeId.Value, userId))
+            return Results.Forbid();
 
         var response = new SyncStatusResponse(null, 0, DateTime.UtcNow);
-        return Task.FromResult(Results.Ok(response));
+        return Results.Ok(response);
     }
 
     private static async Task<IResult> PushAsync(
@@ -45,6 +55,12 @@ public static class SyncEndpoints
         var userId = user.GetUserId();
         if (userId == Guid.Empty)
             return Results.Unauthorized();
+
+        if (!TryNormalizeScopeType(request.ScopeType, out var scopeType) || request.ScopeId == Guid.Empty)
+            return Results.BadRequest();
+
+        if (!await HasScopeAccessAsync(dbContext, scopeType, request.ScopeId, userId))
+            return Results.Forbid();
 
         if (request.Changes is null || request.Changes.Count == 0)
             return Results.BadRequest();
@@ -64,6 +80,12 @@ public static class SyncEndpoints
             if (!TryNormalizeOperation(change.Operation, out var operation))
             {
                 rejected.Add(new SyncRejectedChange(change.Id, "invalid operation"));
+                continue;
+            }
+
+            if (!await IsChangeAllowedForScopeAsync(dbContext, scopeType, request.ScopeId, change, entityType, operation))
+            {
+                rejected.Add(new SyncRejectedChange(change.Id, "scope_mismatch"));
                 continue;
             }
 
@@ -115,6 +137,8 @@ public static class SyncEndpoints
 
     private static async Task<IResult> PullAsync(
         ClaimsPrincipal user,
+        string? scopeType,
+        Guid? scopeId,
         long? since,
         ApplicationDbContext dbContext)
     {
@@ -122,44 +146,79 @@ public static class SyncEndpoints
         if (userId == Guid.Empty)
             return Results.Unauthorized();
 
+        if (!TryNormalizeScopeType(scopeType, out var normalizedScope) || scopeId is null || scopeId == Guid.Empty)
+            return Results.BadRequest();
+
+        if (!await HasScopeAccessAsync(dbContext, normalizedScope, scopeId.Value, userId))
+            return Results.Forbid();
+
         var sinceRevision = since.GetValueOrDefault(0);
         var changes = new List<(long Revision, SyncPullChange Change)>();
 
-        var projectIds = await dbContext.Projects
-            .IgnoreQueryFilters()
-            .Where(p => p.OwnerId == userId
-                || dbContext.ProjectMembers.Any(pm => pm.ProjectId == p.Id && pm.UserId == userId)
-                || dbContext.Properties.Any(prop => prop.ProjectId == p.Id
-                    && dbContext.PropertyMembers.Any(pm => pm.PropertyId == prop.Id && pm.UserId == userId)))
-            .Select(p => p.Id)
-            .ToListAsync();
+        var projectIds = new List<Guid>();
+        var propertyIds = new List<Guid>();
+        var zaznamIds = new List<Guid>();
 
-        var accessibleProjects = dbContext.Projects
-            .IgnoreQueryFilters()
-            .Where(p => projectIds.Contains(p.Id));
+        if (normalizedScope == SyncScopeType.Project)
+        {
+            projectIds.Add(scopeId.Value);
+            propertyIds = await dbContext.Properties
+                .IgnoreQueryFilters()
+                .Where(p => p.ProjectId == scopeId.Value)
+                .Select(p => p.Id)
+                .ToListAsync();
+        }
+        else if (normalizedScope == SyncScopeType.Property)
+        {
+            var property = await dbContext.Properties
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(p => p.Id == scopeId.Value);
+            if (property is null)
+                return Results.NotFound();
 
-        var projectsQuery = accessibleProjects;
-        if (sinceRevision > 0)
-            projectsQuery = projectsQuery.Where(p => p.ServerRevision > sinceRevision);
+            propertyIds.Add(property.Id);
+            projectIds.Add(property.ProjectId);
+        }
+        else if (normalizedScope == SyncScopeType.Zaznam)
+        {
+            var zaznam = await dbContext.Zaznamy
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(z => z.Id == scopeId.Value);
+            if (zaznam is null)
+                return Results.NotFound();
 
-        var projects = await projectsQuery.ToListAsync();
-        foreach (var project in projects)
-            changes.Add((project.ServerRevision, BuildProjectChange(project)));
+            zaznamIds.Add(zaznam.Id);
+            propertyIds.Add(zaznam.PropertyId);
+            var projectId = await dbContext.Properties
+                .IgnoreQueryFilters()
+                .Where(p => p.Id == zaznam.PropertyId)
+                .Select(p => p.ProjectId)
+                .FirstOrDefaultAsync();
+            if (projectId != Guid.Empty)
+                projectIds.Add(projectId);
+        }
 
-        var accessibleProperties = dbContext.Properties
-            .IgnoreQueryFilters()
-            .Where(p => projectIds.Contains(p.ProjectId)
-                || dbContext.PropertyMembers.Any(pm => pm.PropertyId == p.Id && pm.UserId == userId));
+        if (projectIds.Count > 0)
+        {
+            var projectsQuery = dbContext.Projects.IgnoreQueryFilters().Where(p => projectIds.Contains(p.Id));
+            if (sinceRevision > 0)
+                projectsQuery = projectsQuery.Where(p => p.ServerRevision > sinceRevision);
 
-        var propertyIds = await accessibleProperties.Select(p => p.Id).ToListAsync();
+            var projects = await projectsQuery.ToListAsync();
+            foreach (var project in projects)
+                changes.Add((project.ServerRevision, BuildProjectChange(project)));
+        }
 
-        var propertiesQuery = accessibleProperties;
-        if (sinceRevision > 0)
-            propertiesQuery = propertiesQuery.Where(p => p.ServerRevision > sinceRevision);
+        if (propertyIds.Count > 0)
+        {
+            var propertiesQuery = dbContext.Properties.IgnoreQueryFilters().Where(p => propertyIds.Contains(p.Id));
+            if (sinceRevision > 0)
+                propertiesQuery = propertiesQuery.Where(p => p.ServerRevision > sinceRevision);
 
-        var properties = await propertiesQuery.ToListAsync();
-        foreach (var property in properties)
-            changes.Add((property.ServerRevision, BuildPropertyChange(property)));
+            var properties = await propertiesQuery.ToListAsync();
+            foreach (var property in properties)
+                changes.Add((property.ServerRevision, BuildPropertyChange(property)));
+        }
 
         var unitsQuery = dbContext.Units
             .IgnoreQueryFilters()
@@ -171,24 +230,20 @@ public static class SyncEndpoints
         foreach (var unit in units)
             changes.Add((unit.ServerRevision, BuildUnitChange(unit)));
 
-        var accessibleZaznamIds = await dbContext.Zaznamy
-            .IgnoreQueryFilters()
-            .Where(z => propertyIds.Contains(z.PropertyId))
-            .Select(z => z.Id)
-            .ToListAsync();
-
         var zaznamyQuery = dbContext.Zaznamy
             .IgnoreQueryFilters()
             .Where(z => propertyIds.Contains(z.PropertyId));
+        if (zaznamIds.Count > 0)
+            zaznamyQuery = zaznamyQuery.Where(z => zaznamIds.Contains(z.Id));
         if (sinceRevision > 0)
             zaznamyQuery = zaznamyQuery.Where(z => z.ServerRevision > sinceRevision);
 
         var zaznamy = await zaznamyQuery.ToListAsync();
         if (zaznamy.Count > 0)
         {
-            var zaznamIds = zaznamy.Select(z => z.Id).ToList();
+            var zaznamIdsForTags = zaznamy.Select(z => z.Id).ToList();
             var tagLookup = await dbContext.ZaznamTags
-                .Where(t => zaznamIds.Contains(t.ZaznamId))
+                .Where(t => zaznamIdsForTags.Contains(t.ZaznamId))
                 .Join(dbContext.Tags, t => t.TagId, tag => tag.Id, (t, tag) => new { t.ZaznamId, tag.Name })
                 .GroupBy(x => x.ZaznamId)
                 .ToDictionaryAsync(g => g.Key, g => g.Select(x => x.Name).ToList());
@@ -199,6 +254,17 @@ public static class SyncEndpoints
                 changes.Add((zaznam.ServerRevision, BuildZaznamChange(zaznam, tags ?? [])));
             }
         }
+
+        var accessibleZaznamIds = zaznamIds.Count > 0
+            ? zaznamIds
+            : propertyIds.Count == 0
+                ? []
+                : await dbContext.Zaznamy
+                    .IgnoreQueryFilters()
+                    .Where(z => propertyIds.Contains(z.PropertyId))
+                    .Select(z => z.Id)
+                    .ToListAsync();
+
         var documentsQuery = dbContext.ZaznamDokumenty
             .IgnoreQueryFilters()
             .Where(d => accessibleZaznamIds.Contains(d.ZaznamId));
@@ -742,6 +808,9 @@ public static class SyncEndpoints
 
     private static async Task<bool> HasZaznamAccessAsync(ApplicationDbContext dbContext, Guid zaznamId, Guid userId)
     {
+        if (await dbContext.ZaznamMembers.AnyAsync(m => m.ZaznamId == zaznamId && m.UserId == userId))
+            return true;
+
         var propertyId = await dbContext.Zaznamy
             .IgnoreQueryFilters()
             .Where(z => z.Id == zaznamId)
@@ -752,6 +821,182 @@ public static class SyncEndpoints
             return false;
 
         return await HasPropertyAccessAsync(dbContext, propertyId, userId);
+    }
+
+    private static Task<bool> HasScopeAccessAsync(
+        ApplicationDbContext dbContext,
+        SyncScopeType scopeType,
+        Guid scopeId,
+        Guid userId)
+    {
+        return scopeType switch
+        {
+            SyncScopeType.Project => HasProjectAccessAsync(dbContext, scopeId, userId),
+            SyncScopeType.Property => HasPropertyAccessAsync(dbContext, scopeId, userId),
+            SyncScopeType.Zaznam => HasZaznamAccessAsync(dbContext, scopeId, userId),
+            _ => Task.FromResult(false)
+        };
+    }
+
+    private static async Task<bool> IsChangeAllowedForScopeAsync(
+        ApplicationDbContext dbContext,
+        SyncScopeType scopeType,
+        Guid scopeId,
+        SyncChange change,
+        string entityType,
+        string operation)
+    {
+        switch (scopeType)
+        {
+            case SyncScopeType.Project:
+                return await IsChangeAllowedForProjectScopeAsync(dbContext, scopeId, change, entityType, operation);
+            case SyncScopeType.Property:
+                return await IsChangeAllowedForPropertyScopeAsync(dbContext, scopeId, change, entityType, operation);
+            case SyncScopeType.Zaznam:
+                return await IsChangeAllowedForZaznamScopeAsync(dbContext, scopeId, change, entityType, operation);
+            default:
+                return false;
+        }
+    }
+
+    private static async Task<bool> IsChangeAllowedForProjectScopeAsync(
+        ApplicationDbContext dbContext,
+        Guid projectId,
+        SyncChange change,
+        string entityType,
+        string operation)
+    {
+        if (operation == "create")
+        {
+            return await IsCreateAllowedForProjectScopeAsync(dbContext, projectId, change, entityType);
+        }
+
+        var entityId = change.EntityId;
+        return entityType switch
+        {
+            "project" => entityId == projectId,
+            "property" => await dbContext.Properties.AnyAsync(p => p.Id == entityId && p.ProjectId == projectId),
+            "unit" => await dbContext.Units.AnyAsync(u => u.Id == entityId && dbContext.Properties.Any(p => p.Id == u.PropertyId && p.ProjectId == projectId)),
+            "zaznam" => await dbContext.Zaznamy.AnyAsync(z => z.Id == entityId && dbContext.Properties.Any(p => p.Id == z.PropertyId && p.ProjectId == projectId)),
+            "document" => await dbContext.ZaznamDokumenty.AnyAsync(d => d.Id == entityId && dbContext.Zaznamy.Any(z => z.Id == d.ZaznamId && dbContext.Properties.Any(p => p.Id == z.PropertyId && p.ProjectId == projectId))),
+            "comment" => await dbContext.Comments.AnyAsync(c => c.Id == entityId && dbContext.Zaznamy.Any(z => z.Id == c.ZaznamId && dbContext.Properties.Any(p => p.Id == z.PropertyId && p.ProjectId == projectId))),
+            _ => false
+        };
+    }
+
+    private static async Task<bool> IsChangeAllowedForPropertyScopeAsync(
+        ApplicationDbContext dbContext,
+        Guid propertyId,
+        SyncChange change,
+        string entityType,
+        string operation)
+    {
+        if (operation == "create")
+        {
+            return await IsCreateAllowedForPropertyScopeAsync(dbContext, propertyId, change, entityType);
+        }
+
+        var entityId = change.EntityId;
+        return entityType switch
+        {
+            "project" => false,
+            "property" => entityId == propertyId,
+            "unit" => await dbContext.Units.AnyAsync(u => u.Id == entityId && u.PropertyId == propertyId),
+            "zaznam" => await dbContext.Zaznamy.AnyAsync(z => z.Id == entityId && z.PropertyId == propertyId),
+            "document" => await dbContext.ZaznamDokumenty.AnyAsync(d => d.Id == entityId && dbContext.Zaznamy.Any(z => z.Id == d.ZaznamId && z.PropertyId == propertyId)),
+            "comment" => await dbContext.Comments.AnyAsync(c => c.Id == entityId && dbContext.Zaznamy.Any(z => z.Id == c.ZaznamId && z.PropertyId == propertyId)),
+            _ => false
+        };
+    }
+
+    private static async Task<bool> IsChangeAllowedForZaznamScopeAsync(
+        ApplicationDbContext dbContext,
+        Guid zaznamId,
+        SyncChange change,
+        string entityType,
+        string operation)
+    {
+        if (operation == "create")
+        {
+            return await IsCreateAllowedForZaznamScopeAsync(dbContext, zaznamId, change, entityType);
+        }
+
+        var entityId = change.EntityId;
+        return entityType switch
+        {
+            "project" => false,
+            "property" => false,
+            "unit" => false,
+            "zaznam" => entityId == zaznamId,
+            "document" => await dbContext.ZaznamDokumenty.AnyAsync(d => d.Id == entityId && d.ZaznamId == zaznamId),
+            "comment" => await dbContext.Comments.AnyAsync(c => c.Id == entityId && c.ZaznamId == zaznamId),
+            _ => false
+        };
+    }
+
+    private static async Task<bool> IsCreateAllowedForProjectScopeAsync(
+        ApplicationDbContext dbContext,
+        Guid projectId,
+        SyncChange change,
+        string entityType)
+    {
+        if (!TryGetDataObject(change.Data, out var data))
+            return false;
+
+        return entityType switch
+        {
+            "project" => change.EntityId == projectId,
+            "property" => TryGetRequiredGuid(data, "projectId", out var propProjectId) && propProjectId == projectId,
+            "unit" => TryGetRequiredGuid(data, "propertyId", out var unitPropertyId)
+                && await dbContext.Properties.AnyAsync(p => p.Id == unitPropertyId && p.ProjectId == projectId),
+            "zaznam" => TryGetRequiredGuid(data, "propertyId", out var zaznamPropertyId)
+                && await dbContext.Properties.AnyAsync(p => p.Id == zaznamPropertyId && p.ProjectId == projectId),
+            "document" => TryGetRequiredGuid(data, "zaznamId", out var docZaznamId)
+                && await dbContext.Zaznamy.AnyAsync(z => z.Id == docZaznamId && dbContext.Properties.Any(p => p.Id == z.PropertyId && p.ProjectId == projectId)),
+            "comment" => TryGetRequiredGuid(data, "zaznamId", out var commentZaznamId)
+                && await dbContext.Zaznamy.AnyAsync(z => z.Id == commentZaznamId && dbContext.Properties.Any(p => p.Id == z.PropertyId && p.ProjectId == projectId)),
+            _ => false
+        };
+    }
+
+    private static async Task<bool> IsCreateAllowedForPropertyScopeAsync(
+        ApplicationDbContext dbContext,
+        Guid propertyId,
+        SyncChange change,
+        string entityType)
+    {
+        if (!TryGetDataObject(change.Data, out var data))
+            return false;
+
+        return entityType switch
+        {
+            "property" => change.EntityId == propertyId,
+            "unit" => TryGetRequiredGuid(data, "propertyId", out var unitPropertyId) && unitPropertyId == propertyId,
+            "zaznam" => TryGetRequiredGuid(data, "propertyId", out var zaznamPropertyId) && zaznamPropertyId == propertyId,
+            "document" => TryGetRequiredGuid(data, "zaznamId", out var docZaznamId)
+                && await dbContext.Zaznamy.AnyAsync(z => z.Id == docZaznamId && z.PropertyId == propertyId),
+            "comment" => TryGetRequiredGuid(data, "zaznamId", out var commentZaznamId)
+                && await dbContext.Zaznamy.AnyAsync(z => z.Id == commentZaznamId && z.PropertyId == propertyId),
+            _ => false
+        };
+    }
+
+    private static async Task<bool> IsCreateAllowedForZaznamScopeAsync(
+        ApplicationDbContext dbContext,
+        Guid zaznamId,
+        SyncChange change,
+        string entityType)
+    {
+        if (!TryGetDataObject(change.Data, out var data))
+            return false;
+
+        return entityType switch
+        {
+            "zaznam" => change.EntityId == zaznamId,
+            "document" => TryGetRequiredGuid(data, "zaznamId", out var docZaznamId) && docZaznamId == zaznamId,
+            "comment" => TryGetRequiredGuid(data, "zaznamId", out var commentZaznamId) && commentZaznamId == zaznamId,
+            _ => false
+        };
     }
 
     private static SyncPullChange BuildProjectChange(Project project)
@@ -908,6 +1153,28 @@ public static class SyncEndpoints
             DateTimeKind.Local => timestamp.ToUniversalTime(),
             _ => DateTime.SpecifyKind(timestamp, DateTimeKind.Utc)
         };
+    }
+
+    internal static bool TryNormalizeScopeType(string? raw, out SyncScopeType normalized)
+    {
+        normalized = SyncScopeType.Project;
+        var value = raw?.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        return value switch
+        {
+            "project" => SetScopeType(SyncScopeType.Project, out normalized),
+            "property" => SetScopeType(SyncScopeType.Property, out normalized),
+            "zaznam" => SetScopeType(SyncScopeType.Zaznam, out normalized),
+            _ => false
+        };
+    }
+
+    private static bool SetScopeType(SyncScopeType value, out SyncScopeType normalized)
+    {
+        normalized = value;
+        return true;
     }
     internal static bool TryNormalizeEntityType(string? raw, out string normalized)
     {

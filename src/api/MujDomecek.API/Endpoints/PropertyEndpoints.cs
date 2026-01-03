@@ -81,6 +81,8 @@ public static class PropertyEndpoints
             dbContext.Zaznamy.Where(z => z.PropertyId == x.Property.Id).Sum(z => (decimal?)z.Cost) ?? 0,
             ToRoleString(x.PropertyMember?.Role ?? x.ProjectMember?.Role ?? MemberRole.Viewer, x.Project.OwnerId == userId),
             x.Project.OwnerId != userId,
+            ToSyncModeString(x.Property.SyncMode),
+            ToSyncStatusString(x.Property.SyncStatus),
             x.Property.CreatedAt,
             x.Property.UpdatedAt)).ToList();
 
@@ -136,6 +138,8 @@ public static class PropertyEndpoints
             0,
             project.OwnerId == userId ? "owner" : "editor",
             project.OwnerId != userId,
+            ToSyncModeString(property.SyncMode),
+            ToSyncStatusString(property.SyncStatus),
             property.CreatedAt,
             property.UpdatedAt);
 
@@ -176,6 +180,8 @@ public static class PropertyEndpoints
             dbContext.Zaznamy.Where(z => z.PropertyId == property.Id).Sum(z => (decimal?)z.Cost) ?? 0,
             ToRoleString(propertyMember?.Role ?? projectMember?.Role ?? MemberRole.Viewer, project.OwnerId == userId),
             project.OwnerId != userId,
+            ToSyncModeString(property.SyncMode),
+            ToSyncStatusString(property.SyncStatus),
             property.CreatedAt,
             property.UpdatedAt);
 
@@ -229,6 +235,8 @@ public static class PropertyEndpoints
             dbContext.Zaznamy.Where(z => z.PropertyId == property.Id).Sum(z => (decimal?)z.Cost) ?? 0,
             project.OwnerId == userId ? "owner" : "editor",
             project.OwnerId != userId,
+            ToSyncModeString(property.SyncMode),
+            ToSyncStatusString(property.SyncStatus),
             property.CreatedAt,
             property.UpdatedAt);
 
@@ -622,6 +630,16 @@ public static class PropertyEndpoints
     private static string ToRoleString(MemberRole role, bool isOwner)
     {
         return isOwner ? "owner" : role.ToString().ToLowerInvariant();
+    }
+
+    private static string ToSyncModeString(SyncMode mode)
+    {
+        return mode == SyncMode.Synced ? "synced" : "local-only";
+    }
+
+    private static string ToSyncStatusString(SyncStatus status)
+    {
+        return status.ToString().ToLowerInvariant();
     }
 
     private static MemberRole ToRole(string role)

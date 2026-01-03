@@ -188,6 +188,9 @@ public static class DocumentEndpoints
         Guid zaznamId,
         Guid userId)
     {
+        if (await dbContext.ZaznamMembers.AnyAsync(m => m.ZaznamId == zaznamId && m.UserId == userId))
+            return true;
+
         var propertyId = await dbContext.Zaznamy
             .Where(z => z.Id == zaznamId)
             .Select(z => z.PropertyId)

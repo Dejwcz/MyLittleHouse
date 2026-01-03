@@ -14,6 +14,8 @@ public sealed record PropertyDto(
     decimal TotalCost,
     string MyRole,
     bool IsShared,
+    string SyncMode,
+    string SyncStatus,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );

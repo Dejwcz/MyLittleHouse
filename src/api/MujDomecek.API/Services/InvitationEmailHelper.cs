@@ -122,7 +122,13 @@ public static class InvitationEmailHelper
 
     private static string ToTypeString(InvitationTargetType type)
     {
-        return type == InvitationTargetType.Property ? "property" : "project";
+        return type switch
+        {
+            InvitationTargetType.Project => "project",
+            InvitationTargetType.Property => "property",
+            InvitationTargetType.Zaznam => "zaznam",
+            _ => "project"
+        };
     }
 
     private static string ToRoleString(MemberRole role)

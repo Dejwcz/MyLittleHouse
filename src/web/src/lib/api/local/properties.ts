@@ -1,4 +1,4 @@
-import { db, queueChange, type Property } from '$lib/db';
+import { db, queueChange, queuePropertyForSync, type Property, type SyncMode } from '$lib/db';
 import type {
   PropertyDto,
   PropertyDetailDto,
@@ -10,9 +10,26 @@ import type {
 
 const LOCAL_USER_ID = 'local-user';
 
-async function isProjectSynced(projectId: string): Promise<boolean> {
+async function getPropertySyncScope(property: Property): Promise<{
+  scopeType: 'project' | 'property';
+  scopeId: string;
+  projectId?: string;
+} | null> {
+  if (property.syncMode === 'synced') {
+    return { scopeType: 'property', scopeId: property.id, projectId: property.projectId };
+  }
+
+  const project = await db.projects.get(property.projectId);
+  if (project?.syncMode === 'synced') {
+    return { scopeType: 'project', scopeId: project.id, projectId: project.id };
+  }
+
+  return null;
+}
+
+async function getDefaultPropertySyncMode(projectId: string): Promise<SyncMode> {
   const project = await db.projects.get(projectId);
-  return project?.syncMode === 'synced';
+  return project?.syncMode === 'synced' ? 'synced' : 'local-only';
 }
 
 async function propertyToDto(property: Property): Promise<PropertyDto> {
@@ -30,6 +47,8 @@ async function propertyToDto(property: Property): Promise<PropertyDto> {
     totalCost: property.totalCost,
     myRole: 'owner',
     isShared: false,
+    syncMode: property.syncMode,
+    syncStatus: property.syncStatus,
     createdAt: new Date(property.updatedAt).toISOString(),
     updatedAt: new Date(property.updatedAt).toISOString()
   };
@@ -89,7 +108,7 @@ export const localPropertiesApi = {
   async create(data: CreatePropertyRequest): Promise<PropertyDto> {
     const id = crypto.randomUUID();
     const now = Date.now();
-    const synced = await isProjectSynced(data.projectId);
+    const syncMode = await getDefaultPropertySyncMode(data.projectId);
 
     const property: Property = {
       id,
@@ -100,14 +119,15 @@ export const localPropertiesApi = {
       zaznamCount: 0,
       totalCost: 0,
       updatedAt: now,
-      syncStatus: synced ? 'pending' : 'local'
+      syncStatus: syncMode === 'synced' ? 'pending' : 'local',
+      syncMode
     };
 
     await db.properties.add(property);
 
-    // Queue change if project is synced
-    if (synced) {
-      await queueChange(data.projectId, 'properties', id, 'create', {
+    const scope = await getPropertySyncScope(property);
+    if (scope) {
+      await queueChange(scope.scopeType, scope.scopeId, scope.projectId, 'properties', id, 'create', {
         name: data.name,
         description: data.description
       });
@@ -131,18 +151,19 @@ export const localPropertiesApi = {
       throw new Error('Nemovitost nenalezena');
     }
 
-    const synced = await isProjectSynced(property.projectId);
     const updated: Partial<Property> = {
-      updatedAt: Date.now(),
-      syncStatus: synced ? 'pending' : 'local'
+      updatedAt: Date.now()
     };
 
     if (data.name !== undefined) updated.name = data.name;
     if (data.description !== undefined) updated.description = data.description;
 
-    // Queue change if project is synced
-    if (synced) {
-      await queueChange(property.projectId, 'properties', id, 'update', data);
+    const scope = await getPropertySyncScope(property);
+    if (scope) {
+      updated.syncStatus = 'pending';
+      await queueChange(scope.scopeType, scope.scopeId, scope.projectId, 'properties', id, 'update', data);
+    } else {
+      updated.syncStatus = 'local';
     }
 
     await db.properties.update(id, updated);
@@ -154,11 +175,9 @@ export const localPropertiesApi = {
     const property = await db.properties.get(id);
     if (!property) return;
 
-    const synced = await isProjectSynced(property.projectId);
-
-    // Queue delete if project is synced
-    if (synced) {
-      await queueChange(property.projectId, 'properties', id, 'delete');
+    const scope = await getPropertySyncScope(property);
+    if (scope) {
+      await queueChange(scope.scopeType, scope.scopeId, scope.projectId, 'properties', id, 'delete');
     }
 
     // Delete all related data
@@ -218,5 +237,35 @@ export const localPropertiesApi = {
       costByMonth: Object.entries(costByMonth).map(([month, cost]) => ({ month, cost })),
       costByYear: Object.entries(costByYear).map(([year, cost]) => ({ year: parseInt(year), cost }))
     };
+  },
+
+  async setSyncMode(id: string, mode: SyncMode): Promise<void> {
+    const property = await db.properties.get(id);
+    if (!property) {
+      throw new Error('Nemovitost nenalezena');
+    }
+
+    const now = Date.now();
+    await db.properties.update(id, {
+      syncMode: mode,
+      syncStatus: mode === 'synced' ? 'pending' : 'local',
+      updatedAt: now
+    });
+
+    if (mode === 'synced') {
+      await db.zaznamy.where('propertyId').equals(id).modify({
+        syncMode: 'synced',
+        syncStatus: 'pending',
+        updatedAt: now
+      });
+      await queuePropertyForSync(id);
+    } else {
+      await db.syncQueue.where('scopeType').equals('property').and(item => item.scopeId === id).delete();
+      await db.zaznamy.where('propertyId').equals(id).modify({
+        syncMode: 'local-only',
+        syncStatus: 'local',
+        updatedAt: now
+      });
+    }
   }
 };

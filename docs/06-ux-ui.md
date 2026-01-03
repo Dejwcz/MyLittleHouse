@@ -10,34 +10,69 @@
 
 ## Informační architektura
 
+Aplikace používá **projekt-centrickou** navigaci - uživatel nejprve vybere projekt a pak pracuje s jeho obsahem.
+
+### Route struktura
+
 ```
-Dashboard
-├── Quick stats
-├── Poslední záznamy
-└── Upozornění
+/                           ← Landing page
+/projects                   ← Seznam projektů
+/projects/[projectId]       ← Projekt dashboard (vstup do projektu)
+/projects/[projectId]/properties          ← Seznam nemovitostí v projektu
+/projects/[projectId]/properties/[id]     ← Detail nemovitosti
+/projects/[projectId]/properties/new      ← Nová nemovitost
+/projects/[projectId]/units/[id]          ← Detail jednotky
+/projects/[projectId]/zaznamy             ← Seznam záznamů v projektu
+/projects/[projectId]/zaznamy/[id]        ← Detail záznamu
+/projects/[projectId]/zaznamy/new         ← Nový záznam
+/projects/[projectId]/settings            ← Nastavení projektu (sync, členové)
+/notifications              ← Notifikace
+/settings                   ← Uživatelské nastavení
+```
 
-Projekty/Nemovitosti
-├── Moje (default)
-└── Sdílené (přepínač)
+### Navigační kontexty
 
-Property detail
-├── Jednotky (seznam)
-├── Záznamy (souhrn)
-├── Aktivita (feed - pro sdílené)
-└── Statistiky (náklady)
+**Hlavní sidebar (mimo projekt):**
+- Projekty
+- Notifikace
+- Nastavení
 
-Unit detail
+**Projekt sidebar (uvnitř projektu):**
+- Dashboard (projekt)
+- Nemovitosti
+- Záznamy
+- Nastavení projektu
+- ← Zpět na projekty
+
+### Hierarchie obsahu
+
+```
+Projekty (výběr)
+└── Projekt dashboard
+    ├── Quick stats (nemovitosti, záznamy, náklady)
+    ├── Poslední záznamy
+    ├── Sync status
+    └── Členové (pokud sdíleno)
+
+Nemovitosti (v projektu)
+├── Seznam nemovitostí
+└── Nemovitost detail
+    ├── Jednotky (stromová hierarchie)
+    ├── Záznamy (souhrn + link)
+    ├── Aktivita (pro sdílené)
+    └── Statistiky
+
+Jednotka detail
 ├── Child units
 ├── Záznamy (seznam)
-├── Drafty (rozpracované)
-└── Filtry
+└── Drafty (rozpracované)
 
 Záznam detail
 ├── Metadata
 ├── Dokumenty (galerie)
 └── Timeline změn
 
-Nastavení
+Uživatelské nastavení
 ├── Profil
 │   ├── Osobní údaje
 │   └── Fotka profilu
@@ -65,21 +100,34 @@ Nastavení
 
 ## Obrazovky
 
-### Dashboard
+### Seznam projektů
+
+Vstupní bod do aplikace po přihlášení.
+
+| Prvek | Popis |
+|-------|-------|
+| Přepínač | Moje / Sdílené se mnou |
+| Karta | Název, popis, počet nemovitostí, sync status badge |
+| Akce | Vstoupit, Edit, Delete |
+| FAB | "+" nový projekt |
+
+### Projekt dashboard
+
+Po vstupu do projektu - přehled jeho obsahu.
 
 | Sekce | Obsah |
 |-------|-------|
 | Quick stats | Počet nemovitostí, jednotek, záznamů, celkové náklady |
 | Poslední záznamy | 5-10 posledních záznamů (rychlý přístup) |
-| Upozornění | Pending pozvánky, sync status |
+| Sync status | Toggle local-only / synced + badge |
+| Členové | Seznam členů s rolemi (pokud sdíleno) |
 
-### Seznam projektů/nemovitostí
+### Seznam nemovitostí (v projektu)
 
 | Prvek | Popis |
 |-------|-------|
-| Přepínač | Moje / Sdílené |
-| Karta | Název, popis, počet jednotek, náklady |
-| Akce | Detail, Edit, Delete, Share |
+| Karta | Název, popis, počet jednotek, sync status |
+| Akce | Detail, Edit, Delete |
 | FAB | "+" nová nemovitost |
 
 ### Property detail
@@ -91,6 +139,7 @@ Nastavení
 | Záznamy | Poslední záznamy + link "Zobrazit vše" + toggle Seznam/Timeline |
 | Aktivita | Feed událostí (pouze pro sdílené properties) |
 | Stats | Celkové náklady, počet záznamů |
+| Synchronizace | Toggle local-only / synced + sync status badge |
 
 ### Unit detail
 
@@ -110,6 +159,7 @@ Nastavení
 | Galerie | Fotky a dokumenty |
 | Metadata | Vytvořeno, upraveno, kým |
 | Timeline | Historie změn (audit) |
+| Synchronizace | Toggle local-only / synced + sync status badge |
 
 ### Rychlý zápis (modal/stránka)
 
