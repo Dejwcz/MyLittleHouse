@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/svelte';
-import Home from '../../../src/web/src/routes/+page.svelte';
+import Home from '../../src/routes/+page.svelte';
 
 test('renders hero headline', () => {
   render(Home);
