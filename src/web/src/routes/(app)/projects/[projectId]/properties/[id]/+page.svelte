@@ -4,8 +4,8 @@
     Spinner, ConfirmDialog, Select, Toggle, SyncBadge, DisableSyncDialog
   } from '$lib';
   import {
-    propertiesApi, unitsApi, zaznamyApi,
-    type PropertyDetailDto, type UnitDto, type ZaznamDto
+    propertiesApi, unitsApi, zaznamyApi, mediaApi,
+    type PropertyDetailDto, type UnitDto, type ZaznamDto, type MediaDto
   } from '$lib/api';
   import { localPropertiesApi } from '$lib/api/local/properties';
   import { toast } from '$lib/stores/ui.svelte';
@@ -17,7 +17,7 @@
   import { goto } from '$app/navigation';
   import {
     Plus, Building2, FileText, Pencil, Trash2,
-    Calendar, DollarSign, ChevronRight, Layers
+    Calendar, DollarSign, ChevronRight, Layers, Image, Star
   } from 'lucide-svelte';
 
   const projectId = $derived($page.params.projectId ?? '');
@@ -26,7 +26,9 @@
   let property = $state<PropertyDetailDto | null>(null);
   let units = $state<UnitDto[]>([]);
   let recentZaznamy = $state<ZaznamDto[]>([]);
+  let mediaItems = $state<MediaDto[]>([]);
   let loading = $state(true);
+  let mediaLoading = $state(false);
 
   let showUnitModal = $state(false);
   let showDeleteConfirm = $state(false);
@@ -34,6 +36,7 @@
   let selectedUnit = $state<UnitDto | null>(null);
   let showDisableSyncDialog = $state(false);
   let syncModeChanging = $state(false);
+  let coverUpdating = $state(false);
 
   let syncMode = $state<SyncMode>('local-only');
   let syncStatus = $state<SyncStatus>('local');
@@ -60,21 +63,25 @@
 
   async function loadData() {
     loading = true;
+    mediaLoading = true;
     try {
-      const [prop, unitList, zaznamList] = await Promise.all([
+      const [prop, unitList, zaznamList, mediaList] = await Promise.all([
         propertiesApi.get(propertyId),
         unitsApi.list({ propertyId }),
-        zaznamyApi.list({ propertyId, pageSize: 5 })
+        zaznamyApi.list({ propertyId, pageSize: 5 }),
+        mediaApi.list('property', propertyId)
       ]);
       property = prop;
       units = unitList.items;
       recentZaznamy = zaznamList.items;
+      mediaItems = mediaList.items;
       await loadSyncMode();
     } catch (err) {
       toast.error('Nepodařilo se načíst data');
       goto(`/projects/${projectId}/properties`);
     } finally {
       loading = false;
+      mediaLoading = false;
     }
   }
 
@@ -130,6 +137,20 @@
       toast.error('Nepodařilo se vypnout synchronizaci');
     } finally {
       syncModeChanging = false;
+    }
+  }
+
+  async function setCover(mediaId?: string) {
+    if (!property) return;
+    coverUpdating = true;
+    try {
+      const updated = await propertiesApi.updateCover(propertyId, mediaId);
+      property = { ...property, ...updated };
+      toast.success(mediaId ? 'Obálka nastavena' : 'Obálka odebrána');
+    } catch (err) {
+      toast.error('Nepodařilo se upravit obálku');
+    } finally {
+      coverUpdating = false;
     }
   }
 
@@ -246,6 +267,93 @@
       {/if}
     {/snippet}
   </PageHeader>
+
+  <!-- Cover + Gallery -->
+  <div class="mb-6">
+    <div class="mb-3 flex items-center justify-between">
+      <h2 class="text-lg font-semibold">Obálka</h2>
+      {#if canEdit && property.coverMediaId}
+        <Button size="sm" variant="ghost" onclick={() => setCover(undefined)} disabled={coverUpdating}>
+          {#snippet children()}
+            Odebrat obálku
+          {/snippet}
+        </Button>
+      {/if}
+    </div>
+    <Card class="overflow-hidden">
+      <div class="relative aspect-[16/9] w-full bg-bg-secondary">
+        {#if property.coverUrl}
+          <img src={property.coverUrl} alt={property.name} class="h-full w-full object-cover" />
+        {:else}
+          <div class="flex h-full flex-col items-center justify-center gap-2 text-foreground-muted">
+            <Image class="h-8 w-8" />
+            <span class="text-sm">Žádná obálka</span>
+          </div>
+        {/if}
+      </div>
+    </Card>
+  </div>
+
+  <div class="mb-6">
+    <div class="mb-3 flex items-center justify-between">
+      <h2 class="text-lg font-semibold">Galerie</h2>
+      {#if mediaItems.length > 0}
+        <span class="text-sm text-foreground-muted">{mediaItems.length} položek</span>
+      {/if}
+    </div>
+    {#if mediaLoading}
+      <div class="flex items-center justify-center py-6">
+        <Spinner />
+      </div>
+    {:else if mediaItems.length === 0}
+      <EmptyState
+        icon={Image}
+        title="Galerie je prázdná"
+        description="Přidejte fotky nebo dokumenty k této nemovitosti."
+      />
+    {:else}
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {#each mediaItems as media (media.id)}
+          <Card class="group">
+            <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-bg-secondary">
+              {#if media.thumbnailUrl}
+                <img src={media.thumbnailUrl} alt={media.originalFileName ?? 'Media'} class="h-full w-full object-cover" />
+              {:else}
+                <div class="flex h-full items-center justify-center text-foreground-muted">
+                  <Image class="h-6 w-6" />
+                </div>
+              {/if}
+            </div>
+            <div class="mt-3 flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate text-sm font-medium">{media.originalFileName ?? 'Media'}</p>
+                {#if media.caption}
+                  <p class="truncate text-xs text-foreground-muted">{media.caption}</p>
+                {/if}
+              </div>
+              {#if canEdit}
+                {#if property.coverMediaId === media.id}
+                  <Button size="sm" variant="secondary" disabled>
+                    {#snippet children()}
+                      <Star class="h-4 w-4" />
+                      Obálka
+                    {/snippet}
+                  </Button>
+                {:else}
+                  <Button size="sm" variant="ghost" onclick={() => setCover(media.id)} disabled={coverUpdating}>
+                    {#snippet children()}
+                      <Star class="h-4 w-4" />
+                      Nastavit
+                    {/snippet}
+                  </Button>
+                {/if}
+              {/if}
+            </div>
+          </Card>
+        {/each}
+      </div>
+    {/if}
+  </div>
 
   <!-- Stats -->
   <div class="mb-6 grid gap-4 sm:grid-cols-3">

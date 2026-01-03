@@ -28,6 +28,8 @@ export interface Property {
   unitCount: number;
   zaznamCount: number;
   totalCost: number;
+  coverMediaId?: string;
+  coverUrl?: string;
   updatedAt: number;
   syncStatus: SyncStatus;
   syncMode: SyncMode;
@@ -43,6 +45,8 @@ export interface Unit {
   description?: string;
   childUnitCount: number;
   zaznamCount: number;
+  coverMediaId?: string;
+  coverUrl?: string;
   updatedAt: number;
   syncStatus: SyncStatus;
 }
@@ -65,12 +69,17 @@ export interface Zaznam {
   lastSyncAt?: number;
 }
 
-export interface Dokument {
+export interface Media {
   id: string;
-  zaznamId: string;
-  fileName: string;
+  ownerType: 'property' | 'unit' | 'zaznam';
+  ownerId: string;
+  mediaType: 'photo' | 'document' | 'receipt';
+  storageKey?: string;
+  originalFileName?: string;
   mimeType: string;
-  size: number;
+  sizeBytes: number;
+  caption?: string;
+  thumbnailUrl?: string;
   url?: string;
   data?: Blob;
   updatedAt: number;
@@ -93,7 +102,7 @@ export interface SyncQueueItem {
   scopeType: 'project' | 'property' | 'zaznam';
   scopeId: string;
   projectId?: string;           // Optional for UI filtering
-  entityType: 'projects' | 'properties' | 'units' | 'zaznamy' | 'dokumenty';
+  entityType: 'projects' | 'properties' | 'units' | 'zaznamy' | 'media';
   entityId: string;
   action: 'create' | 'update' | 'delete';
   payload: object | null;
@@ -110,7 +119,7 @@ class MujDomecekDb extends Dexie {
   properties!: Table<Property>;
   units!: Table<Unit>;
   zaznamy!: Table<Zaznam>;
-  dokumenty!: Table<Dokument>;
+  media!: Table<Media>;
   tags!: Table<Tag>;
   zaznamTags!: Table<ZaznamTag>;
   syncQueue!: Table<SyncQueueItem>;
@@ -178,6 +187,64 @@ class MujDomecekDb extends Dexie {
         }
         if (!item.scopeId) {
           item.scopeId = item.projectId ?? item.entityId;
+        }
+      });
+    });
+
+    // v5 - media + cover support
+    this.version(5).stores({
+      projects: 'id, name, ownerId, updatedAt, syncStatus, syncMode',
+      properties: 'id, projectId, name, updatedAt, syncStatus, syncMode',
+      units: 'id, propertyId, parentUnitId, updatedAt, syncStatus',
+      zaznamy: 'id, propertyId, unitId, date, updatedAt, status, syncStatus, syncMode',
+      media: 'id, ownerType, ownerId, updatedAt, syncStatus, mediaType',
+      dokumenty: 'id, zaznamId, updatedAt, syncStatus',
+      tags: 'id, name',
+      zaznamTags: '[zaznamId+tagId], zaznamId, tagId',
+      syncQueue: 'id, scopeType, scopeId, projectId, entityType, entityId, action, status, createdAt, attempts'
+    }).upgrade(async tx => {
+      const dokumentyTable = tx.table('dokumenty');
+      const mediaTable = tx.table('media');
+
+      if (dokumentyTable) {
+        const legacyDocuments = await dokumentyTable.toArray();
+        for (const dokument of legacyDocuments) {
+          await mediaTable.put({
+            id: dokument.id,
+            ownerType: 'zaznam',
+            ownerId: dokument.zaznamId,
+            mediaType: 'document',
+            originalFileName: dokument.fileName,
+            mimeType: dokument.mimeType,
+            sizeBytes: dokument.size,
+            data: dokument.data,
+            updatedAt: dokument.updatedAt,
+            syncStatus: dokument.syncStatus
+          });
+        }
+      }
+
+      await tx.table('properties').toCollection().modify(property => {
+        if (!('coverMediaId' in property)) {
+          property.coverMediaId = undefined;
+        }
+        if (!('coverUrl' in property)) {
+          property.coverUrl = undefined;
+        }
+      });
+
+      await tx.table('units').toCollection().modify(unit => {
+        if (!('coverMediaId' in unit)) {
+          unit.coverMediaId = undefined;
+        }
+        if (!('coverUrl' in unit)) {
+          unit.coverUrl = undefined;
+        }
+      });
+
+      await tx.table('syncQueue').toCollection().modify(item => {
+        if (item.entityType === 'dokumenty') {
+          item.entityType = 'media';
         }
       });
     });
@@ -308,7 +375,7 @@ export async function queuePropertyForSync(propertyId: string): Promise<void> {
 }
 
 /**
- * Queue a zaznam and its documents for initial sync
+ * Queue a zaznam and its media for initial sync
  */
 export async function queueZaznamForSync(zaznamId: string): Promise<void> {
   const zaznam = await db.zaznamy.get(zaznamId);
@@ -327,13 +394,20 @@ export async function queueZaznamForSync(zaznamId: string): Promise<void> {
     status: zaznam.status
   });
 
-  const dokumenty = await db.dokumenty.where('zaznamId').equals(zaznamId).toArray();
-  for (const dokument of dokumenty) {
-    await queueChange('zaznam', zaznamId, projectId, 'dokumenty', dokument.id, 'create', {
-      zaznamId: dokument.zaznamId,
-      fileName: dokument.fileName,
-      mimeType: dokument.mimeType,
-      size: dokument.size
+  const mediaItems = await db.media
+    .where('ownerType')
+    .equals('zaznam')
+    .and(item => item.ownerId === zaznamId)
+    .toArray();
+  for (const media of mediaItems) {
+    await queueChange('zaznam', zaznamId, projectId, 'media', media.id, 'create', {
+      zaznamId: media.ownerId,
+      type: media.mediaType,
+      storageKey: media.storageKey,
+      originalFileName: media.originalFileName,
+      mimeType: media.mimeType,
+      sizeBytes: media.sizeBytes,
+      description: media.caption
     });
   }
 }

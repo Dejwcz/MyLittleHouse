@@ -1,18 +1,21 @@
 <script lang="ts">
   import { PageHeader, Card, Button, Badge, Spinner, EmptyState } from '$lib';
-  import { unitsApi, zaznamyApi, type UnitDto, type ZaznamDto } from '$lib/api';
+  import { unitsApi, zaznamyApi, mediaApi, type UnitDto, type ZaznamDto, type MediaDto } from '$lib/api';
   import { toast } from '$lib/stores/ui.svelte';
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { FileText, Calendar, Plus, Layers } from 'lucide-svelte';
+  import { FileText, Calendar, Plus, Layers, Image, Star } from 'lucide-svelte';
 
   const projectId = $derived($page.params.projectId ?? '');
   const unitId = $derived($page.params.id ?? '');
 
   let unit = $state<UnitDto | null>(null);
   let zaznamy = $state<ZaznamDto[]>([]);
+  let mediaItems = $state<MediaDto[]>([]);
   let loading = $state(true);
+  let mediaLoading = $state(false);
+  let coverUpdating = $state(false);
 
   onMount(async () => {
     await loadData();
@@ -20,18 +23,36 @@
 
   async function loadData() {
     loading = true;
+    mediaLoading = true;
     try {
-      const [unitData, zaznamList] = await Promise.all([
+      const [unitData, zaznamList, mediaList] = await Promise.all([
         unitsApi.get(unitId),
-        zaznamyApi.list({ unitId })
+        zaznamyApi.list({ unitId }),
+        mediaApi.list('unit', unitId)
       ]);
       unit = unitData;
       zaznamy = zaznamList.items;
+      mediaItems = mediaList.items;
     } catch (err) {
       toast.error('Nepodařilo se načíst jednotku');
       goto(`/projects/${projectId}`);
     } finally {
       loading = false;
+      mediaLoading = false;
+    }
+  }
+
+  async function setCover(mediaId?: string) {
+    if (!unit) return;
+    coverUpdating = true;
+    try {
+      const updated = await unitsApi.updateCover(unitId, mediaId);
+      unit = { ...unit, ...updated };
+      toast.success(mediaId ? 'Obálka nastavena' : 'Obálka odebrána');
+    } catch (err) {
+      toast.error('Nepodařilo se upravit obálku');
+    } finally {
+      coverUpdating = false;
     }
   }
 
@@ -59,6 +80,91 @@
       </Button>
     {/snippet}
   </PageHeader>
+
+  <!-- Cover + Gallery -->
+  <div class="mb-6">
+    <div class="mb-3 flex items-center justify-between">
+      <h2 class="text-lg font-semibold">Obálka</h2>
+      {#if unit.coverMediaId}
+        <Button size="sm" variant="ghost" onclick={() => setCover(undefined)} disabled={coverUpdating}>
+          {#snippet children()}
+            Odebrat obálku
+          {/snippet}
+        </Button>
+      {/if}
+    </div>
+    <Card class="overflow-hidden">
+      <div class="relative aspect-[16/9] w-full bg-bg-secondary">
+        {#if unit.coverUrl}
+          <img src={unit.coverUrl} alt={unit.name} class="h-full w-full object-cover" />
+        {:else}
+          <div class="flex h-full flex-col items-center justify-center gap-2 text-foreground-muted">
+            <Image class="h-8 w-8" />
+            <span class="text-sm">Žádná obálka</span>
+          </div>
+        {/if}
+      </div>
+    </Card>
+  </div>
+
+  <div class="mb-6">
+    <div class="mb-3 flex items-center justify-between">
+      <h2 class="text-lg font-semibold">Galerie</h2>
+      {#if mediaItems.length > 0}
+        <span class="text-sm text-foreground-muted">{mediaItems.length} položek</span>
+      {/if}
+    </div>
+    {#if mediaLoading}
+      <div class="flex items-center justify-center py-6">
+        <Spinner />
+      </div>
+    {:else if mediaItems.length === 0}
+      <EmptyState
+        icon={Image}
+        title="Galerie je prázdná"
+        description="Přidejte fotky nebo dokumenty k této jednotce."
+      />
+    {:else}
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {#each mediaItems as media (media.id)}
+          <Card class="group">
+            <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-bg-secondary">
+              {#if media.thumbnailUrl}
+                <img src={media.thumbnailUrl} alt={media.originalFileName ?? 'Media'} class="h-full w-full object-cover" />
+              {:else}
+                <div class="flex h-full items-center justify-center text-foreground-muted">
+                  <Image class="h-6 w-6" />
+                </div>
+              {/if}
+            </div>
+            <div class="mt-3 flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate text-sm font-medium">{media.originalFileName ?? 'Media'}</p>
+                {#if media.caption}
+                  <p class="truncate text-xs text-foreground-muted">{media.caption}</p>
+                {/if}
+              </div>
+              {#if unit.coverMediaId === media.id}
+                <Button size="sm" variant="secondary" disabled>
+                  {#snippet children()}
+                    <Star class="h-4 w-4" />
+                    Obálka
+                  {/snippet}
+                </Button>
+              {:else}
+                <Button size="sm" variant="ghost" onclick={() => setCover(media.id)} disabled={coverUpdating}>
+                  {#snippet children()}
+                    <Star class="h-4 w-4" />
+                    Nastavit
+                  {/snippet}
+                </Button>
+              {/if}
+            </div>
+          </Card>
+        {/each}
+      </div>
+    {/if}
+  </div>
 
   <div class="mb-6 grid gap-4 sm:grid-cols-2">
     <Card>

@@ -10,11 +10,12 @@
  */
 
 import { auth } from '$lib/stores/auth.svelte';
-import { localProjectsApi, localPropertiesApi, localUnitsApi, localZaznamyApi } from './local';
+import { localProjectsApi, localPropertiesApi, localUnitsApi, localZaznamyApi, localMediaApi } from './local';
 import { projectsApi as remoteProjectsApi, type ProjectListResponse } from './projects';
 import { propertiesApi as remotePropertiesApi, type PropertyListResponse } from './properties';
 import { unitsApi as remoteUnitsApi, type UnitListResponse } from './units';
 import { zaznamyApi as remoteZaznamyApi, type ZaznamListResponse } from './zaznamy';
+import { mediaApi as remoteMediaApi, type MediaListResponse, type AddMediaRequest, type UpdateMediaRequest } from './media';
 import type {
   ProjectDto,
   ProjectDetailDto,
@@ -38,7 +39,9 @@ import type {
   CreateZaznamRequest,
   UpdateZaznamRequest,
   ZaznamQueryParams,
-  CommentDto
+  CommentDto,
+  MediaDto,
+  MediaOwnerType
 } from './types';
 
 function isGuest(): boolean {
@@ -167,6 +170,13 @@ export const unifiedApi = {
         return localPropertiesApi.getStats(id);
       }
       return remotePropertiesApi.getStats(id);
+    },
+
+    async updateCover(id: string, coverMediaId?: string): Promise<PropertyDto> {
+      if (isGuest()) {
+        return localPropertiesApi.updateCover(id, coverMediaId);
+      }
+      return remotePropertiesApi.updateCover(id, coverMediaId);
     }
   },
 
@@ -204,6 +214,13 @@ export const unifiedApi = {
         return localUnitsApi.delete(id);
       }
       return remoteUnitsApi.delete(id);
+    },
+
+    async updateCover(id: string, coverMediaId?: string): Promise<UnitDto> {
+      if (isGuest()) {
+        return localUnitsApi.updateCover(id, coverMediaId);
+      }
+      return remoteUnitsApi.updateCover(id, coverMediaId);
     }
   },
 
@@ -285,6 +302,36 @@ export const unifiedApi = {
         throw new GuestOnlyError('Komentáře');
       }
       return remoteZaznamyApi.deleteComment(commentId);
+    }
+  },
+
+  media: {
+    async list(ownerType: MediaOwnerType, ownerId: string): Promise<MediaListResponse> {
+      if (isGuest()) {
+        return localMediaApi.list(ownerType, ownerId);
+      }
+      return remoteMediaApi.list(ownerType, ownerId);
+    },
+
+    async create(data: AddMediaRequest): Promise<MediaDto> {
+      if (isGuest()) {
+        return localMediaApi.create(data);
+      }
+      return remoteMediaApi.create(data);
+    },
+
+    async update(id: string, data: UpdateMediaRequest): Promise<MediaDto> {
+      if (isGuest()) {
+        return localMediaApi.update(id, data);
+      }
+      return remoteMediaApi.update(id, data);
+    },
+
+    async delete(id: string): Promise<void> {
+      if (isGuest()) {
+        return localMediaApi.delete(id);
+      }
+      return remoteMediaApi.delete(id);
     }
   }
 };

@@ -49,6 +49,8 @@ async function propertyToDto(property: Property): Promise<PropertyDto> {
     isShared: false,
     syncMode: property.syncMode,
     syncStatus: property.syncStatus,
+    coverMediaId: property.coverMediaId,
+    coverUrl: property.coverUrl,
     createdAt: new Date(property.updatedAt).toISOString(),
     updatedAt: new Date(property.updatedAt).toISOString()
   };
@@ -92,6 +94,8 @@ export const localPropertiesApi = {
         unitType: u.unitType as 'flat' | 'house' | 'garage' | 'garden' | 'room' | 'stairs' | 'other',
         childCount: u.childUnitCount,
         zaznamCount: u.zaznamCount,
+        coverMediaId: u.coverMediaId,
+        coverUrl: u.coverUrl,
         createdAt: new Date(u.updatedAt).toISOString(),
         updatedAt: new Date(u.updatedAt).toISOString()
       })),
@@ -181,13 +185,33 @@ export const localPropertiesApi = {
     }
 
     // Delete all related data
+    const units = await db.units.where('propertyId').equals(id).toArray();
+    const unitIds = units.map(u => u.id);
     const zaznamy = await db.zaznamy.where('propertyId').equals(id).toArray();
     const zaznamIds = zaznamy.map(z => z.id);
 
-    // Delete documents and tags
+    // Delete media and tags
     for (const zaznamId of zaznamIds) {
-      await db.dokumenty.where('zaznamId').equals(zaznamId).delete();
+      await db.media
+        .where('ownerType')
+        .equals('zaznam')
+        .and(media => media.ownerId === zaznamId)
+        .delete();
       await db.zaznamTags.where('zaznamId').equals(zaznamId).delete();
+    }
+
+    await db.media
+      .where('ownerType')
+      .equals('property')
+      .and(media => media.ownerId === id)
+      .delete();
+
+    for (const unitId of unitIds) {
+      await db.media
+        .where('ownerType')
+        .equals('unit')
+        .and(media => media.ownerId === unitId)
+        .delete();
     }
 
     await db.zaznamy.where('propertyId').equals(id).delete();
@@ -207,7 +231,13 @@ export const localPropertiesApi = {
   async getStats(id: string): Promise<PropertyStatsDto> {
     const zaznamy = await db.zaznamy.where('propertyId').equals(id).toArray();
     const documents = await Promise.all(
-      zaznamy.map(z => db.dokumenty.where('zaznamId').equals(z.id).count())
+      zaznamy.map(z =>
+        db.media
+          .where('ownerType')
+          .equals('zaznam')
+          .and(media => media.ownerId === z.id)
+          .count()
+      )
     );
 
     const totalCost = zaznamy.reduce((sum, z) => sum + (z.cost ?? 0), 0);
@@ -267,5 +297,37 @@ export const localPropertiesApi = {
         updatedAt: now
       });
     }
+  },
+  async updateCover(id: string, coverMediaId?: string): Promise<PropertyDto> {
+    const property = await db.properties.get(id);
+    if (!property) {
+      throw new Error('Nemovitost nenalezena');
+    }
+
+    let coverUrl: string | undefined;
+    if (coverMediaId) {
+      const media = await db.media.get(coverMediaId);
+      coverUrl = media?.thumbnailUrl ?? media?.url;
+    }
+
+    const updated: Partial<Property> = {
+      coverMediaId: coverMediaId || undefined,
+      coverUrl,
+      updatedAt: Date.now()
+    };
+
+    const scope = await getPropertySyncScope(property);
+    if (scope) {
+      updated.syncStatus = 'pending';
+      await queueChange(scope.scopeType, scope.scopeId, scope.projectId, 'properties', id, 'update', {
+        coverMediaId: coverMediaId ?? null
+      });
+    } else {
+      updated.syncStatus = 'local';
+    }
+
+    await db.properties.update(id, updated);
+    const result = await db.properties.get(id);
+    return propertyToDto(result!);
   }
 };

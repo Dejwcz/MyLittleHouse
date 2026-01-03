@@ -118,8 +118,8 @@ export const syncEngine = {
       case 'zaznamy':
         await this.pushZaznamChange(entityId, action, payload);
         break;
-      case 'dokumenty':
-        await this.pushDokumentChange(entityId, action, payload);
+      case 'media':
+        await this.pushMediaChange(entityId, action, payload);
         break;
       default:
         throw new Error(`Unknown entity type: ${entityType}`);
@@ -237,30 +237,36 @@ export const syncEngine = {
     }
   },
 
-  async pushDokumentChange(
+  async pushMediaChange(
     id: string,
     action: SyncQueueItem['action'],
     _payload: object | null
   ): Promise<void> {
-    // Documents require special handling (file upload)
+    // Media records require upload + confirm before creating metadata
     switch (action) {
       case 'create':
-        const dokument = await db.dokumenty.get(id);
-        if (dokument?.data) {
-          const formData = new FormData();
-          formData.append('file', dokument.data, dokument.fileName);
-          formData.append('zaznamId', dokument.zaznamId);
-          // Use fetch directly for FormData
-          const token = auth.getAccessToken();
-          await fetch('/api/documents/upload', {
-            method: 'POST',
-            body: formData,
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        const media = await db.media.get(id);
+        if (media?.storageKey) {
+          await api.post('/media', {
+            ownerType: media.ownerType,
+            ownerId: media.ownerId,
+            storageKey: media.storageKey,
+            mediaType: media.mediaType,
+            originalFileName: media.originalFileName,
+            mimeType: media.mimeType,
+            sizeBytes: media.sizeBytes,
+            caption: media.caption
           });
         }
         break;
+      case 'update':
+        const updated = await db.media.get(id);
+        if (updated) {
+          await api.put(`/media/${id}`, { caption: updated.caption });
+        }
+        break;
       case 'delete':
-        await api.delete(`/documents/${id}`);
+        await api.delete(`/media/${id}`);
         break;
     }
   },
@@ -388,7 +394,7 @@ export const syncEngine = {
       case 'properties': return db.properties;
       case 'units': return db.units;
       case 'zaznamy': return db.zaznamy;
-      case 'dokumenty': return db.dokumenty;
+      case 'media': return db.media;
       default: return null;
     }
   },

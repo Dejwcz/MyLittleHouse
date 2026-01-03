@@ -33,6 +33,8 @@ function unitToDto(unit: Unit): UnitDto {
     unitType: unit.unitType as UnitDto['unitType'],
     childCount: unit.childUnitCount,
     zaznamCount: unit.zaznamCount,
+    coverMediaId: unit.coverMediaId,
+    coverUrl: unit.coverUrl,
     createdAt: new Date(unit.updatedAt).toISOString(),
     updatedAt: new Date(unit.updatedAt).toISOString()
   };
@@ -233,6 +235,49 @@ export const localUnitsApi = {
       });
     }
 
+    await db.media
+      .where('ownerType')
+      .equals('unit')
+      .and(media => media.ownerId === id)
+      .delete();
+
     await db.units.delete(id);
+  },
+  async updateCover(id: string, coverMediaId?: string): Promise<UnitDto> {
+    const unit = await db.units.get(id);
+    if (!unit) {
+      throw new Error('Jednotka nenalezena');
+    }
+
+    const property = await db.properties.get(unit.propertyId);
+
+    let coverUrl: string | undefined;
+    if (coverMediaId) {
+      const media = await db.media.get(coverMediaId);
+      coverUrl = media?.thumbnailUrl ?? media?.url;
+    }
+
+    const updated: Partial<Unit> = {
+      coverMediaId: coverMediaId || undefined,
+      coverUrl,
+      updatedAt: Date.now()
+    };
+
+    if (property) {
+      const scope = await getPropertySyncScope(property);
+      if (scope) {
+        updated.syncStatus = 'pending';
+        await queueChange(scope.scopeType, scope.scopeId, scope.projectId, 'units', id, 'update', {
+          coverMediaId: coverMediaId ?? null
+        });
+      }
+    } else {
+      updated.syncStatus = 'local';
+    }
+
+    await db.units.update(id, updated);
+
+    const result = await db.units.get(id);
+    return unitToDto(result!);
   }
 };

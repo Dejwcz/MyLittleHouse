@@ -7,6 +7,7 @@ export const projectsApi = unifiedApi.projects;
 export const propertiesApi = unifiedApi.properties;
 export const unitsApi = unifiedApi.units;
 export const zaznamyApi = unifiedApi.zaznamy;
+export const mediaApi = unifiedApi.media;
 
 // Re-export unified for explicit usage
 export { unifiedApi };

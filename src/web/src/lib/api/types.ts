@@ -9,7 +9,8 @@ export interface PaginatedResponse<T> {
 export type Role = 'owner' | 'editor' | 'viewer';
 export type ZaznamStatus = 'draft' | 'complete';
 export type UnitType = 'flat' | 'house' | 'garage' | 'garden' | 'room' | 'stairs' | 'other';
-export type DocumentType = 'photo' | 'document' | 'receipt';
+export type MediaType = 'photo' | 'document' | 'receipt';
+export type MediaOwnerType = 'property' | 'unit' | 'zaznam';
 export type SyncStatus = 'local' | 'synced' | 'syncing' | 'pending' | 'failed';
 export type SyncMode = 'local-only' | 'synced';
 
@@ -59,6 +60,8 @@ export interface PropertyDto {
   isShared: boolean;
   syncMode?: SyncMode;
   syncStatus?: SyncStatus;
+  coverMediaId?: string;
+  coverUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -104,6 +107,8 @@ export interface UnitDto {
   unitType: UnitType;
   childCount: number;
   zaznamCount: number;
+  coverMediaId?: string;
+  coverUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -148,7 +153,7 @@ export interface ZaznamDto {
 }
 
 export interface ZaznamDetailDto extends ZaznamDto {
-  documents: DocumentDto[];
+  documents: MediaDto[];
   comments: CommentDto[];
 }
 
@@ -174,16 +179,18 @@ export interface UpdateZaznamRequest {
   tags?: string[];
 }
 
-// Document types
-export interface DocumentDto {
+// Media types
+export interface MediaDto {
   id: string;
   zaznamId: string;
-  type: DocumentType;
+  ownerType?: MediaOwnerType;
+  ownerId?: string;
+  type: MediaType;
   storageKey: string;
   originalFileName?: string;
   mimeType: string;
   sizeBytes: number;
-  description?: string;
+  caption?: string;
   thumbnailUrl?: string;
   createdAt: string;
 }

@@ -65,6 +65,8 @@ export const localProjectsApi = {
         isShared: false,
         syncMode: p.syncMode,
         syncStatus: p.syncStatus,
+        coverMediaId: p.coverMediaId,
+        coverUrl: p.coverUrl,
         createdAt: new Date(p.updatedAt).toISOString(),
         updatedAt: new Date(p.updatedAt).toISOString()
       })),
@@ -139,14 +141,34 @@ export const localProjectsApi = {
 
     // Delete zaznamy for all properties
     for (const propertyId of propertyIds) {
+      const units = await db.units.where('propertyId').equals(propertyId).toArray();
+      const unitIds = units.map(u => u.id);
       const zaznamy = await db.zaznamy.where('propertyId').equals(propertyId).toArray();
       const zaznamIds = zaznamy.map(z => z.id);
 
-      // Delete documents
+      // Delete media
       for (const zaznamId of zaznamIds) {
-        await db.dokumenty.where('zaznamId').equals(zaznamId).delete();
+        await db.media
+          .where('ownerType')
+          .equals('zaznam')
+          .and(media => media.ownerId === zaznamId)
+          .delete();
         await db.zaznamTags.where('zaznamId').equals(zaznamId).delete();
       }
+
+      for (const unitId of unitIds) {
+        await db.media
+          .where('ownerType')
+          .equals('unit')
+          .and(media => media.ownerId === unitId)
+          .delete();
+      }
+
+      await db.media
+        .where('ownerType')
+        .equals('property')
+        .and(media => media.ownerId === propertyId)
+        .delete();
 
       await db.zaznamy.where('propertyId').equals(propertyId).delete();
       await db.units.where('propertyId').equals(propertyId).delete();

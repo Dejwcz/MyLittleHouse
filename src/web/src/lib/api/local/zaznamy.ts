@@ -56,7 +56,11 @@ async function getZaznamSyncScope(zaznam: Zaznam): Promise<{
 async function zaznamToDto(zaznam: Zaznam): Promise<ZaznamDto> {
   const property = await db.properties.get(zaznam.propertyId);
   const unit = zaznam.unitId ? await db.units.get(zaznam.unitId) : null;
-  const documentCount = await db.dokumenty.where('zaznamId').equals(zaznam.id).count();
+  const documentCount = await db.media
+    .where('ownerType')
+    .equals('zaznam')
+    .and(media => media.ownerId === zaznam.id)
+    .count();
   const tags = await db.zaznamTags.where('zaznamId').equals(zaznam.id).toArray();
   const tagNames = await Promise.all(
     tags.map(async t => {
@@ -168,18 +172,24 @@ export const localZaznamyApi = {
       throw new Error('Zaznam nenalezen');
     }
 
-    const documents = await db.dokumenty.where('zaznamId').equals(id).toArray();
+    const documents = await db.media
+      .where('ownerType')
+      .equals('zaznam')
+      .and(media => media.ownerId === id)
+      .toArray();
 
     return {
       ...(await zaznamToDto(zaznam)),
       documents: documents.map(d => ({
         id: d.id,
-        zaznamId: d.zaznamId,
-        type: 'document' as const,
-        storageKey: '',
-        originalFileName: d.fileName,
+        zaznamId: d.ownerId,
+        type: d.mediaType,
+        storageKey: d.storageKey ?? '',
+        originalFileName: d.originalFileName,
         mimeType: d.mimeType,
-        sizeBytes: d.size,
+        sizeBytes: d.sizeBytes,
+        caption: d.caption,
+        thumbnailUrl: d.thumbnailUrl,
         createdAt: new Date(d.updatedAt).toISOString()
       })),
       comments: []
@@ -356,7 +366,11 @@ export const localZaznamyApi = {
     }
 
     // Delete related data
-    await db.dokumenty.where('zaznamId').equals(id).delete();
+    await db.media
+      .where('ownerType')
+      .equals('zaznam')
+      .and(media => media.ownerId === id)
+      .delete();
     await db.zaznamTags.where('zaznamId').equals(id).delete();
     await db.zaznamy.delete(id);
   },

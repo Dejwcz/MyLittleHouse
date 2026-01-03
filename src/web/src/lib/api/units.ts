@@ -37,5 +37,11 @@ export const unitsApi = {
 
   async delete(id: string): Promise<void> {
     return api.delete(`/units/${id}`);
+  },
+
+  async updateCover(id: string, coverMediaId?: string): Promise<UnitDto> {
+    return api.patch<UnitDto>(`/units/${id}/cover`, {
+      coverMediaId: coverMediaId ?? null
+    });
   }
 };

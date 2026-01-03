@@ -49,6 +49,12 @@ export const propertiesApi = {
     return api.get<PropertyStatsDto>(`/properties/${id}/stats`);
   },
 
+  async updateCover(id: string, coverMediaId?: string): Promise<PropertyDto> {
+    return api.patch<PropertyDto>(`/properties/${id}/cover`, {
+      coverMediaId: coverMediaId ?? null
+    });
+  },
+
   // Members
   async getMembers(propertyId: string): Promise<MemberDto[]> {
     return api.get<MemberDto[]>(`/properties/${propertyId}/members`);
