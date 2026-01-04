@@ -58,18 +58,20 @@ Nemovitosti (v projektu)
 ├── Seznam nemovitostí
 └── Nemovitost detail
     ├── Jednotky (stromová hierarchie)
+    ├── Galerie (fotky + dokumenty)
     ├── Záznamy (souhrn + link)
     ├── Aktivita (pro sdílené)
     └── Statistiky
 
 Jednotka detail
 ├── Child units
+├── Galerie (fotky + dokumenty)
 ├── Záznamy (seznam)
 └── Drafty (rozpracované)
 
 Záznam detail
 ├── Metadata
-├── Dokumenty (galerie)
+├── Galerie (fotky + dokumenty)
 └── Timeline změn
 
 Uživatelské nastavení
@@ -95,6 +97,36 @@ Uživatelské nastavení
     ├── Sync nastavení
     └── Export/Smazání dat
 ```
+
+---
+
+## CTA konzistence
+
+Primární akce je vždy vpravo v `PageHeader`.
+
+| Stránka | Primary (default) | Secondary (ghost) |
+|---------|-------------------|-------------------|
+| Projekt dashboard | Nový záznam | Nová nemovitost |
+| Seznam nemovitostí | Nová nemovitost | — |
+| Detail nemovitosti | Nový záznam | Nová jednotka |
+| Seznam jednotek | — (filtr + inline akce u property) | — |
+| Detail jednotky | Nový záznam | — |
+
+### Button varianty
+
+| Varianta | Použití | Vzhled |
+|----------|---------|--------|
+| `primary` | Hlavní akce (CTA) | Zelené pozadí, bílý text |
+| `secondary` | Alternativní akce | Průhledné, tmavší border |
+| `ghost` | Sekundární akce v header | Průhledné, jemný border |
+| `danger` | Destruktivní akce | Červené pozadí |
+| `outline` | Neutrální akce | Průhledné, jemný border |
+
+**Pravidla:**
+- Primary = vytvoření hlavní entity (záznam)
+- Ghost = vytvoření vedlejší entity (nemovitost, jednotka)
+- Secondary = akce v kartách, dialozích
+- Danger = mazání, odhlášení
 
 ---
 
@@ -130,11 +162,42 @@ Po vstupu do projektu - přehled jeho obsahu.
 | Akce | Detail, Edit, Delete |
 | FAB | "+" nová nemovitost |
 
+**Vytvoření nemovitosti (flow):**
+1. Výběr typu (karty s ikonou: Dům, Byt, Garáž, Zahrada, Kůlna, Pozemek, Jiné)
+2. Název + popis
+3. Otázka: "Chceš přidat jednotky?" → Ano / Přeskočit
+4. (Volitelně) Preset jednotek podle typu
+   - Dům → Podlaží
+   - Byt → Místnosti
+   - Garáž → Parkovací stání / nic
+   - Ostatní → nic
+
+**PropertyType (karty s ikonou):**
+| Hodnota | CZ label |
+|---------|----------|
+| house | Dům |
+| apartment | Byt |
+| garage | Garáž |
+| garden | Zahrada |
+| shed | Kůlna |
+| land | Pozemek |
+| other | Jiné |
+
+**UnitType (zjednodušené):**
+| Hodnota | CZ label |
+|---------|----------|
+| room | Místnost |
+| floor | Podlaží |
+| cellar | Sklep |
+| parking | Parkovací stání |
+| other | Jiné |
+
 ### Property detail
 
 | Sekce | Obsah |
 |-------|-------|
 | Header | Název, popis, akce, GPS badge (📍 pokud nastaveno) |
+| Galerie | Fotky + dokumenty, akce pro nastavení titulní fotky |
 | Jednotky | Seznam karet jednotek |
 | Záznamy | Poslední záznamy + link "Zobrazit vše" + toggle Seznam/Timeline |
 | Aktivita | Feed událostí (pouze pro sdílené properties) |
@@ -146,6 +209,7 @@ Po vstupu do projektu - přehled jeho obsahu.
 | Sekce | Obsah |
 |-------|-------|
 | Header | Název, typ, parent breadcrumb |
+| Galerie | Fotky + dokumenty, akce pro nastavení titulní fotky |
 | Child units | Pokud existují |
 | Záznamy | Seznam s filtry + toggle Seznam/Timeline |
 | Drafty | Collapsible sekce s rozpracovanými záznamy |
@@ -390,8 +454,10 @@ Viz existující dokumentace kontaktů.
 | Sync status | Online/Offline, počet čekajících změn |
 | Auto-sync | Toggle (default ON) |
 | Sync přes mobilní data | Toggle (default OFF) |
-| Export dat | Stáhnout vše jako JSON/ZIP |
-| Smazání účtu | Danger zone |
+| Export dat | Stáhnout vše jako JSON (lokální) nebo ZIP (server) |
+| Import dat | Nahrát zálohu z JSON souboru |
+| Smazání lokálních dat | Vymazat IndexedDB |
+| Smazání účtu | Danger zone (server) |
 
 **Sync status UI:**
 ```
@@ -403,13 +469,35 @@ Viz existující dokumentace kontaktů.
 └─────────────────────────────────────┘
 ```
 
-**Export dat:**
+**Export dat (lokální - guest/offline):**
+```
+1. Klik "Exportovat data"
+2. IndexedDB → JSON (včetně media jako base64)
+3. Okamžité stažení souboru mujdomecek-backup-YYYY-MM-DD.json
+```
+
+**Import dat (lokální):**
+```
+1. Klik "Importovat data"
+2. Výběr JSON souboru
+3. Modal s náhledem (počet projektů, nemovitostí, záznamů)
+4. Volba: "Smazat stávající data před importem" (checkbox)
+5. Klik "Importovat"
+6. Toast s výsledkem
+```
+
+**Export dat (server - přihlášený):**
 ```
 1. Klik "Exportovat data"
 2. Vybrat formát: JSON / ZIP (s fotkami)
 3. Server připraví export (může trvat)
 4. Email s download linkem (platnost 24h)
 ```
+
+**Varování o lokálních datech:**
+- Amber banner na /settings/data
+- Modal při prvním "Pokračovat" na homepage (pokud jsou lokální data)
+- Text: "Vymazání dat prohlížeče, čističe (CCleaner), přeinstalace může smazat záznamy"
 
 **Smazání účtu - flow:**
 ```

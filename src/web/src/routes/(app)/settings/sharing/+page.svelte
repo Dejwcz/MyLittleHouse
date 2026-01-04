@@ -6,14 +6,8 @@
   const isGuest = $derived(auth.isGuest);
 
   // TODO: Load from API/IndexedDB
-  const sharedByMe = [
-    { id: '1', name: 'Chalupa', type: 'property', members: 3 },
-    { id: '2', name: 'Rodina Novákovi', type: 'project', members: 5 }
-  ];
-
-  const sharedWithMe = [
-    { id: '3', name: 'Byt Praha', type: 'property', owner: 'Eva Nováková', role: 'editor' }
-  ];
+  const sharedByMe: Array<{ id: string; name: string; type: string; members: number }> = [];
+  const sharedWithMe: Array<{ id: string; name: string; type: string; owner: string; role: string }> = [];
 </script>
 
 <PageHeader

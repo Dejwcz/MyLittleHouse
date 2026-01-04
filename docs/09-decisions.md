@@ -1599,6 +1599,48 @@ Umožňuje výjimky (např. Editor na projektu, ale Viewer na citlivé Property)
 
 ---
 
+### [069] Media model pro fotky/dokumenty (Property + Unit + Zaznam)
+
+**Datum:** 2026-01-03
+**Stav:** Rozhodnuto
+
+**Kontext:** Potrebujeme jednotny model pro fotky a dokumenty napric zaznamy, nemovitostmi a jednotkami. Soucasne chceme zachovat optionalni galerie a titulni fotku, bez povinnosti nahravat fotky.
+
+**Moznosti:**
+1. **Ponechat ZaznamDokument a pridat nove tabulky** pro property/unit (rychle, ale duplicita).
+2. **Přejmenovat a rozšířit ZaznamDokument na Media** s `ownerType` + `ownerId` (breaking).
+
+**Rozhodnuti:** Moznost 2. Zavest jednotny Media model a pouzit ho pro property, unit i zaznam. `ownerType` zatim jen `property|unit|zaznam` (project pozdeji).
+
+**Dusledky:**
+- ZaznamDokument se nahradi Media (breaking).
+- Property a Unit dostanou `coverMediaId`, galerie je optionalni.
+- Default UI stav pouziva ilustraci, kdyz nejsou fotky.
+- Media ID je client-generated UUID (bez remappingu pri syncu).
+- Index na `(ownerType, ownerId)` pro rychle nacitani galerie.
+
+---
+
+### [070] PropertyType + zjednoduseny UnitType
+
+**Datum:** 2026-01-03
+**Stav:** Rozhodnuto
+
+**Kontext:** Uzivatele matou typy jednotek. `UnitType` obsahuje hodnoty, ktere logicky patri na uroveň nemovitosti.
+
+**Moznosti:**
+1. Ponechat stavajici `UnitType` (Flat/House/Garage/...) bez `PropertyType`.
+2. Zavest `PropertyType` a zjednodusit `UnitType` na vnitrni cleneni.
+
+**Rozhodnuti:** Moznost 2. Property dostane `PropertyType` (Dum/Byt/Garaz/Zahrada/Kulna/Pozemek/Jine). UnitType se zjednodusi na Místnost/Podlaží/Sklep/Parkovací stání/Jiné.
+
+**Dusledky:**
+- UI tvorby nemovitosti nabidne vyber typu kartami s ikonami.
+- Presety jednotek jsou volitelne a zavisle na zvolenem `PropertyType`.
+- API a data model budou rozsireny o `propertyType`.
+
+---
+
 ## Otevřená rozhodnutí
 
 Všechna rozhodnutí jsou uzavřena. Viz [10-open-questions.md](10-open-questions.md) pro historii.

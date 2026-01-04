@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MujDomecek.Application.Abstractions;
 using MujDomecek.Domain.Aggregates.User;
 using MujDomecek.Infrastructure.Options;
+using MujDomecek.Infrastructure.Identity;
 using MujDomecek.Infrastructure.Persistence;
 using MujDomecek.Infrastructure.Services;
 
@@ -38,7 +39,8 @@ public static class DependencyInjection
             })
             .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            .AddErrorDescriber<CzechIdentityErrorDescriber>();
 
         return services;
     }

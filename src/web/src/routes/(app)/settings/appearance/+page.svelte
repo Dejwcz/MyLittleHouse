@@ -10,24 +10,16 @@
   ];
 
   const languages = [
-    { id: 'cs', label: 'Čeština', flag: '🇨🇿' },
-    { id: 'en', label: 'English', flag: '🇬🇧' }
+    { id: 'cs', label: 'Čeština', flag: '🇨🇿', disabled: false },
+    { id: 'en', label: 'English', flag: '🇬🇧', disabled: true, note: 'AJ verze se připravuje' }
   ];
 
-  let selectedTheme = $state(theme.isDark ? 'dark' : 'light');
+  let selectedTheme = $state(theme.preference);
   let selectedLanguage = $state('cs');
 
   function setTheme(id: string) {
     selectedTheme = id;
-    if (id === 'light') {
-      theme.setLight();
-    } else if (id === 'dark') {
-      theme.setDark();
-    } else {
-      // System - detect
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      prefersDark ? theme.setDark() : theme.setLight();
-    }
+    theme.setTheme(id === 'light' || id === 'dark' ? id : 'system');
   }
 </script>
 
@@ -61,11 +53,17 @@
     <div class="space-y-2">
       {#each languages as lang}
         <button
-          onclick={() => selectedLanguage = lang.id}
-          class="flex w-full items-center gap-3 rounded-xl border-2 p-3 transition-colors {selectedLanguage === lang.id ? 'border-primary bg-primary-50 dark:bg-primary-950' : 'border-border hover:border-foreground-muted'}"
+          onclick={() => !lang.disabled && (selectedLanguage = lang.id)}
+          disabled={lang.disabled}
+          class="flex w-full items-center gap-3 rounded-xl border-2 p-3 transition-colors disabled:cursor-not-allowed disabled:opacity-60 {selectedLanguage === lang.id ? 'border-primary bg-primary-50 dark:bg-primary-950' : 'border-border hover:border-foreground-muted'}"
         >
           <span class="text-2xl">{lang.flag}</span>
-          <span class="font-medium">{lang.label}</span>
+          <div class="text-left">
+            <div class="font-medium">{lang.label}</div>
+            {#if lang.note}
+              <div class="text-xs text-foreground-muted">{lang.note}</div>
+            {/if}
+          </div>
         </button>
       {/each}
     </div>

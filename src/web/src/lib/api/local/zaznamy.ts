@@ -61,6 +61,17 @@ async function zaznamToDto(zaznam: Zaznam): Promise<ZaznamDto> {
     .equals('zaznam')
     .and(media => media.ownerId === zaznam.id)
     .count();
+  const thumbnailMedia = await db.media
+    .where('ownerType')
+    .equals('zaznam')
+    .and(media => media.ownerId === zaznam.id)
+    .first();
+  let thumbnailUrl: string | undefined;
+  if (thumbnailMedia?.data && typeof URL !== 'undefined') {
+    thumbnailUrl = URL.createObjectURL(thumbnailMedia.data);
+  } else {
+    thumbnailUrl = thumbnailMedia?.thumbnailUrl ?? thumbnailMedia?.url;
+  }
   const tags = await db.zaznamTags.where('zaznamId').equals(zaznam.id).toArray();
   const tagNames = await Promise.all(
     tags.map(async t => {
@@ -84,6 +95,7 @@ async function zaznamToDto(zaznam: Zaznam): Promise<ZaznamDto> {
     tags: tagNames.filter(Boolean),
     documentCount,
     commentCount: 0,
+    thumbnailUrl,
     syncMode: zaznam.syncMode,
     syncStatus: zaznam.syncStatus,
     createdAt: new Date(zaznam.updatedAt).toISOString(),
@@ -178,20 +190,24 @@ export const localZaznamyApi = {
       .and(media => media.ownerId === id)
       .toArray();
 
+    const documentDtos = documents.map(d => ({
+      id: d.id,
+      zaznamId: d.ownerId,
+      type: d.mediaType,
+      storageKey: d.storageKey ?? '',
+      originalFileName: d.originalFileName,
+      mimeType: d.mimeType,
+      sizeBytes: d.sizeBytes,
+      caption: d.caption,
+      thumbnailUrl: d.data && typeof URL !== 'undefined'
+        ? URL.createObjectURL(d.data)
+        : d.thumbnailUrl,
+      createdAt: new Date(d.updatedAt).toISOString()
+    }));
+
     return {
       ...(await zaznamToDto(zaznam)),
-      documents: documents.map(d => ({
-        id: d.id,
-        zaznamId: d.ownerId,
-        type: d.mediaType,
-        storageKey: d.storageKey ?? '',
-        originalFileName: d.originalFileName,
-        mimeType: d.mimeType,
-        sizeBytes: d.sizeBytes,
-        caption: d.caption,
-        thumbnailUrl: d.thumbnailUrl,
-        createdAt: new Date(d.updatedAt).toISOString()
-      })),
+      documents: documentDtos,
       comments: []
     };
   },

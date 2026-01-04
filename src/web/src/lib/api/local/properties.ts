@@ -34,6 +34,16 @@ async function getDefaultPropertySyncMode(projectId: string): Promise<SyncMode> 
 
 async function propertyToDto(property: Property): Promise<PropertyDto> {
   const project = await db.projects.get(property.projectId);
+  let coverUrl = property.coverUrl;
+
+  if (property.coverMediaId) {
+    const coverMedia = await db.media.get(property.coverMediaId);
+    if (coverMedia?.data && typeof URL !== 'undefined') {
+      coverUrl = URL.createObjectURL(coverMedia.data);
+    } else if (coverMedia?.thumbnailUrl || coverMedia?.url) {
+      coverUrl = coverMedia.thumbnailUrl ?? coverMedia.url;
+    }
+  }
 
   return {
     id: property.id,
@@ -51,7 +61,7 @@ async function propertyToDto(property: Property): Promise<PropertyDto> {
     syncMode: property.syncMode,
     syncStatus: property.syncStatus,
     coverMediaId: property.coverMediaId,
-    coverUrl: property.coverUrl,
+    coverUrl,
     createdAt: new Date(property.updatedAt).toISOString(),
     updatedAt: new Date(property.updatedAt).toISOString()
   };

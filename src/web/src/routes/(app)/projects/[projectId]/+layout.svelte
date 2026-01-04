@@ -10,6 +10,7 @@
   import {
     Home,
     Warehouse,
+    Layers,
     FileText,
     Settings,
     Sun,
@@ -62,6 +63,7 @@
   const navItems = $derived([
     { href: `/projects/${projectId}`, label: 'Dashboard', icon: Home },
     { href: `/projects/${projectId}/properties`, label: 'Nemovitosti', icon: Warehouse },
+    { href: `/projects/${projectId}/units`, label: 'Jednotky', icon: Layers },
     { href: `/projects/${projectId}/zaznamy`, label: 'Záznamy', icon: FileText },
     { href: `/projects/${projectId}/settings`, label: 'Nastavení', icon: Settings }
   ]);

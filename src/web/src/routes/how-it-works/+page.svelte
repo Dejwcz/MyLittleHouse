@@ -25,7 +25,7 @@
 
   function startWithoutAccount() {
     auth.startAsGuest();
-    goto('/dashboard');
+    goto('/projects');
   }
 </script>
 

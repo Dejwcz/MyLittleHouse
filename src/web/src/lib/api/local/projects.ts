@@ -1,4 +1,4 @@
-import { db, queueChange, queueProjectForSync, type Project, type SyncMode } from '$lib/db';
+import { db, queueChange, queueProjectForSync, type Media, type Project, type SyncMode } from '$lib/db';
 import type {
   ProjectDto,
   ProjectDetailDto,
@@ -48,6 +48,15 @@ export const localProjectsApi = {
     }
 
     const properties = await db.properties.where('projectId').equals(id).toArray();
+    const mediaById = new Map<string, Media>();
+
+    for (const property of properties) {
+      if (!property.coverMediaId) continue;
+      const media = await db.media.get(property.coverMediaId);
+      if (media) {
+        mediaById.set(property.coverMediaId, media);
+      }
+    }
 
     return {
       ...projectToDto(project),
@@ -57,6 +66,7 @@ export const localProjectsApi = {
         projectName: project.name,
         name: p.name,
         description: p.description,
+        propertyType: (p.propertyType ?? 'other') as ProjectDetailDto['properties'][number]['propertyType'],
         geoRadius: 0,
         unitCount: p.unitCount,
         zaznamCount: p.zaznamCount,
@@ -66,7 +76,14 @@ export const localProjectsApi = {
         syncMode: p.syncMode,
         syncStatus: p.syncStatus,
         coverMediaId: p.coverMediaId,
-        coverUrl: p.coverUrl,
+        coverUrl: (() => {
+          const coverMedia = p.coverMediaId ? mediaById.get(p.coverMediaId) : undefined;
+          if (!coverMedia) return p.coverUrl;
+          if (coverMedia.data && typeof URL !== 'undefined') {
+            return URL.createObjectURL(coverMedia.data);
+          }
+          return coverMedia.thumbnailUrl ?? coverMedia.url ?? p.coverUrl;
+        })(),
         createdAt: new Date(p.updatedAt).toISOString(),
         updatedAt: new Date(p.updatedAt).toISOString()
       })),

@@ -21,7 +21,7 @@ Kompletní seznam všech API endpointů.
 | [Units](#units) | `/units` | Jednotky (místnosti, patra) |
 | [Zaznamy](#zaznamy) | `/zaznamy` | Záznamy (opravy, údržba) |
 | [Comments](#comments) | `/comments` | Komentáře k záznamům |
-| [Documents](#documents) | `/documents` | Dokumenty a fotky |
+| [Media](#media) | `/media` | Fotky a dokumenty |
 | [Upload](#upload) | `/upload` | Upload souborů |
 | [Sharing](#sharing) | `/sharing` | Přehled sdílení |
 | [Invitations](#invitations) | `/invitations` | Pozvánky |
@@ -294,6 +294,7 @@ interface ProjectDetailResponse extends ProjectDto {
 | `/properties/{id}/members` | POST | JWT | Přidat člena (pozvánka) |
 | `/properties/{id}/members/{userId}` | PUT | JWT | Změnit roli člena |
 | `/properties/{id}/members/{userId}` | DELETE | JWT | Odebrat člena |
+| `/properties/{id}/cover` | PATCH | JWT | Nastavit titulní foto |
 | `/properties/{id}/leave` | POST | JWT | Opustit property |
 | `/properties/{id}/activity` | GET | JWT | Activity feed |
 
@@ -319,6 +320,9 @@ interface PropertyDto {
   projectName: string;
   name: string;
   description?: string;
+  propertyType: 'house' | 'apartment' | 'garage' | 'garden' | 'shed' | 'land' | 'other';
+  coverMediaId?: string;
+  coverUrl?: string;
   latitude?: number;
   longitude?: number;
   geoRadius: number;
@@ -338,6 +342,7 @@ interface CreatePropertyRequest {
   projectId: string;
   name: string;           // max 100 znaků
   description?: string;   // max 500 znaků
+  propertyType?: 'house' | 'apartment' | 'garage' | 'garden' | 'shed' | 'land' | 'other';
   latitude?: number;
   longitude?: number;
   geoRadius?: number;     // default 100
@@ -347,9 +352,15 @@ interface CreatePropertyRequest {
 interface UpdatePropertyRequest {
   name?: string;
   description?: string;
+  propertyType?: 'house' | 'apartment' | 'garage' | 'garden' | 'shed' | 'land' | 'other';
   latitude?: number;
   longitude?: number;
   geoRadius?: number;
+}
+
+// PATCH /properties/{id}/cover
+interface SetCoverRequest {
+  coverMediaId?: string;  // null = use first photo or default
 }
 
 // GET /properties/{id}/stats
@@ -374,6 +385,7 @@ interface PropertyStatsResponse {
 | `/units/{id}` | GET | JWT | Detail jednotky |
 | `/units/{id}` | PUT | JWT | Upravit jednotku |
 | `/units/{id}` | DELETE | JWT | Smazat jednotku |
+| `/units/{id}/cover` | PATCH | JWT | Nastavit titulní foto |
 
 ### Query parametry pro GET /units
 
@@ -391,11 +403,18 @@ interface UnitDto {
   parentUnitId?: string;
   name: string;
   description?: string;
-  unitType: 'flat' | 'house' | 'garage' | 'garden' | 'room' | 'stairs' | 'other';
+  coverMediaId?: string;
+  coverUrl?: string;
+  unitType: 'room' | 'floor' | 'cellar' | 'parking' | 'other';
   childCount: number;
   zaznamCount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+// PATCH /units/{id}/cover
+interface SetUnitCoverRequest {
+  coverMediaId?: string;  // null = use first photo or default
 }
 
 // POST /units
@@ -404,14 +423,14 @@ interface CreateUnitRequest {
   parentUnitId?: string;
   name: string;           // max 100 znaků
   description?: string;   // max 500 znaků
-  unitType: string;
+  unitType: 'room' | 'floor' | 'cellar' | 'parking' | 'other';
 }
 
 // PUT /units/{id}
 interface UpdateUnitRequest {
   name?: string;
   description?: string;
-  unitType?: string;
+  unitType?: 'room' | 'floor' | 'cellar' | 'parking' | 'other';
   parentUnitId?: string;
 }
 ```
@@ -510,7 +529,7 @@ interface UpdateZaznamRequest {
 
 // GET /zaznamy/{id}
 interface ZaznamDetailResponse extends ZaznamDto {
-  documents: DocumentDto[];
+  media: MediaDto[];
   comments: CommentDto[];
   auditLog: AuditLogEntry[];
 }
@@ -554,50 +573,57 @@ interface UpdateCommentRequest {
 
 ---
 
-## Documents
+## Media
 
 | Endpoint | Metoda | Auth | Popis |
 |----------|--------|------|-------|
-| `/zaznamy/{zaznamId}/documents` | GET | JWT | Seznam dokumentů záznamu |
-| `/zaznamy/{zaznamId}/documents` | POST | JWT | Přidat dokument (po uploadu) |
-| `/documents/{id}` | GET | JWT | Detail dokumentu |
-| `/documents/{id}` | PUT | JWT | Upravit popis |
-| `/documents/{id}` | DELETE | JWT | Smazat dokument |
-| `/documents/{id}/url` | GET | JWT | Presigned URL pro download |
+| `/media` | GET | JWT | Galerie podle ownerType + ownerId |
+| `/media` | POST | JWT | Přidat media (po uploadu) |
+| `/media/{id}` | PUT | JWT | Upravit caption |
+| `/media/{id}` | DELETE | JWT | Smazat media |
+| `/media/{id}/url` | GET | JWT | Presigned URL pro download |
 
 ### Request/Response
 
 ```typescript
-interface DocumentDto {
+interface MediaDto {
   id: string;
-  zaznamId: string;
-  type: 'photo' | 'document' | 'receipt';
+  ownerType: 'property' | 'unit' | 'zaznam';
+  ownerId: string;
+  mediaType: 'photo' | 'document' | 'receipt';
   storageKey: string;
   originalFileName?: string;
   mimeType: string;
   sizeBytes: number;
-  description?: string;
+  caption?: string;
   thumbnailUrl?: string;
   createdAt: string;
 }
 
-// POST /zaznamy/{zaznamId}/documents
-interface AddDocumentRequest {
+// GET /media?ownerType=property&ownerId={id}
+interface MediaListResponse {
+  items: MediaDto[];
+}
+
+// POST /media
+interface AddMediaRequest {
+  ownerType: 'property' | 'unit' | 'zaznam';
+  ownerId: string;
   storageKey: string;     // z upload/confirm
-  type: 'photo' | 'document' | 'receipt';
+  mediaType: 'photo' | 'document' | 'receipt';
   originalFileName?: string;
   mimeType: string;
   sizeBytes: number;
-  description?: string;
+  caption?: string;
 }
 
-// PUT /documents/{id}
-interface UpdateDocumentRequest {
-  description?: string;
+// PUT /media/{id}
+interface UpdateMediaRequest {
+  caption?: string;
 }
 
-// GET /documents/{id}/url
-interface DocumentUrlResponse {
+// GET /media/{id}/url
+interface MediaUrlResponse {
   url: string;
   expiresAt: string;
 }

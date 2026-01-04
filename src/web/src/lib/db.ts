@@ -480,3 +480,211 @@ export async function getPendingChanges(
     .and(item => item.scopeId === scopeId && item.status === 'pending')
     .toArray();
 }
+
+// =============================================================================
+// Export / Import Helpers
+// =============================================================================
+
+export interface ExportData {
+  version: number;
+  exportedAt: string;
+  projects: Project[];
+  properties: Property[];
+  units: Unit[];
+  zaznamy: Zaznam[];
+  media: Array<Omit<Media, 'data'> & { dataBase64?: string }>;
+  tags: Tag[];
+  zaznamTags: ZaznamTag[];
+}
+
+/**
+ * Export all local data to JSON
+ * Media blobs are converted to base64
+ */
+export async function exportLocalData(): Promise<ExportData> {
+  const [projects, properties, units, zaznamy, mediaItems, tags, zaznamTags] = await Promise.all([
+    db.projects.toArray(),
+    db.properties.toArray(),
+    db.units.toArray(),
+    db.zaznamy.toArray(),
+    db.media.toArray(),
+    db.tags.toArray(),
+    db.zaznamTags.toArray()
+  ]);
+
+  // Convert media blobs to base64
+  const mediaWithBase64 = await Promise.all(
+    mediaItems.map(async (item) => {
+      const { data, ...rest } = item;
+      let dataBase64: string | undefined;
+
+      if (data) {
+        const arrayBuffer = await data.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        dataBase64 = btoa(binary);
+      }
+
+      return { ...rest, dataBase64 };
+    })
+  );
+
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    projects,
+    properties,
+    units,
+    zaznamy,
+    media: mediaWithBase64,
+    tags,
+    zaznamTags
+  };
+}
+
+/**
+ * Download export data as JSON file
+ */
+export function downloadExport(data: ExportData, filename?: string): void {
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename ?? `mujdomecek-backup-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Import data from JSON export
+ * Optionally clear existing data first
+ */
+export async function importLocalData(
+  data: ExportData,
+  options: { clearExisting?: boolean } = {}
+): Promise<{ imported: number; errors: string[] }> {
+  const errors: string[] = [];
+  let imported = 0;
+
+  // Validate data structure
+  if (!data || typeof data !== 'object') {
+    errors.push('Neplatná struktura dat');
+    return { imported: 0, errors };
+  }
+
+  // Validate version (allow missing version for backwards compat)
+  if (data.version && data.version > 1) {
+    errors.push('Nepodporovaná verze exportu');
+    return { imported: 0, errors };
+  }
+
+  try {
+    await db.transaction('rw', [db.projects, db.properties, db.units, db.zaznamy, db.media, db.tags, db.zaznamTags], async () => {
+      // Clear existing data if requested
+      if (options.clearExisting) {
+        await Promise.all([
+          db.projects.clear(),
+          db.properties.clear(),
+          db.units.clear(),
+          db.zaznamy.clear(),
+          db.media.clear(),
+          db.tags.clear(),
+          db.zaznamTags.clear()
+        ]);
+      }
+
+      // Import projects
+      if (data.projects?.length) {
+        await db.projects.bulkPut(data.projects);
+        imported += data.projects.length;
+      }
+
+      // Import properties
+      if (data.properties?.length) {
+        await db.properties.bulkPut(data.properties);
+        imported += data.properties.length;
+      }
+
+      // Import units
+      if (data.units?.length) {
+        await db.units.bulkPut(data.units);
+        imported += data.units.length;
+      }
+
+      // Import zaznamy
+      if (data.zaznamy?.length) {
+        await db.zaznamy.bulkPut(data.zaznamy);
+        imported += data.zaznamy.length;
+      }
+
+      // Import media (convert base64 back to blob)
+      if (data.media?.length) {
+        const mediaWithBlobs = data.media.map((item) => {
+          const { dataBase64, ...rest } = item;
+          let blobData: Blob | undefined;
+
+          if (dataBase64) {
+            try {
+              const binary = atob(dataBase64);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+              }
+              blobData = new Blob([bytes], { type: rest.mimeType });
+            } catch {
+              console.warn(`Failed to decode media ${item.id}`);
+            }
+          }
+
+          return { ...rest, data: blobData } as Media;
+        });
+        await db.media.bulkPut(mediaWithBlobs);
+        imported += data.media.length;
+      }
+
+      // Import tags
+      if (data.tags?.length) {
+        await db.tags.bulkPut(data.tags);
+        imported += data.tags.length;
+      }
+
+      // Import zaznamTags
+      if (data.zaznamTags?.length) {
+        await db.zaznamTags.bulkPut(data.zaznamTags);
+        imported += data.zaznamTags.length;
+      }
+    });
+  } catch (err) {
+    console.error('Import transaction error:', err);
+    const message = err instanceof Error ? err.message : 'Neznámá chyba databáze';
+    errors.push(message);
+  }
+
+  return { imported, errors };
+}
+
+/**
+ * Read and parse JSON file for import
+ */
+export function readExportFile(file: File): Promise<ExportData> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string);
+        resolve(data);
+      } catch {
+        reject(new Error('Neplatný JSON soubor'));
+      }
+    };
+    reader.onerror = () => reject(new Error('Chyba při čtení souboru'));
+    reader.readAsText(file);
+  });
+}

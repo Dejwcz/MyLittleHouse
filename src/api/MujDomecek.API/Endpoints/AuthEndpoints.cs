@@ -70,7 +70,7 @@ public static class AuthEndpoints
 
         var result = await userManager.CreateAsync(user, request.Password);
         if (!result.Succeeded)
-            return Results.BadRequest(result.Errors);
+            return Results.BadRequest(ToApiError(result.Errors));
 
         dbContext.UserPreferences.Add(new UserPreferences { UserId = user.Id });
         await dbContext.SaveChangesAsync();
@@ -276,7 +276,7 @@ public static class AuthEndpoints
 
         var result = await userManager.ConfirmEmailAsync(user, token);
         if (!result.Succeeded)
-            return Results.BadRequest(result.Errors);
+            return Results.BadRequest(ToApiError(result.Errors));
 
         return Results.Ok(new ConfirmEmailResponse(true, "Email confirmed."));
     }
@@ -406,7 +406,7 @@ public static class AuthEndpoints
 
         var result = await userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
         if (!result.Succeeded)
-            return Results.BadRequest(result.Errors);
+            return Results.BadRequest(ToApiError(result.Errors));
 
         token.UsedAt = now;
 
@@ -437,7 +437,7 @@ public static class AuthEndpoints
 
         var result = await userManager.ChangePasswordAsync(appUser, request.CurrentPassword, request.NewPassword);
         if (!result.Succeeded)
-            return Results.BadRequest(result.Errors);
+            return Results.BadRequest(ToApiError(result.Errors));
 
         var currentHash = GetRefreshTokenHash(httpRequest);
         var tokens = await dbContext.RefreshTokens
@@ -588,7 +588,7 @@ public static class AuthEndpoints
         appUser.GoogleId = null;
         var result = await userManager.UpdateAsync(appUser);
         if (!result.Succeeded)
-            return Results.BadRequest(result.Errors);
+            return Results.BadRequest(ToApiError(result.Errors));
 
         return Results.NoContent();
     }
@@ -620,7 +620,7 @@ public static class AuthEndpoints
         appUser.AppleId = null;
         var result = await userManager.UpdateAsync(appUser);
         if (!result.Succeeded)
-            return Results.BadRequest(result.Errors);
+            return Results.BadRequest(ToApiError(result.Errors));
 
         return Results.NoContent();
     }
@@ -713,6 +713,44 @@ public static class AuthEndpoints
     {
         var bytes = Encoding.UTF8.GetBytes(token);
         return Convert.ToBase64String(SHA256.HashData(bytes));
+    }
+
+    private static object ToApiError(IEnumerable<IdentityError> errors)
+    {
+        var errorList = errors.ToList();
+        var details = new Dictionary<string, string[]>();
+
+        foreach (var error in errorList)
+        {
+            // Map Identity error codes to field names
+            var field = error.Code switch
+            {
+                "DuplicateEmail" or "DuplicateUserName" => "email",
+                "InvalidEmail" => "email",
+                "PasswordTooShort" or "PasswordRequiresDigit" or "PasswordRequiresLower"
+                    or "PasswordRequiresUpper" or "PasswordRequiresNonAlphanumeric"
+                    or "PasswordRequiresUniqueChars" => "password",
+                "PasswordMismatch" => "currentPassword",
+                _ => "general"
+            };
+
+            if (!details.TryGetValue(field, out var existing))
+            {
+                details[field] = [error.Description];
+            }
+            else
+            {
+                details[field] = [.. existing, error.Description];
+            }
+        }
+
+        var firstError = errorList.FirstOrDefault();
+        return new
+        {
+            code = firstError?.Code ?? "VALIDATION_ERROR",
+            message = firstError?.Description ?? "Validation failed",
+            details
+        };
     }
 }
 

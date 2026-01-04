@@ -5,7 +5,7 @@
   import { getContext } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { Home, Building2, FileText, Plus, Pencil, Trash2, Warehouse, Leaf, Hammer, Map, MoreHorizontal } from 'lucide-svelte';
+  import { Home, Building2, FileText, Plus, Pencil, Trash2, Warehouse, Leaf, Hammer, Map as MapIcon, MoreHorizontal } from 'lucide-svelte';
 
   const projectId = $derived($page.params.projectId ?? '');
 
@@ -49,7 +49,7 @@
     { value: 'garage', label: 'Garáž', icon: Warehouse },
     { value: 'garden', label: 'Zahrada', icon: Leaf },
     { value: 'shed', label: 'Kůlna', icon: Hammer },
-    { value: 'land', label: 'Pozemek', icon: Map },
+    { value: 'land', label: 'Pozemek', icon: MapIcon },
     { value: 'other', label: 'Jiné', icon: MoreHorizontal }
   ] as const;
 
@@ -211,41 +211,47 @@
   <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
     {#each properties as property (property.id)}
       <Card hover class="group cursor-pointer" onclick={() => goto(`/projects/${projectId}/properties/${property.id}`)}>
-        <div class="flex items-start justify-between">
-          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950">
-            <Home class="h-6 w-6 text-blue-500" />
+        <div class="grid grid-cols-[1fr_auto] items-stretch gap-4">
+          <div class="min-w-0">
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+              <h3 class="font-semibold">{property.name}</h3>
+              <Badge size="sm" variant="secondary">{getPropertyTypeLabel(property.propertyType)}</Badge>
+              {#if canEdit}
+                <button
+                  class="rounded p-1 opacity-0 transition-opacity hover:bg-bg-secondary group-hover:opacity-100"
+                  onclick={(e) => { e.stopPropagation(); openModal(property); }}
+                  aria-label="Upravit"
+                >
+                  <Pencil class="h-4 w-4 text-foreground-muted" />
+                </button>
+              {/if}
+            </div>
+            <p class="mt-2 min-h-[2.5rem] line-clamp-2 text-sm text-foreground-muted">
+              {property.description ?? ''}
+            </p>
+            <div class="mt-4 flex flex-wrap items-center gap-3 text-sm text-foreground-muted">
+              <span class="flex items-center gap-1">
+                <Building2 class="h-4 w-4" />
+                {property.unitCount}
+              </span>
+              <span class="flex items-center gap-1">
+                <FileText class="h-4 w-4" />
+                {property.zaznamCount}
+              </span>
+              {#if property.totalCost > 0}
+                <span class="ml-auto font-medium text-foreground">
+                  {formatCost(property.totalCost)}
+                </span>
+              {/if}
+            </div>
           </div>
-          {#if canEdit}
-            <button
-              class="rounded p-1 opacity-0 transition-opacity hover:bg-bg-secondary group-hover:opacity-100"
-              onclick={(e) => { e.stopPropagation(); openModal(property); }}
-              aria-label="Upravit"
-            >
-              <Pencil class="h-4 w-4 text-foreground-muted" />
-            </button>
-          {/if}
-        </div>
-        <div class="mt-4 flex items-center gap-2">
-          <h3 class="font-semibold">{property.name}</h3>
-          <Badge size="sm" variant="secondary">{getPropertyTypeLabel(property.propertyType)}</Badge>
-        </div>
-        {#if property.description}
-          <p class="mt-2 line-clamp-2 text-sm text-foreground-muted">{property.description}</p>
-        {/if}
-        <div class="mt-4 flex flex-wrap items-center gap-3 text-sm text-foreground-muted">
-          <span class="flex items-center gap-1">
-            <Building2 class="h-4 w-4" />
-            {property.unitCount}
-          </span>
-          <span class="flex items-center gap-1">
-            <FileText class="h-4 w-4" />
-            {property.zaznamCount}
-          </span>
-          {#if property.totalCost > 0}
-            <span class="ml-auto font-medium text-foreground">
-              {formatCost(property.totalCost)}
-            </span>
-          {/if}
+          <div class="flex h-full w-[120px] items-center justify-center overflow-hidden rounded-2xl bg-blue-50 dark:bg-blue-950">
+            {#if property.coverUrl}
+              <img src={property.coverUrl} alt={property.name} class="h-full w-full object-cover" />
+            {:else}
+              <Home class="h-6 w-6 text-blue-500" />
+            {/if}
+          </div>
         </div>
       </Card>
     {/each}

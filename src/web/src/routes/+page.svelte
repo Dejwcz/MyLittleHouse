@@ -1,16 +1,17 @@
 <script lang="ts">
-  import { ToastContainer, Button } from '$lib';
+  import { ToastContainer, Button, Modal } from '$lib';
   import { theme } from '$lib/stores/theme.svelte';
   import { auth } from '$lib/stores/auth.svelte';
   import { db } from '$lib/db';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
-  import { Sun, Moon, Building2, FileText, Users, Shield, ArrowRight } from 'lucide-svelte';
+  import { Sun, Moon, Building2, FileText, Users, Shield, ArrowRight, AlertTriangle } from 'lucide-svelte';
 
   let hasLocalData = $state(false);
   let projectCount = $state(0);
   let checking = $state(true);
+  let showWarningModal = $state(false);
 
   onMount(async () => {
     if (browser) {
@@ -25,7 +26,16 @@
     }
   });
 
+  function handleContinueClick() {
+    if (hasLocalData) {
+      showWarningModal = true;
+    } else {
+      startWithoutAccount();
+    }
+  }
+
   function startWithoutAccount() {
+    showWarningModal = false;
     auth.startAsGuest();
     goto('/projects');
   }
@@ -94,7 +104,7 @@
           Zachyťte záznamy v momentě kdy se dějí. Synchronizujte jen když chcete, sdílejte jen když potřebujete.
         </p>
         <div class="flex flex-wrap gap-3">
-          <Button size="lg" onclick={startWithoutAccount}>
+          <Button size="lg" onclick={handleContinueClick}>
             {#snippet children()}
               {#if checking}
                 Načítám...
@@ -225,5 +235,37 @@
     Local-first property logbook. Data stays on your devices by default.
   </footer>
 </div>
+
+<Modal bind:open={showWarningModal} title="Lokální data">
+  <div class="space-y-4">
+    <div class="flex items-start gap-3 rounded-xl bg-amber-50 p-4 dark:bg-amber-950">
+      <AlertTriangle class="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+      <div class="text-sm text-amber-800 dark:text-amber-200">
+        <p class="font-medium">Vaše data jsou uložena pouze v tomto prohlížeči</p>
+        <p class="mt-1">
+          Vymazání dat prohlížeče, použití čističe (CCleaner apod.) nebo přeinstalace prohlížeče
+          může trvale smazat vaše záznamy.
+        </p>
+      </div>
+    </div>
+    <div class="text-sm text-foreground-muted">
+      <p class="font-medium text-foreground">Pro ochranu dat doporučujeme:</p>
+      <ul class="mt-2 list-inside list-disc space-y-1">
+        <li>Vytvořit účet a zapnout synchronizaci</li>
+        <li>Pravidelně exportovat data (Nastavení → Data)</li>
+      </ul>
+    </div>
+  </div>
+  {#snippet footer()}
+    <div class="flex justify-end gap-3">
+      <Button variant="secondary" onclick={() => showWarningModal = false}>
+        {#snippet children()}Zrušit{/snippet}
+      </Button>
+      <Button onclick={startWithoutAccount}>
+        {#snippet children()}Rozumím, pokračovat{/snippet}
+      </Button>
+    </div>
+  {/snippet}
+</Modal>
 
 <ToastContainer />

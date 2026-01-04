@@ -7,11 +7,7 @@
   let searchQuery = $state('');
 
   // TODO: Load from API/IndexedDB
-  const contacts = [
-    { id: '1', name: 'Eva Nováková', email: 'eva@example.cz', phone: '+420 111 222 333' },
-    { id: '2', name: 'Jan Svoboda', email: 'jan@example.cz', phone: '+420 444 555 666' },
-    { id: '3', name: 'Petr Řemeslník', email: 'petr@remeslo.cz', phone: '+420 777 888 999' }
-  ];
+  const contacts: Array<{ id: string; name: string; email: string; phone?: string }> = [];
 
   const filteredContacts = $derived(
     contacts.filter(c =>

@@ -8,6 +8,8 @@
     type PropertyDetailDto, type UnitDto, type ZaznamDto, type MediaDto
   } from '$lib/api';
   import { localPropertiesApi } from '$lib/api/local/properties';
+  import { api } from '$lib/api/client';
+  import { localMediaApi } from '$lib/api/local/media';
   import { toast } from '$lib/stores/ui.svelte';
   import { auth } from '$lib/stores/auth.svelte';
   import { sync } from '$lib/stores/sync.svelte';
@@ -17,7 +19,7 @@
   import { goto } from '$app/navigation';
   import {
     Plus, Building2, FileText, Pencil, Trash2,
-    Calendar, DollarSign, ChevronRight, Layers, Image, Star
+    Calendar, DollarSign, ChevronRight, ChevronDown, ChevronUp, Layers, Image, Star
   } from 'lucide-svelte';
 
   const projectId = $derived($page.params.projectId ?? '');
@@ -37,6 +39,19 @@
   let showDisableSyncDialog = $state(false);
   let syncModeChanging = $state(false);
   let coverUpdating = $state(false);
+  let uploading = $state(false);
+  let galleryCollapsed = $state(true);
+  let photoInput: HTMLInputElement | null = null;
+
+  interface UploadRequestResponse {
+    storageKey: string;
+    uploadUrl: string;
+  }
+
+  interface UploadConfirmResponse {
+    storageKey: string;
+    thumbnailUrl?: string;
+  }
 
   let syncMode = $state<SyncMode>('local-only');
   let syncStatus = $state<SyncStatus>('local');
@@ -81,6 +96,11 @@
       loading = false;
       mediaLoading = false;
     }
+  }
+
+  async function refreshMedia() {
+    const mediaList = await mediaApi.list('property', propertyId);
+    mediaItems = mediaList.items;
   }
 
   async function loadSyncMode() {
@@ -149,6 +169,75 @@
       toast.error('Nepodařilo se upravit obálku');
     } finally {
       coverUpdating = false;
+    }
+  }
+
+  function openPhotoPicker() {
+    photoInput?.click();
+  }
+
+  async function handlePhotoChange(event: Event) {
+    const target = event.currentTarget as HTMLInputElement | null;
+    const files = target?.files ? Array.from(target.files) : [];
+    if (files.length === 0) return;
+
+    const useLocalUpload = auth.isGuest || !auth.isAuthenticated;
+    uploading = true;
+    try {
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) {
+          toast.error(`Soubor ${file.name} není obrázek.`);
+          continue;
+        }
+
+        if (useLocalUpload) {
+          await localMediaApi.create({
+            ownerType: 'property',
+            ownerId: propertyId,
+            mediaType: 'photo',
+            originalFileName: file.name,
+            mimeType: file.type,
+            sizeBytes: file.size,
+            data: file
+          });
+        } else {
+          const request = await api.post<UploadRequestResponse>('/upload/request', {
+            fileName: file.name,
+            mimeType: file.type,
+            sizeBytes: file.size
+          });
+
+          await fetch(request.uploadUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': file.type },
+            body: file
+          });
+
+          const confirm = await api.post<UploadConfirmResponse>('/upload/confirm', {
+            storageKey: request.storageKey
+          });
+
+          await mediaApi.create({
+            ownerType: 'property',
+            ownerId: propertyId,
+            storageKey: confirm.storageKey,
+            mediaType: 'photo',
+            originalFileName: file.name,
+            mimeType: file.type,
+            sizeBytes: file.size
+          });
+        }
+      }
+
+      await refreshMedia();
+      toast.success('Fotky nahrány');
+    } catch (err) {
+      toast.error('Nepodařilo se nahrát fotky');
+    } finally {
+      uploading = false;
+      if (photoInput) {
+        photoInput.value = '';
+      }
     }
   }
 
@@ -283,90 +372,102 @@
     <Badge size="sm" variant="secondary">{getPropertyTypeLabel(property.propertyType)}</Badge>
   </div>
 
-  <!-- Cover + Gallery -->
   <div class="mb-6">
     <div class="mb-3 flex items-center justify-between">
-      <h2 class="text-lg font-semibold">Obálka</h2>
-      {#if canEdit && property.coverMediaId}
-        <Button size="sm" variant="ghost" onclick={() => setCover(undefined)} disabled={coverUpdating}>
-          {#snippet children()}
-            Odebrat obálku
-          {/snippet}
-        </Button>
-      {/if}
-    </div>
-    <Card class="overflow-hidden">
-      <div class="relative aspect-[16/9] w-full bg-bg-secondary">
-        {#if property.coverUrl}
-          <img src={property.coverUrl} alt={property.name} class="h-full w-full object-cover" />
+      <button
+        type="button"
+        class="flex items-center gap-2 text-lg font-semibold text-foreground"
+        onclick={() => galleryCollapsed = !galleryCollapsed}
+        aria-expanded={!galleryCollapsed}
+      >
+        Galerie
+        {#if galleryCollapsed}
+          <ChevronDown class="h-4 w-4 text-foreground-muted" />
         {:else}
-          <div class="flex h-full flex-col items-center justify-center gap-2 text-foreground-muted">
-            <Image class="h-8 w-8" />
-            <span class="text-sm">Žádná obálka</span>
-          </div>
+          <ChevronUp class="h-4 w-4 text-foreground-muted" />
+        {/if}
+      </button>
+      <div class="flex items-center gap-3">
+        {#if mediaItems.length > 0}
+          <span class="text-sm text-foreground-muted">{mediaItems.length} položek</span>
+        {/if}
+        {#if canEdit}
+          <Button
+            size="sm"
+            variant="outline"
+            class="border-primary text-primary hover:bg-primary-50"
+            onclick={openPhotoPicker}
+            disabled={uploading}
+          >
+            {#snippet children()}
+              <Plus class="h-4 w-4" />
+              Přidat fotky
+            {/snippet}
+          </Button>
         {/if}
       </div>
-    </Card>
-  </div>
-
-  <div class="mb-6">
-    <div class="mb-3 flex items-center justify-between">
-      <h2 class="text-lg font-semibold">Galerie</h2>
-      {#if mediaItems.length > 0}
-        <span class="text-sm text-foreground-muted">{mediaItems.length} položek</span>
-      {/if}
     </div>
-    {#if mediaLoading}
-      <div class="flex items-center justify-center py-6">
-        <Spinner />
-      </div>
-    {:else if mediaItems.length === 0}
-      <EmptyState
-        icon={Image}
-        title="Galerie je prázdná"
-        description="Přidejte fotky nebo dokumenty k této nemovitosti."
-      />
-    {:else}
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {#each mediaItems as media (media.id)}
-          <Card class="group">
-            <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-bg-secondary">
-              {#if media.thumbnailUrl}
-                <img src={media.thumbnailUrl} alt={media.originalFileName ?? 'Media'} class="h-full w-full object-cover" />
-              {:else}
-                <div class="flex h-full items-center justify-center text-foreground-muted">
-                  <Image class="h-6 w-6" />
-                </div>
-              {/if}
-            </div>
-            <div class="mt-3 flex items-center justify-between gap-3">
-              <div class="min-w-0">
-                <p class="truncate text-sm font-medium">{media.originalFileName ?? 'Media'}</p>
-                {#if media.caption}
-                  <p class="truncate text-xs text-foreground-muted">{media.caption}</p>
+    <input
+      bind:this={photoInput}
+      type="file"
+      accept="image/*"
+      multiple
+      class="hidden"
+      onchange={handlePhotoChange}
+    />
+    {#if !galleryCollapsed}
+      {#if mediaLoading}
+        <div class="flex items-center justify-center py-6">
+          <Spinner />
+        </div>
+      {:else if mediaItems.length === 0}
+        <EmptyState
+          icon={Image}
+          title="Galerie je prázdná"
+          description="Přidejte fotky nebo dokumenty k této nemovitosti."
+        />
+      {:else}
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {#each mediaItems as media (media.id)}
+            <Card class="group">
+              <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-bg-secondary">
+                {#if media.thumbnailUrl}
+                  <img src={media.thumbnailUrl} alt={media.originalFileName ?? 'Media'} class="h-full w-full object-cover" />
+                {:else}
+                  <div class="flex h-full items-center justify-center text-foreground-muted">
+                    <Image class="h-6 w-6" />
+                  </div>
                 {/if}
               </div>
-              {#if canEdit}
-                {#if property.coverMediaId === media.id}
-                  <Button size="sm" variant="secondary" disabled>
-                    {#snippet children()}
-                      <Star class="h-4 w-4" />
-                      Obálka
-                    {/snippet}
-                  </Button>
-                {:else}
-                  <Button size="sm" variant="ghost" onclick={() => setCover(media.id)} disabled={coverUpdating}>
-                    {#snippet children()}
-                      <Star class="h-4 w-4" />
-                      Nastavit
-                    {/snippet}
-                  </Button>
+              <div class="mt-3 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-medium">{media.originalFileName ?? 'Media'}</p>
+                  {#if media.caption}
+                    <p class="truncate text-xs text-foreground-muted">{media.caption}</p>
+                  {/if}
+                </div>
+                {#if canEdit}
+                  {#if property.coverMediaId === media.id}
+                    <Button size="sm" variant="secondary" disabled>
+                      {#snippet children()}
+                        <Star class="h-4 w-4" />
+                        Obálka
+                      {/snippet}
+                    </Button>
+                  {:else}
+                    <Button size="sm" variant="ghost" onclick={() => setCover(media.id)} disabled={coverUpdating}>
+                      {#snippet children()}
+                        <Star class="h-4 w-4" />
+                        Nastavit
+                      {/snippet}
+                    </Button>
+                  {/if}
                 {/if}
-              {/if}
-            </div>
-          </Card>
-        {/each}
-      </div>
+              </div>
+            </Card>
+          {/each}
+        </div>
+      {/if}
     {/if}
   </div>
 

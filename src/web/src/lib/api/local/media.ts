@@ -22,6 +22,10 @@ export interface UpdateMediaRequest {
 }
 
 function mediaToDto(media: Media): MediaDto {
+  const blobUrl = typeof URL !== 'undefined' && media.data
+    ? URL.createObjectURL(media.data)
+    : undefined;
+
   return {
     id: media.id,
     zaznamId: media.ownerId,
@@ -33,7 +37,8 @@ function mediaToDto(media: Media): MediaDto {
     mimeType: media.mimeType,
     sizeBytes: media.sizeBytes,
     caption: media.caption,
-    thumbnailUrl: media.thumbnailUrl,
+    thumbnailUrl: media.thumbnailUrl ?? blobUrl,
+    url: media.url ?? blobUrl,
     createdAt: new Date(media.updatedAt).toISOString()
   };
 }

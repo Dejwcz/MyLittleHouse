@@ -23,7 +23,18 @@ async function getPropertySyncScope(property: Property): Promise<{
   return null;
 }
 
-function unitToDto(unit: Unit): UnitDto {
+async function unitToDto(unit: Unit): Promise<UnitDto> {
+  let coverUrl = unit.coverUrl;
+
+  if (unit.coverMediaId) {
+    const coverMedia = await db.media.get(unit.coverMediaId);
+    if (coverMedia?.data && typeof URL !== 'undefined') {
+      coverUrl = URL.createObjectURL(coverMedia.data);
+    } else if (coverMedia?.thumbnailUrl || coverMedia?.url) {
+      coverUrl = coverMedia.thumbnailUrl ?? coverMedia.url;
+    }
+  }
+
   return {
     id: unit.id,
     propertyId: unit.propertyId,
@@ -34,7 +45,7 @@ function unitToDto(unit: Unit): UnitDto {
     childCount: unit.childUnitCount,
     zaznamCount: unit.zaznamCount,
     coverMediaId: unit.coverMediaId,
-    coverUrl: unit.coverUrl,
+    coverUrl,
     createdAt: new Date(unit.updatedAt).toISOString(),
     updatedAt: new Date(unit.updatedAt).toISOString()
   };
@@ -60,10 +71,8 @@ export const localUnitsApi = {
         .toArray();
     }
 
-    return {
-      items: units.map(unitToDto),
-      total: units.length
-    };
+    const items = await Promise.all(units.map(unitToDto));
+    return { items, total: units.length };
   },
 
   async get(id: string): Promise<UnitDto> {
@@ -71,7 +80,7 @@ export const localUnitsApi = {
     if (!unit) {
       throw new Error('Jednotka nenalezena');
     }
-    return unitToDto(unit);
+    return await unitToDto(unit);
   },
 
   async create(data: CreateUnitRequest): Promise<UnitDto> {
@@ -128,7 +137,7 @@ export const localUnitsApi = {
       });
     }
 
-    return unitToDto(unit);
+    return await unitToDto(unit);
   },
 
   async update(id: string, data: UpdateUnitRequest): Promise<UnitDto> {
@@ -185,7 +194,7 @@ export const localUnitsApi = {
 
     await db.units.update(id, updated);
     const result = await db.units.get(id);
-    return unitToDto(result!);
+    return await unitToDto(result!);
   },
 
   async delete(id: string): Promise<void> {
@@ -278,6 +287,6 @@ export const localUnitsApi = {
     await db.units.update(id, updated);
 
     const result = await db.units.get(id);
-    return unitToDto(result!);
+    return await unitToDto(result!);
   }
 };

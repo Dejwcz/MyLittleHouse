@@ -78,16 +78,25 @@ docker-compose up -d db
 ```bash
 cd src/api/MujDomecek.API
 dotnet run
-# Běží na http://localhost:5000
+# Běží na http://localhost:5230
 ```
 
 ### 3. Frontend
 ```bash
 cd src/web
+cp .env.example .env   # Pouze poprvé!
 npm install
 npm run dev
 # Běží na http://localhost:5173
 ```
+
+### Dev porty (FIXNÍ)
+
+| Služba | Port | URL |
+|--------|------|-----|
+| PostgreSQL (Docker) | 5434 | localhost:5434 |
+| Backend API | 5230 | http://localhost:5230 |
+| Frontend | 5173 | http://localhost:5173 |
 
 ### Konfigurace
 
@@ -96,11 +105,11 @@ npm run dev
 - `Jwt:SigningKey` - JWT klíč (změnit pro produkci!)
 - `Cors:AllowedOrigins` - povolené frontend origins
 
-**Frontend:** `src/web/.env`
-- `VITE_API_BASE=http://localhost:5000` - URL backendu
+**Frontend:** `src/web/.env` (zkopírovat z `.env.example`)
+- `VITE_API_BASE=http://localhost:5230` - URL backendu
 
 ### API Dokumentace
-- OpenAPI: http://localhost:5000/openapi/v1.json
+- OpenAPI: http://localhost:5230/openapi/v1.json
 
 ## Aktuální produkce
 

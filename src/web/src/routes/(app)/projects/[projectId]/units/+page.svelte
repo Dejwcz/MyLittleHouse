@@ -113,11 +113,8 @@
           <div class="space-y-3">
             {#each section.units as unit (unit.id)}
               <Card hover class="cursor-pointer" onclick={() => goto(`/projects/${projectId}/units/${unit.id}`)}>
-                <div class="flex items-center gap-4">
-                  <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-950">
-                    <Layers class="h-6 w-6 text-purple-500" />
-                  </div>
-                  <div class="min-w-0 flex-1">
+                <div class="grid grid-cols-[1fr_auto] items-stretch gap-4">
+                  <div class="min-w-0">
                     <h3 class="font-semibold">{unit.name}</h3>
                     <div class="mt-1 flex items-center gap-3 text-sm text-foreground-muted">
                       {#if unit.childCount > 0}
@@ -128,7 +125,13 @@
                       {/if}
                     </div>
                   </div>
-                  <ChevronRight class="h-5 w-5 text-foreground-muted" />
+                  <div class="flex h-full w-[120px] items-center justify-center overflow-hidden rounded-2xl bg-purple-50 dark:bg-purple-950">
+                    {#if unit.coverUrl}
+                      <img src={unit.coverUrl} alt={unit.name} class="h-full w-full object-cover" />
+                    {:else}
+                      <Layers class="h-6 w-6 text-purple-500" />
+                    {/if}
+                  </div>
                 </div>
               </Card>
             {/each}

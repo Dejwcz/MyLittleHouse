@@ -124,11 +124,8 @@
   <div class="space-y-3">
     {#each zaznamy as zaznam (zaznam.id)}
       <Card hover class="cursor-pointer" onclick={() => goto(`/projects/${projectId}/zaznamy/${zaznam.id}`)}>
-        <div class="flex items-start gap-4">
-          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-bg-secondary">
-            <FileText class="h-6 w-6 text-foreground-muted" />
-          </div>
-          <div class="min-w-0 flex-1">
+        <div class="grid grid-cols-[1fr_auto] items-stretch gap-4">
+          <div class="min-w-0">
             <div class="flex items-center gap-2">
               <p class="font-medium">{zaznam.title || 'Bez názvu'}</p>
               {#if zaznam.status === 'draft'}
@@ -147,6 +144,13 @@
                 <span class="font-medium text-foreground">{formatCost(zaznam.cost)}</span>
               {/if}
             </div>
+          </div>
+          <div class="flex h-full w-[120px] items-center justify-center overflow-hidden rounded-2xl bg-bg-secondary">
+            {#if zaznam.thumbnailUrl}
+              <img src={zaznam.thumbnailUrl} alt={zaznam.title || 'Záznam'} class="h-full w-full object-cover" />
+            {:else}
+              <FileText class="h-6 w-6 text-foreground-muted" />
+            {/if}
           </div>
         </div>
       </Card>

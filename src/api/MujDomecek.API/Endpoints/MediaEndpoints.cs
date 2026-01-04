@@ -17,8 +17,8 @@ public static class MediaEndpoints
     {
         var group = endpoints.MapGroup("").RequireAuthorization();
 
-        group.MapGet("/zaznamy/{zaznamId:guid}/media", GetMediaListAsync);
-        group.MapPost("/zaznamy/{zaznamId:guid}/media", AddMediaAsync);
+        group.MapGet("/media", GetMediaListAsync);
+        group.MapPost("/media", AddMediaAsync);
         group.MapGet("/media/{id:guid}", GetMediaAsync);
         group.MapPut("/media/{id:guid}", UpdateMediaAsync);
         group.MapDelete("/media/{id:guid}", DeleteMediaAsync);
@@ -29,7 +29,8 @@ public static class MediaEndpoints
 
     private static async Task<IResult> GetMediaListAsync(
         ClaimsPrincipal user,
-        Guid zaznamId,
+        string? ownerType,
+        Guid? ownerId,
         IStorageService storageService,
         ApplicationDbContext dbContext)
     {
@@ -37,21 +38,23 @@ public static class MediaEndpoints
         if (userId == Guid.Empty)
             return Results.Unauthorized();
 
-        if (!await HasZaznamAccessAsync(dbContext, zaznamId, userId))
+        if (!TryParseOwnerType(ownerType, out var parsedOwnerType) || ownerId is null || ownerId == Guid.Empty)
+            return Results.BadRequest();
+
+        if (!await HasOwnerAccessAsync(dbContext, parsedOwnerType, ownerId.Value, userId))
             return Results.Forbid();
 
         var documents = await dbContext.Media
-            .Where(d => d.OwnerType == OwnerType.Zaznam && d.OwnerId == zaznamId)
+            .Where(d => d.OwnerType == parsedOwnerType && d.OwnerId == ownerId.Value)
             .OrderByDescending(d => d.CreatedAt)
             .ToListAsync();
 
         var dtos = documents.Select(d => ToMediaDto(d, storageService)).ToList();
-        return Results.Ok(dtos);
+        return Results.Ok(new MediaListResponse(dtos));
     }
 
     private static async Task<IResult> AddMediaAsync(
         ClaimsPrincipal user,
-        Guid zaznamId,
         [FromBody] AddMediaRequest request,
         IStorageService storageService,
         ApplicationDbContext dbContext)
@@ -60,26 +63,32 @@ public static class MediaEndpoints
         if (userId == Guid.Empty)
             return Results.Unauthorized();
 
-        if (!await HasZaznamAccessAsync(dbContext, zaznamId, userId))
+        if (!TryParseOwnerType(request.OwnerType, out var ownerType))
+            return Results.BadRequest();
+
+        if (request.OwnerId == Guid.Empty)
+            return Results.BadRequest();
+
+        if (!await HasOwnerAccessAsync(dbContext, ownerType, request.OwnerId, userId))
             return Results.Forbid();
 
         if (string.IsNullOrWhiteSpace(request.StorageKey))
             return Results.BadRequest();
 
-        if (!TryParseMediaType(request.Type, out var mediaType))
+        if (!TryParseMediaType(request.MediaType, out var mediaType))
             return Results.BadRequest();
 
         var document = new Media
         {
             Id = Guid.NewGuid(),
-            OwnerType = OwnerType.Zaznam,
-            OwnerId = zaznamId,
+            OwnerType = ownerType,
+            OwnerId = request.OwnerId,
             Type = mediaType,
             StorageKey = request.StorageKey,
             OriginalFileName = request.OriginalFileName,
             MimeType = request.MimeType,
             SizeBytes = request.SizeBytes,
-            Description = request.Description,
+            Description = request.Caption,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -104,8 +113,7 @@ public static class MediaEndpoints
         if (document is null)
             return Results.NotFound();
 
-        if (document.OwnerType != OwnerType.Zaznam
-            || !await HasZaznamAccessAsync(dbContext, document.OwnerId, userId))
+        if (!await HasOwnerAccessAsync(dbContext, document.OwnerType, document.OwnerId, userId))
             return Results.Forbid();
 
         return Results.Ok(ToMediaDto(document, storageService));
@@ -126,12 +134,11 @@ public static class MediaEndpoints
         if (document is null)
             return Results.NotFound();
 
-        if (document.OwnerType != OwnerType.Zaznam
-            || !await HasZaznamAccessAsync(dbContext, document.OwnerId, userId))
+        if (!await HasOwnerAccessAsync(dbContext, document.OwnerType, document.OwnerId, userId))
             return Results.Forbid();
 
-        if (request.Description is not null)
-            document.Description = request.Description;
+        if (request.Caption is not null)
+            document.Description = request.Caption;
 
         document.UpdatedAt = DateTime.UtcNow;
         await dbContext.SaveChangesAsync();
@@ -152,8 +159,7 @@ public static class MediaEndpoints
         if (document is null)
             return Results.NotFound();
 
-        if (document.OwnerType != OwnerType.Zaznam
-            || !await HasZaznamAccessAsync(dbContext, document.OwnerId, userId))
+        if (!await HasOwnerAccessAsync(dbContext, document.OwnerType, document.OwnerId, userId))
             return Results.Forbid();
 
         document.IsDeleted = true;
@@ -178,8 +184,7 @@ public static class MediaEndpoints
         if (document is null)
             return Results.NotFound();
 
-        if (document.OwnerType != OwnerType.Zaznam
-            || !await HasZaznamAccessAsync(dbContext, document.OwnerId, userId))
+        if (!await HasOwnerAccessAsync(dbContext, document.OwnerType, document.OwnerId, userId))
             return Results.Forbid();
 
         var expiresIn = GetPresignedExpiry(storageOptions.Value);
@@ -210,6 +215,42 @@ public static class MediaEndpoints
              || dbContext.PropertyMembers.Any(pm => pm.PropertyId == p.Id && pm.UserId == userId)));
     }
 
+    private static Task<bool> HasOwnerAccessAsync(
+        ApplicationDbContext dbContext,
+        OwnerType ownerType,
+        Guid ownerId,
+        Guid userId)
+    {
+        return ownerType switch
+        {
+            OwnerType.Property => HasPropertyAccessAsync(dbContext, ownerId, userId),
+            OwnerType.Unit => HasUnitAccessAsync(dbContext, ownerId, userId),
+            OwnerType.Zaznam => HasZaznamAccessAsync(dbContext, ownerId, userId),
+            _ => Task.FromResult(false)
+        };
+    }
+
+    private static Task<bool> HasPropertyAccessAsync(ApplicationDbContext dbContext, Guid propertyId, Guid userId)
+    {
+        return dbContext.Properties.AnyAsync(p => p.Id == propertyId &&
+            (dbContext.Projects.Any(pr => pr.Id == p.ProjectId && pr.OwnerId == userId)
+             || dbContext.ProjectMembers.Any(pm => pm.ProjectId == p.ProjectId && pm.UserId == userId)
+             || dbContext.PropertyMembers.Any(pm => pm.PropertyId == p.Id && pm.UserId == userId)));
+    }
+
+    private static async Task<bool> HasUnitAccessAsync(ApplicationDbContext dbContext, Guid unitId, Guid userId)
+    {
+        var propertyId = await dbContext.Units
+            .Where(u => u.Id == unitId)
+            .Select(u => u.PropertyId)
+            .FirstOrDefaultAsync();
+
+        if (propertyId == Guid.Empty)
+            return false;
+
+        return await HasPropertyAccessAsync(dbContext, propertyId, userId);
+    }
+
     private static MediaDto ToMediaDto(
         Media document,
         IStorageService storageService)
@@ -220,6 +261,7 @@ public static class MediaEndpoints
 
         return new MediaDto(
             document.Id,
+            ToOwnerTypeString(document.OwnerType),
             document.OwnerId,
             ToMediaTypeString(document.Type),
             document.StorageKey,
@@ -246,6 +288,27 @@ public static class MediaEndpoints
         };
     }
 
+    private static bool TryParseOwnerType(string? type, out OwnerType ownerType)
+    {
+        ownerType = OwnerType.Zaznam;
+        if (string.IsNullOrWhiteSpace(type))
+            return false;
+
+        return type.Trim().ToLowerInvariant() switch
+        {
+            "property" => SetOwnerType(OwnerType.Property, out ownerType),
+            "unit" => SetOwnerType(OwnerType.Unit, out ownerType),
+            "zaznam" => SetOwnerType(OwnerType.Zaznam, out ownerType),
+            _ => false
+        };
+    }
+
+    private static bool SetOwnerType(OwnerType type, out OwnerType ownerType)
+    {
+        ownerType = type;
+        return true;
+    }
+
     private static bool SetMediaType(MediaType type, out MediaType mediaType)
     {
         mediaType = type;
@@ -260,6 +323,17 @@ public static class MediaEndpoints
             MediaType.Document => "document",
             MediaType.Receipt => "receipt",
             _ => "document"
+        };
+    }
+
+    private static string ToOwnerTypeString(OwnerType type)
+    {
+        return type switch
+        {
+            OwnerType.Property => "property",
+            OwnerType.Unit => "unit",
+            OwnerType.Zaznam => "zaznam",
+            _ => "zaznam"
         };
     }
 

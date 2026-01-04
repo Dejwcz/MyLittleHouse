@@ -11,7 +11,7 @@
   import { goto } from '$app/navigation';
   import {
     Plus, Building2, Home, FileText, Pencil, Trash2, UserPlus, Cloud, CloudOff, TrendingUp, ChevronDown,
-    Warehouse, Leaf, Hammer, Map, MoreHorizontal
+    Warehouse, Leaf, Hammer, Map as MapIcon, MoreHorizontal
   } from 'lucide-svelte';
 
   const projectId = $derived($page.params.projectId ?? '');
@@ -148,7 +148,7 @@
     { value: 'garage', label: 'Garáž', icon: Warehouse },
     { value: 'garden', label: 'Zahrada', icon: Leaf },
     { value: 'shed', label: 'Kůlna', icon: Hammer },
-    { value: 'land', label: 'Pozemek', icon: Map },
+    { value: 'land', label: 'Pozemek', icon: MapIcon },
     { value: 'other', label: 'Jiné', icon: MoreHorizontal }
   ] as const;
 
@@ -440,13 +440,10 @@
           {#each project.properties as property (property.id)}
             <Card hover class="group cursor-pointer" onclick={() => goto(`/projects/${projectId}/properties/${property.id}`)}>
               <div class="flex items-start gap-4">
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950">
-                  <Home class="h-6 w-6 text-blue-500" />
-                </div>
                 <div class="min-w-0 flex-1">
-                  <div class="flex items-start justify-between">
+                  <div class="flex items-start justify-between gap-3">
                     <div>
-                      <div class="flex items-center gap-2">
+                      <div class="flex flex-wrap items-center gap-2">
                         <h3 class="font-semibold">{property.name}</h3>
                         <Badge size="sm" variant="secondary">{getPropertyTypeLabel(property.propertyType)}</Badge>
                       </div>
@@ -479,6 +476,13 @@
                       </span>
                     {/if}
                   </div>
+                </div>
+                <div class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-blue-50 dark:bg-blue-950">
+                  {#if property.coverUrl}
+                    <img src={property.coverUrl} alt={property.name} class="h-full w-full object-cover" />
+                  {:else}
+                    <Home class="h-6 w-6 text-blue-500" />
+                  {/if}
                 </div>
               </div>
             </Card>

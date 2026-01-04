@@ -7,13 +7,17 @@ User
   └── Project (1:N)
         └── Property (1:N)
               ├── Unit (1:N, hierarchie)
+              ├── Media (1:N) ← galerie property
               └── Activity (1:N) ← activity feed
 
 Zaznam (samostatný aggregate)
-  ├── ZaznamDokument (1:N)
+  ├── Media (1:N)
   ├── ZaznamTag (M:N → Tag)
   └── Comment (1:N)
         └── CommentMention (M:N → User)
+
+Unit
+  └── Media (1:N) ← galerie jednotky
 ```
 
 ## Entity
@@ -114,9 +118,11 @@ Nová entita pro seskupení nemovitostí.
 | ProjectId | uuid (Guid) | FK → Project |
 | Name | string | Název |
 | Description | string? | Popis |
+| PropertyType | enum | Typ nemovitosti |
 | Latitude | decimal? | GPS šířka (pro auto-tagging) |
 | Longitude | decimal? | GPS délka (pro auto-tagging) |
 | GeoRadius | int | Radius v metrech (default 100) |
+| CoverMediaId | uuid (Guid)? | Titulní fotka (nullable) |
 | CreatedAt | datetime | Vytvořeno |
 | UpdatedAt | datetime | Upraveno |
 | SyncMode | enum | `local-only` / `synced` |
@@ -135,18 +141,26 @@ Nová entita pro seskupení nemovitostí.
 | Name | string | Název |
 | Description | string? | Popis |
 | UnitType | enum | Typ jednotky |
+| CoverMediaId | uuid (Guid)? | Titulní fotka (nullable) |
 | CreatedAt | datetime | Vytvořeno |
 | UpdatedAt | datetime | Upraveno |
 | IsDeleted | bool | Soft delete |
 | DeletedAt | datetime? | Kdy smazáno |
 
-**UnitType enum:**
-- Flat
+**PropertyType enum:**
 - House
+- Apartment
 - Garage
 - Garden
+- Shed
+- Land
+- Other
+
+**UnitType enum:**
 - Room
-- Stairs
+- Floor
+- Cellar
+- Parking
 - Other
 
 ### Zaznam
@@ -181,13 +195,14 @@ Obecný záznam (nahrazuje Repair).
 - `Tags` jsou many-to-many přes junction tabulku (`ZaznamTag`) na reference data `Tag`.
 - Draft záznamy se po 30 dnech automaticky mažou (s upozorněním 7 dní předem).
 
-### ZaznamDokument
+### Media (nahrazuje ZaznamDokument)
 
 | Pole | Typ | Popis |
 |------|-----|-------|
 | Id | uuid (Guid) | PK |
-| ZaznamId | uuid (Guid) | FK → Zaznam |
-| Type | enum | Photo / Document / Receipt |
+| OwnerType | enum | Property / Unit / Zaznam |
+| OwnerId | uuid (Guid) | ID vlastníka |
+| MediaType | enum | Photo / Document / Receipt |
 | StorageKey | string | S3 key (ne URL) |
 | OriginalFileName | string? | Původní název souboru |
 | MimeType | string | Content-Type |
@@ -197,6 +212,10 @@ Obecný záznam (nahrazuje Repair).
 | UpdatedAt | datetime | Upraveno |
 | IsDeleted | bool | Soft delete |
 | DeletedAt | datetime? | Kdy smazáno |
+
+**Poznámky:**
+- `Id` je client-generated UUID (pro offline sync bez remappingu).
+- Index na `(OwnerType, OwnerId)` pro rychlé načtení galerie.
 
 ### Tag
 
