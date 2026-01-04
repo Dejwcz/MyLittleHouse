@@ -52,6 +52,8 @@
 
 <svelte:head>
   <title>Přihlášení | MůjDomeček</title>
+  <meta name="description" content="Přihlášení do účtu MůjDomeček." />
+  <meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
 <Card padding="lg">

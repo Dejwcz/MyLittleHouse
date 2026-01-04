@@ -34,8 +34,10 @@
 
   let showUnitModal = $state(false);
   let showDeleteConfirm = $state(false);
+  let showMediaDeleteConfirm = $state(false);
   let saving = $state(false);
   let selectedUnit = $state<UnitDto | null>(null);
+  let selectedMedia = $state<MediaDto | null>(null);
   let showDisableSyncDialog = $state(false);
   let syncModeChanging = $state(false);
   let coverUpdating = $state(false);
@@ -169,6 +171,29 @@
       toast.error('Nepodařilo se upravit obálku');
     } finally {
       coverUpdating = false;
+    }
+  }
+
+  function requestMediaDelete(media: MediaDto) {
+    selectedMedia = media;
+    showMediaDeleteConfirm = true;
+  }
+
+  async function handleMediaDelete() {
+    if (!selectedMedia) return;
+    try {
+      if (property?.coverMediaId === selectedMedia.id) {
+        const updated = await propertiesApi.updateCover(propertyId, undefined);
+        property = { ...property, ...updated };
+      }
+      await mediaApi.delete(selectedMedia.id);
+      await refreshMedia();
+      toast.success('Fotka smazána');
+    } catch (err) {
+      toast.error('Nepodařilo se smazat fotku');
+    } finally {
+      showMediaDeleteConfirm = false;
+      selectedMedia = null;
     }
   }
 
@@ -431,6 +456,15 @@
           {#each mediaItems as media (media.id)}
             <Card class="group">
               <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-bg-secondary">
+                {#if canEdit}
+                  <button
+                    class="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full border border-dashed border-red-400 bg-white text-red-600 opacity-0 transition-opacity group-hover:opacity-100"
+                    onclick={() => requestMediaDelete(media)}
+                    aria-label="Smazat fotku"
+                  >
+                    <Trash2 class="h-4 w-4" />
+                  </button>
+                {/if}
                 {#if media.thumbnailUrl}
                   <img src={media.thumbnailUrl} alt={media.originalFileName ?? 'Media'} class="h-full w-full object-cover" />
                 {:else}
@@ -470,6 +504,14 @@
       {/if}
     {/if}
   </div>
+
+  <ConfirmDialog
+    bind:open={showMediaDeleteConfirm}
+    title="Smazat fotku?"
+    message="Tato akce je nevratná."
+    confirmText="Smazat"
+    onconfirm={handleMediaDelete}
+  />
 
   <!-- Stats -->
   <div class="mb-6 grid gap-4 sm:grid-cols-3">

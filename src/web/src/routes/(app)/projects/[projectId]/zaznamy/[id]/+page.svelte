@@ -23,6 +23,8 @@
   let uploading = $state(false);
   let galleryCollapsed = $state(true);
   let photoInput: HTMLInputElement | null = null;
+  let showMediaDeleteConfirm = $state(false);
+  let selectedMedia = $state<MediaDto | null>(null);
 
   interface UploadRequestResponse {
     storageKey: string;
@@ -182,6 +184,25 @@
     }
   }
 
+  function requestMediaDelete(media: MediaDto) {
+    selectedMedia = media;
+    showMediaDeleteConfirm = true;
+  }
+
+  async function handleMediaDelete() {
+    if (!selectedMedia) return;
+    try {
+      await mediaApi.delete(selectedMedia.id);
+      await refreshMedia();
+      toast.success('Fotka smazána');
+    } catch (err) {
+      toast.error('Nepodařilo se smazat fotku');
+    } finally {
+      showMediaDeleteConfirm = false;
+      selectedMedia = null;
+    }
+  }
+
   function formatCost(cost: number): string {
     return new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 }).format(cost);
   }
@@ -331,6 +352,13 @@
           {#each mediaItems as media (media.id)}
             <Card class="group">
               <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-bg-secondary">
+                <button
+                  class="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full border border-dashed border-red-400 bg-white text-red-600 opacity-0 transition-opacity group-hover:opacity-100"
+                  onclick={() => requestMediaDelete(media)}
+                  aria-label="Smazat fotku"
+                >
+                  <Trash2 class="h-4 w-4" />
+                </button>
                 {#if media.thumbnailUrl}
                   <img src={media.thumbnailUrl} alt={media.originalFileName ?? 'Media'} class="h-full w-full object-cover" />
                 {:else}
@@ -358,5 +386,12 @@
     message="Tato akce je nevratná."
     confirmText="Smazat"
     onconfirm={handleDelete}
+  />
+  <ConfirmDialog
+    bind:open={showMediaDeleteConfirm}
+    title="Smazat fotku?"
+    message="Tato akce je nevratná."
+    confirmText="Smazat"
+    onconfirm={handleMediaDelete}
   />
 {/if}

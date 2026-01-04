@@ -2,16 +2,40 @@
   import { ToastContainer, Button, Modal } from '$lib';
   import { theme } from '$lib/stores/theme.svelte';
   import { auth } from '$lib/stores/auth.svelte';
-  import { db } from '$lib/db';
+  import { db, type Zaznam } from '$lib/db';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
-  import { Sun, Moon, Building2, FileText, Users, Shield, ArrowRight, AlertTriangle } from 'lucide-svelte';
+  import { Sun, Moon, Building2, FileText, Users, Shield, ArrowRight, AlertTriangle, Clock } from 'lucide-svelte';
+
+  interface ActivityItem {
+    id: string;
+    title: string;
+    propertyName?: string;
+    date: string;
+    type: 'zaznam';
+  }
 
   let hasLocalData = $state(false);
   let projectCount = $state(0);
   let checking = $state(true);
   let showWarningModal = $state(false);
+  let recentActivity = $state<ActivityItem[]>([]);
+
+  function formatRelativeTime(dateStr: string): string {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'právě teď';
+    if (diffMins < 60) return `před ${diffMins} min`;
+    if (diffHours < 24) return `před ${diffHours}h`;
+    if (diffDays < 7) return `před ${diffDays}d`;
+    return date.toLocaleDateString('cs-CZ');
+  }
 
   onMount(async () => {
     if (browser) {
@@ -19,6 +43,26 @@
         const projects = await db.projects.count();
         projectCount = projects;
         hasLocalData = projects > 0;
+
+        // Load recent activity
+        if (hasLocalData) {
+          const zaznamy = await db.zaznamy
+            .orderBy('updatedAt')
+            .reverse()
+            .limit(5)
+            .toArray();
+
+          recentActivity = await Promise.all(zaznamy.map(async (z) => {
+            const property = await db.properties.get(z.propertyId);
+            return {
+              id: z.id,
+              title: z.title || 'Bez názvu',
+              propertyName: property?.name,
+              date: new Date(z.updatedAt).toISOString(),
+              type: 'zaznam' as const
+            };
+          }));
+        }
       } catch {
         // DB not initialized yet, that's fine
       }
@@ -43,6 +87,22 @@
 
 <svelte:head>
   <title>MůjDomeček - Správa nemovitostí</title>
+  <meta
+    name="description"
+    content="Local-first deník nemovitostí. Záznamy, fotky, dokumenty a náklady offline se synchronizací jen když chcete."
+  />
+  <meta property="og:title" content="MůjDomeček - Správa nemovitostí" />
+  <meta
+    property="og:description"
+    content="Local-first deník nemovitostí. Záznamy, fotky, dokumenty a náklady offline se synchronizací jen když chcete."
+  />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="MůjDomeček - Správa nemovitostí" />
+  <meta
+    name="twitter:description"
+    content="Local-first deník nemovitostí. Záznamy, fotky, dokumenty a náklady offline se synchronizací jen když chcete."
+  />
 </svelte:head>
 
 <div class="min-h-screen bg-bg">
@@ -166,23 +226,27 @@
           </button>
         </div>
 
-        <div class="rounded-3xl border border-border bg-bg-secondary p-6">
-          <p class="text-sm font-semibold">Poslední aktivita</p>
-          <div class="mt-4 space-y-3 text-sm text-foreground-muted">
-            <div class="flex items-center justify-between">
-              <span>Nahrána inspekce střechy</span>
-              <span>před 2h</span>
+        {#if recentActivity.length > 0}
+          <div class="rounded-3xl border border-border bg-bg-secondary p-6">
+            <div class="flex items-center gap-2">
+              <Clock class="h-4 w-4 text-foreground-muted" />
+              <p class="text-sm font-semibold">Poslední aktivita</p>
             </div>
-            <div class="flex items-center justify-between">
-              <span>Záruka kuchyně končí</span>
-              <span>za 6 dní</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span>Sdílena "Chalupa" s Evou</span>
-              <span>před 1t</span>
+            <div class="mt-4 space-y-3 text-sm">
+              {#each recentActivity as activity}
+                <div class="flex items-center justify-between">
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate font-medium">{activity.title}</p>
+                    {#if activity.propertyName}
+                      <p class="truncate text-xs text-foreground-muted">{activity.propertyName}</p>
+                    {/if}
+                  </div>
+                  <span class="ml-3 shrink-0 text-foreground-muted">{formatRelativeTime(activity.date)}</span>
+                </div>
+              {/each}
             </div>
           </div>
-        </div>
+        {/if}
       </div>
     </section>
 

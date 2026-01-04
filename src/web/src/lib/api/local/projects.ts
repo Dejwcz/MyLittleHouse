@@ -97,7 +97,7 @@ export const localProjectsApi = {
     };
   },
 
-  async create(data: CreateProjectRequest): Promise<ProjectDto> {
+  async create(data: CreateProjectRequest, syncMode: SyncMode = 'local-only'): Promise<ProjectDto> {
     const id = crypto.randomUUID();
     const now = Date.now();
 
@@ -110,11 +110,20 @@ export const localProjectsApi = {
       propertyCount: 0,
       myRole: 'owner',
       updatedAt: now,
-      syncStatus: 'local',
-      syncMode: 'local-only'  // New projects are local-only by default
+      syncStatus: syncMode === 'synced' ? 'pending' : 'local',
+      syncMode
     };
 
     await db.projects.add(project);
+
+    // If synced, queue for sync
+    if (syncMode === 'synced') {
+      await queueChange('project', id, id, 'projects', id, 'create', {
+        name: data.name,
+        description: data.description
+      });
+    }
+
     return projectToDto(project);
   },
 

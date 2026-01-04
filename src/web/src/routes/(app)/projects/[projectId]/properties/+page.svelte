@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PageHeader, Card, Button, EmptyState, Badge, Modal, Input, Textarea, ConfirmDialog } from '$lib';
+  import { PageHeader, Card, Button, EmptyState, Badge, Modal, Input, Textarea, ConfirmDialog, SyncBadge } from '$lib';
   import { propertiesApi, unitsApi, type ProjectDetailDto, type PropertyDto, type PropertyType, type UnitType } from '$lib/api';
   import { toast } from '$lib/stores/ui.svelte';
   import { getContext } from 'svelte';
@@ -216,6 +216,9 @@
             <div class="mt-4 flex flex-wrap items-center gap-2">
               <h3 class="font-semibold">{property.name}</h3>
               <Badge size="sm" variant="secondary">{getPropertyTypeLabel(property.propertyType)}</Badge>
+              {#if property.syncMode && property.syncStatus}
+                <SyncBadge syncMode={property.syncMode} syncStatus={property.syncStatus} showLabel={false} />
+              {/if}
               {#if canEdit}
                 <button
                   class="rounded p-1 opacity-0 transition-opacity hover:bg-bg-secondary group-hover:opacity-100"

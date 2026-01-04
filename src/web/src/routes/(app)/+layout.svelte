@@ -123,6 +123,10 @@
   }
 </script>
 
+<svelte:head>
+  <meta name="robots" content="noindex, nofollow" />
+</svelte:head>
+
 {#if checking}
   <div class="flex min-h-screen items-center justify-center bg-bg">
     <Spinner size="lg" />

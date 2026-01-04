@@ -31,6 +31,22 @@
 
 <svelte:head>
   <title>Jak to funguje - MujDomecek</title>
+  <meta
+    name="description"
+    content="Zjistete, jak funguje MujDomecek: local-first pristup, synchronizace na pozadani a sdileni az pri pridani clena."
+  />
+  <meta property="og:title" content="Jak to funguje - MujDomecek" />
+  <meta
+    property="og:description"
+    content="Zjistete, jak funguje MujDomecek: local-first pristup, synchronizace na pozadani a sdileni az pri pridani clena."
+  />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Jak to funguje - MujDomecek" />
+  <meta
+    name="twitter:description"
+    content="Zjistete, jak funguje MujDomecek: local-first pristup, synchronizace na pozadani a sdileni az pri pridani clena."
+  />
 </svelte:head>
 
 <div class="min-h-screen bg-bg">
@@ -366,6 +382,13 @@
               <div>
                 <p class="font-medium">Synchronizace</p>
                 <p class="text-sm text-foreground-muted">Přístup z mobilu, tabletu, druhého počítače.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <CheckCircle class="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
+              <div>
+                <p class="font-medium">Soukromé cloudové zálohy</p>
+                <p class="text-sm text-foreground-muted">Data zůstávají jen u vás, sdílení zapnete až při přidání člena.</p>
               </div>
             </div>
             <div class="flex items-start gap-3">

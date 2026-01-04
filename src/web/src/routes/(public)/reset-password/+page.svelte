@@ -74,6 +74,8 @@
 
 <svelte:head>
   <title>Obnova hesla | MůjDomeček</title>
+  <meta name="description" content="Nastavení nového hesla pro účet MůjDomeček." />
+  <meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
 <Card padding="lg">

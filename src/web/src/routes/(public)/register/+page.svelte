@@ -53,6 +53,8 @@
 
 <svelte:head>
   <title>Registrace | MůjDomeček</title>
+  <meta name="description" content="Vytvořte si účet MůjDomeček." />
+  <meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
 <Card padding="lg">

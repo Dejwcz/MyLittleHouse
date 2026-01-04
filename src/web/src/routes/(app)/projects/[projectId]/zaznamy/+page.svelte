@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PageHeader, Card, Button, Badge, Tabs, EmptyState, Spinner } from '$lib';
+  import { PageHeader, Card, Button, Badge, Tabs, EmptyState, Spinner, SyncBadge } from '$lib';
   import { zaznamyApi, type ProjectDetailDto } from '$lib/api';
   import type { ZaznamDto, ZaznamQueryParams } from '$lib/api/types';
   import { getContext, onMount } from 'svelte';
@@ -130,6 +130,9 @@
               <p class="font-medium">{zaznam.title || 'Bez názvu'}</p>
               {#if zaznam.status === 'draft'}
                 <Badge variant="warning">Draft</Badge>
+              {/if}
+              {#if zaznam.syncMode && zaznam.syncStatus}
+                <SyncBadge syncMode={zaznam.syncMode} syncStatus={zaznam.syncStatus} showLabel={false} />
               {/if}
             </div>
             <div class="mt-1 flex items-center gap-3 text-sm text-foreground-muted">
