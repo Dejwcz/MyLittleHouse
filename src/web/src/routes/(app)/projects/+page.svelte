@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PageHeader, Card, Button, EmptyState, Badge, Modal, Input, Textarea, Spinner, ConfirmDialog } from '$lib';
+  import { PageHeader, Card, Button, EmptyState, Badge, Modal, Input, Textarea, Spinner, ConfirmDialog, SyncBadge } from '$lib';
   import { unifiedApi } from '$lib/api/unified';
   import type { ProjectDto } from '$lib/api/types';
   import { onMount } from 'svelte';
@@ -171,6 +171,9 @@
             <FolderOpen class="h-6 w-6 text-primary" />
           </div>
           <div class="flex items-center gap-2">
+            {#if project.syncMode && project.syncStatus}
+              <SyncBadge syncMode={project.syncMode} syncStatus={project.syncStatus} showLabel={false} />
+            {/if}
             <Badge variant={roleBadge.variant}>{roleBadge.label}</Badge>
             {#if project.myRole === 'owner'}
               <div class="relative">

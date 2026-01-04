@@ -1,9 +1,11 @@
 <script lang="ts">
   import { PageHeader, Card, Button, Modal } from '$lib';
   import { sync } from '$lib/stores/sync.svelte';
+  import { auth } from '$lib/stores/auth.svelte';
+  import { preferences } from '$lib/stores/preferences.svelte';
   import { toast } from '$lib/stores/ui.svelte';
-  import { db, exportLocalData, downloadExport, importLocalData, readExportFile, type ExportData } from '$lib/db';
-  import { Database, Cloud, Download, Upload, Trash2, RefreshCw, AlertTriangle } from 'lucide-svelte';
+  import { db, exportLocalData, downloadExport, importLocalData, readExportFile, type ExportData, type SyncMode } from '$lib/db';
+  import { Database, Cloud, Download, Upload, Trash2, RefreshCw, AlertTriangle, Settings } from 'lucide-svelte';
 
   let exporting = $state(false);
   let importing = $state(false);
@@ -169,6 +171,41 @@
       {/if}
     </div>
   </Card>
+
+  {#if auth.isAuthenticated}
+    <Card>
+      <div class="mb-4 flex items-center gap-3">
+        <Settings class="h-5 w-5 text-foreground-muted" />
+        <h2 class="font-medium">Nastavení synchronizace</h2>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <p class="mb-2 text-sm font-medium">Výchozí režim pro nové položky</p>
+          <p class="mb-3 text-sm text-foreground-muted">
+            Zvolte, zda nové projekty a záznamy budou automaticky synchronizovány do cloudu.
+          </p>
+          <div class="flex gap-3">
+            <button
+              type="button"
+              class="flex-1 rounded-xl border p-3 text-left transition-colors {preferences.defaultSyncMode === 'local-only' ? 'border-primary bg-primary-50 dark:bg-primary-950' : 'border-border hover:bg-bg-secondary'}"
+              onclick={() => preferences.setDefaultSyncMode('local-only')}
+            >
+              <p class="font-medium">Pouze lokálně</p>
+              <p class="mt-1 text-xs text-foreground-muted">Data zůstanou jen v tomto zařízení</p>
+            </button>
+            <button
+              type="button"
+              class="flex-1 rounded-xl border p-3 text-left transition-colors {preferences.defaultSyncMode === 'synced' ? 'border-primary bg-primary-50 dark:bg-primary-950' : 'border-border hover:bg-bg-secondary'}"
+              onclick={() => preferences.setDefaultSyncMode('synced')}
+            >
+              <p class="font-medium">Synchronizovat</p>
+              <p class="mt-1 text-xs text-foreground-muted">Automaticky zálohovat do cloudu</p>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Card>
+  {/if}
 
   <Card>
     <div class="mb-4 flex items-center gap-3">

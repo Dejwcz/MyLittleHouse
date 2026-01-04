@@ -128,9 +128,50 @@ Primární akce je vždy vpravo v `PageHeader`.
 - Secondary = akce v kartách, dialozích
 - Danger = mazání, odhlášení
 
+### SyncBadge indikátory
+
+Každá položka (projekt, nemovitost, záznam) zobrazuje stav synchronizace pomocí `SyncBadge`:
+
+| Stav | Ikona | Popis |
+|------|-------|-------|
+| `local-only` | CloudOff | Data pouze lokálně, nesynchronizováno |
+| `synced` | Check | Synchronizováno se serverem |
+| `syncing` | RefreshCw (animace) | Probíhá synchronizace |
+| `pending` | Cloud | Čeká na synchronizaci |
+| `failed` | AlertCircle | Chyba synchronizace |
+
+Badge se zobrazuje v seznamech vedle názvu položky.
+
 ---
 
 ## Obrazovky
+
+### Landing page (`/`)
+
+Domovská stránka před přihlášením/vstupem do aplikace.
+
+| Sekce | Obsah |
+|-------|-------|
+| Hero | Název, tagline, CTA tlačítka |
+| CTA | "Začít bez účtu" / "Pokračovat" (pokud jsou lokální data) |
+| Rychlý záznam | Mockup formuláře záznamu |
+| Poslední aktivita | 5 posledních záznamů z IndexedDB (pokud existují) |
+| Features | Karty s popisem funkcí (Projekty, Záznamy, Sdílení, Local-first) |
+
+**Poslední aktivita (dynamická z IndexedDB):**
+```
+┌─────────────────────────────────────┐
+│ 🕐 Poslední aktivita                │
+│                                     │
+│ Oprava střechy          před 2h    │
+│ Chalupa                             │
+│                                     │
+│ Výměna kotlu            před 1d    │
+│ Rodinný dům                         │
+└─────────────────────────────────────┘
+```
+- Zobrazuje se pouze pokud jsou lokální data
+- Načítá 5 posledních záznamů seřazených podle `updatedAt`
 
 ### Seznam projektů
 
@@ -452,12 +493,26 @@ Viz existující dokumentace kontaktů.
 | Sekce | Obsah |
 |-------|-------|
 | Sync status | Online/Offline, počet čekajících změn |
+| Výchozí sync režim | Pouze lokálně / Synchronizovat (jen pro přihlášené) |
 | Auto-sync | Toggle (default ON) |
 | Sync přes mobilní data | Toggle (default OFF) |
 | Export dat | Stáhnout vše jako JSON (lokální) nebo ZIP (server) |
 | Import dat | Nahrát zálohu z JSON souboru |
 | Smazání lokálních dat | Vymazat IndexedDB |
 | Smazání účtu | Danger zone (server) |
+
+**Výchozí sync režim (authenticated users):**
+```
+┌─────────────────────────────────────┐
+│ Výchozí režim pro nové položky      │
+│                                     │
+│ [Pouze lokálně]  [Synchronizovat]   │
+│  Data zůstanou    Automaticky       │
+│  jen v zařízení   zálohovat         │
+└─────────────────────────────────────┘
+```
+- Nastavení je uloženo v localStorage (`mujdomecek-preferences`)
+- Ovlivňuje syncMode nových projektů, nemovitostí a záznamů
 
 **Sync status UI:**
 ```

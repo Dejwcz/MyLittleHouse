@@ -1641,6 +1641,26 @@ Umožňuje výjimky (např. Editor na projektu, ale Viewer na citlivé Property)
 
 ---
 
+### [071] Default sync preference + SyncBadge indikátory
+
+**Datum:** 2026-01-04
+**Stav:** Rozhodnuto
+
+**Kontext:** Uživatelé potřebují jasně vidět, které položky jsou pouze lokální a které synchronizované. Také chtějí nastavit výchozí chování pro nové položky.
+
+**Rozhodnutí:**
+1. **Default sync preference** - v `/settings/data` může přihlášený uživatel vybrat výchozí sync mode pro nové položky (local-only vs synced). Uloženo v localStorage.
+2. **SyncBadge indikátory** - v seznamech projektů, nemovitostí a záznamů se zobrazuje badge se stavem synchronizace (CloudOff pro local-only, Check pro synced, atd.).
+3. **Activity feed na homepage** - dynamicky z IndexedDB načtených 5 posledních záznamů (místo hardcoded dat).
+
+**Důsledky:**
+- Nový store `preferences.svelte.ts` pro uživatelské preference
+- `SyncBadge` komponenta zobrazuje stav synchronizace
+- Homepage activity feed načítá reálná data z db.zaznamy
+- API pro tvorbu entit přijímá volitelný `syncMode` parametr
+
+---
+
 ## Otevřená rozhodnutí
 
 Všechna rozhodnutí jsou uzavřena. Viz [10-open-questions.md](10-open-questions.md) pro historii.
